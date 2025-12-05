@@ -30,7 +30,7 @@ get_coeffs <- function(data,sigma_Y=1,numcoeffs =100){
 
 # Create the basis for the convex projection
 create_basis <- function(num_coeffs,L=6,numgrid=1500,sigma_Y=1){
-  L <- 6
+  #L <- 6
   pis <- c(seq(-L, L, length.out = numgrid),0,9999)
   U <- matrix(rep(NA,num_coeffs*length(pis)) ,nrow = num_coeffs)
   for (j in 1:num_coeffs){
@@ -41,6 +41,39 @@ create_basis <- function(num_coeffs,L=6,numgrid=1500,sigma_Y=1){
     #print(paste0("Basis row ", j, " of ", num_coeffs," created"))
   }
   return(U)
+}
+
+
+
+## For given x,y compute:
+## sqrt( ∫ φ(t) (φ(t - x) - φ(t - y))^2 dt )
+kernel_diff <- function(x, delta, rel.tol = 1e-8) {
+  #Corrected eps1
+  ## Standard normal density
+  phi <- function(t) dnorm(t)
+  
+  integrand <- function(t) {
+    phi(t) * (phi(t - x) - phi(t - x-delta))^2
+  }
+  val <- integrate(integrand, lower = -Inf, upper = Inf, rel.tol = rel.tol)$value
+  sqrt(val)
+}
+
+## Approximate max_{|x - y| <= delta/2} of that quantity
+## over a search box x,y ∈ [-L, L] with a grid of size nx × ny
+max_diff_over_delta <- function(delta, L = 6, nx = 15000,
+                                rel.tol = 1e-8) {
+  xs <- seq(-L, L, length.out = nx)
+  max_val <- 0
+  
+  for (x in xs) {
+    val <- kernel_diff(x, delta, rel.tol = rel.tol)
+    if (val > max_val) {
+      max_val <- val
+    }
+  }
+  
+  max_val
 }
 
 draw_exp_matrix <- function(n, k, rate = 1) {
@@ -147,11 +180,16 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     
     #Projection basis
     U          <- create_basis(num_coeffs,L=L,numgrid=numgrid,sigma_Y=sigma_Y)
-    delta = (2*L)/numgrid
-    integrand <- function(x) {
-      dnorm(x) * (dnorm(x-1-delta /2) -dnorm(x-1))^2
-    }
-    eps1<-  sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value)  # (dnorm(1-L/numgrid)-dnorm(1+L/numgrid))/( 2*pi )^(1/4) #approx error from grid density
+    delta      <- (2*L)/numgrid
+    
+    #not quite right
+    #integrand <- function(x) {
+    #  dnorm(x) * (dnorm(x-1-delta /2) -dnorm(x-1))^2
+    #}
+    #eps1<-  sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value)  # (dnorm(1-L/numgrid)-dnorm(1+L/numgrid))/( 2*pi )^(1/4) #approx error from grid density
+    
+    eps1<- max_diff_over_delta(delta,L=L,nx=15000)
+    
     integrand2 <- function(x) {
       dnorm(x) * (dnorm(x-L))^2
     }
@@ -341,6 +379,8 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     parms$mean_resid[parm]         <- mean(resids)
     parms$breakdown[parm]          <- mean( resids[rejects_no_nu] - boot95[rejects_no_nu]-epsilon_U )
     parms$boot95[parm]             <- mean(boot95)
+    parms$eps2[parm]               <- eps2
+    parms$eps1[parm]               <- eps1
     parms$mean_cvs_no_nu[parm]     <- mean(boot95+epsilon_U)
     parms$mean_cvs_full[parm]      <- mean(boot95+epsilon_U+nu_resid)
     parms$finished_at[parm]        <-  format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
