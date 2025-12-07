@@ -47,13 +47,9 @@ create_basis <- function(num_coeffs,L=6,numgrid=1500,sigma_Y=1){
 
 ## For given x,y compute:
 ## sqrt( ∫ φ(t) (φ(t - x) - φ(t - y))^2 dt )
-kernel_diff <- function(x, delta, rel.tol = 1e-8) {
-  #Corrected eps1
-  ## Standard normal density
-  phi <- function(t) dnorm(t)
-  
+kernel_diff <- function(x, y, rel.tol = 1e-8) {
   integrand <- function(t) {
-    phi(t) * (phi(t - x) - phi(t - x-delta))^2
+    phi(t) * (phi(t - x) - phi(t - y))^2
   }
   val <- integrate(integrand, lower = -Inf, upper = Inf, rel.tol = rel.tol)$value
   sqrt(val)
@@ -61,15 +57,20 @@ kernel_diff <- function(x, delta, rel.tol = 1e-8) {
 
 ## Approximate max_{|x - y| <= delta/2} of that quantity
 ## over a search box x,y ∈ [-L, L] with a grid of size nx × ny
-max_diff_over_delta <- function(delta, L = 6, nx = 15000,
+max_diff_over_delta <- function(delta, L = 6, nx = 3000,ny=100,
                                 rel.tol = 1e-8) {
   xs <- seq(-L, L, length.out = nx)
   max_val <- 0
   
   for (x in xs) {
-    val <- kernel_diff(x, delta, rel.tol = rel.tol)
-    if (val > max_val) {
-      max_val <- val
+    ys <- seq(x+delta/2, x-delta/2,length.out = ny)
+    for (y in ys) {
+      
+      val <- kernel_diff(x, y, rel.tol = rel.tol)
+      if (val > max_val) {
+        max_val <- val
+      }
+      
     }
   }
   
@@ -188,7 +189,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     #}
     #eps1<-  sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value)  # (dnorm(1-L/numgrid)-dnorm(1+L/numgrid))/( 2*pi )^(1/4) #approx error from grid density
     
-    eps1<- max_diff_over_delta(delta,L=L,nx=15000)
+    eps1<- max_diff_over_delta(delta,L=L,nx=numgrid)
     
     integrand2 <- function(x) {
       dnorm(x) * (dnorm(x-L))^2
@@ -325,8 +326,14 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
         print("Running Projection method:")
       
       #Estimate residuals
+      tic()
       coeffs          <- get_coeffs( ts,sigma_Y=sigma_Y,numcoeffs = num_coeffs ) #estimate coefficients
+      toc()
+      print("Coefficients computed")
+      tic()
       projection      <- compute_residual(coeffs,U)
+      toc()
+      print("Residual computed")
       resids[sim]     <- projection$residual
       true_dist[sim]  <- sqrt(sum((coeffs-null_true_coeffs)^2))
       projpoint       <- U%*%projection$alpha_opt
