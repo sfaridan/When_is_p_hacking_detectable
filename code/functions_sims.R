@@ -43,7 +43,7 @@ create_basis <- function(num_coeffs,L=6,numgrid=1500,sigma_Y=1){
   return(U)
 }
 
-
+phi <- function(t) dnorm(t)
 
 ## For given x,y compute:
 ## sqrt( ∫ φ(t) (φ(t - x) - φ(t - y))^2 dt )
@@ -101,7 +101,8 @@ draw_unif_matrix <- function(n, k, rate = 1) {
   matrix(runif(n * k, min = -sqrt(3),max=sqrt(3)), nrow = n, ncol = k)
 }
 
-compute_residual <- function(v,U){
+#deprecated on 3/31/2026
+compute_residual_old <- function(v,U){
   # Assume U (K×N) and v (length K) are defined...
   P_sp <- as(2 * crossprod(U), "dgCMatrix")
   q    <- -2 * crossprod(U, v)
@@ -129,6 +130,49 @@ compute_residual <- function(v,U){
   out <- list(residual=residual, alpha_opt=alpha_opt)
   return(out)
 }
+
+compute_residual_fast <- function(v, solver, alpha_start = NULL) {
+  q <- as.numeric(-2 * crossprod(solver$U, v))
+  
+  solver$model$Update(q = q)   # model@Update(...) in osqp >= 1.0
+  if (!is.null(alpha_start)) {
+    solver$model$WarmStart(x = alpha_start)
+  }
+  
+  result <- solver$model$Solve()
+  alpha  <- result$x
+  
+  # residual from quadratic form (see below)
+  cvec     <- as.numeric(crossprod(solver$U, v))
+  resid_sq <- drop(crossprod(v)) - 2 * sum(cvec * alpha) +
+    sum(alpha * as.numeric((crossprod(solver$U) %*% alpha)))
+  list(residual = sqrt(max(resid_sq, 0)), alpha_opt = alpha)
+}
+
+
+setup_projection_solver <- function(U) {
+  nvar <- ncol(U)
+  
+  P_sp <- as(2 * crossprod(U), "dgCMatrix")
+  A    <- rbind(Matrix(1, 1, nvar), Diagonal(nvar))
+  A_sp <- as(as(A, "TsparseMatrix"), "dgCMatrix")
+  l    <- c(1, rep(0, nvar))
+  u    <- c(1, rep(Inf, nvar))
+  
+  pars <- osqpSettings(
+    verbose = FALSE,
+    warm_start = TRUE   # or warm_starting = TRUE depending on version
+  )
+  
+  model <- osqp(P = P_sp, q = rep(0, nvar), A = A_sp, l = l, u = u, pars = pars)
+  
+  list(
+    U = U,
+    P = P_sp,
+    model = model
+  )
+}
+
 
 t_to_p_normal_approx <- function(t_score) {
   # Input validation
@@ -214,6 +258,8 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     Uboot <- U
     #if (theta <1 & parms$fastboot[parm]==TRUE  ){Uboot <- create_basis(num_coeffs,L=L,numgrid=(numgrid/2),sigma_Y=sigma_Y)}
     
+    #For warm-starting
+    solver <-  setup_projection_solver(U)
     
     #Set up Elliott et al pval vectors
     lcms_EWK        <- rep(NA,nsims)
@@ -228,10 +274,13 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     rejects   <- rep(NA,nsims)
     true_dist <- rep(NA,nsims)
     proj_error <- rep(NA,nsims) # distance between projection point and true coefficients
+    
     for(sim in 1:nsims){
+      
+      
       tic()
       numsimsper <- 100
-      if ( (sim) /numsimsper == floor( (sim) /numsimsper) ){
+      if (TRUE){ #( (sim) /numsimsper == floor( (sim) /numsimsper) ){
         print("")
         print("")
         print(paste0("Parm: ", parm, " of ",num_parameterizations, ", Sim: ", sim, " of ", parms$nsims[parm] ))
@@ -325,13 +374,15 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       if(parms$omit_proj[parm]==FALSE){
         print("Running Projection method:")
       
+
+        
       #Estimate residuals
       tic()
       coeffs          <- get_coeffs( ts,sigma_Y=sigma_Y,numcoeffs = num_coeffs ) #estimate coefficients
       toc()
       print("Coefficients computed")
       tic()
-      projection      <- compute_residual(coeffs,U)
+      projection      <- compute_residual_fast(coeffs,solver) #compute_residual(coeffs,U)
       toc()
       print("Residual computed")
       resids[sim]     <- projection$residual
@@ -352,9 +403,9 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
           coeffs_boot           <- get_coeffs( ts_boot,sigma_Y=sigma_Y,numcoeffs = num_coeffs ) #estimate coefficients
           #resids_boot[boot]    <- sqrt(sum((coeffs_boot-coeffs)^2 )) #conservative!
           v_boot                <- projpoint+(coeffs_boot-coeffs) #
-          resids_boot[boot]     <- compute_residual(v_boot,Uboot)$residual #does noise get you farther away?
+          resids_boot[boot]     <-  compute_residual_fast(v_boot,solver,alpha_start=projection$alpha_opt)$residual #compute_residual(v_boot,Uboot)$residual #does noise get you farther away?
           
-          if((boot-1) / 50 == floor((boot-1)/50)){            print(round(c(prob_hack,resids[sim],quantile(resids_boot[1:boot],0.95),boot/nboots,sim/nsims),5))
+          if((boot-1) / 10 == floor((boot-1)/10)){            print(round(c(prob_hack,resids[sim],quantile(resids_boot[1:boot],0.95),boot/nboots,sim/nsims),5))
           }
         }
         boot95[sim]     <- quantile(resids_boot,0.95) 
