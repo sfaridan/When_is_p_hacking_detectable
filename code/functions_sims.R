@@ -1,4 +1,8 @@
 
+library(osqp)
+library(Matrix)
+library(tictoc)
+
 #The normalized generalized Hermite polynomials (Carrasco 2011)
 hermite_general<- function(x,j,sigma_Y){
   ans <- 0*x
@@ -495,3 +499,4 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
   toc()
   return(filename)
 }
+
