@@ -1,10 +1,18 @@
 # Define the integrand function
 integrand <- function(x) {
-  dnorm(x) * (dt(x, df = 51) - dnorm(x))^2
+  dnorm(x) * (dt(x, df = 185) - dnorm(x))^2
 }
+result <- sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value)
+result 
 
-# Perform the numerical integration
-result <- integrate(integrand, lower = -Inf, upper = Inf)
+integrand <- function(x) {
+  dnorm(x) * (dt(x, df = 287) - dnorm(x))^2
+}
+result <- sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value)
+result 
 
-# Take the square root
-sqrt(result$value)
+integrand <- function(x) {
+  dnorm(x) * (dt(x, df = 261) - dnorm(x))^2
+}
+result <- sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value)
+result 
