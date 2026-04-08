@@ -72,7 +72,7 @@ saveRDS(empirical_results_30, file = paste0("MM_results_",coeffs,"_coeffs"))
 print(readRDS(paste0("MM_results_",coeffs,"_coeffs")))
 
 print(readRDS(paste0("MM_results_",20,"_coeffs")))
-print(readRDS(paste0("MM_results_",coeffs,"_coeffs")))
+print(readRDS(paste0("MM_results_",30,"_coeffs")))
 
 
 #Run EWK
