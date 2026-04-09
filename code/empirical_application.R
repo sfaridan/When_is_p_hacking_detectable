@@ -54,11 +54,11 @@ empirical_results <- as.data.frame(do.call(rbind, list(rct_results, did_results,
 empirical_results$methods <- c("RCT","DID","RDD","IV")
 setwd(paste0(root,"/results"))
 saveRDS(empirical_results, file = paste0("MM_results_",20,"_coeffs"))
-print(empirical_results)
+print(readRDS(paste0("MM_results_",20,"_coeffs")))
 
 
 
-#Run the projection test
+#Run the projection test with more coefficients
 coeffs<-30
 rct_results <- run_test(MM_data[MM_data$method=="RCT",],numcoeffs=coeffs,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots)
 did_results <- run_test(MM_data[MM_data$method=="DID",],numcoeffs=coeffs,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots)
@@ -69,9 +69,10 @@ empirical_results_30 <- as.data.frame(do.call(rbind, list(rct_results, did_resul
 empirical_results_30$methods <- c("RCT","DID","RDD","IV")
 setwd(paste0(root,"/results"))
 saveRDS(empirical_results_30, file = paste0("MM_results_",coeffs,"_coeffs"))
-print(empirical_results_30)
+print(readRDS(paste0("MM_results_",coeffs,"_coeffs")))
 
-
+print(readRDS(paste0("MM_results_",20,"_coeffs")))
+print(readRDS(paste0("MM_results_",30,"_coeffs")))
 
 
 #Run EWK

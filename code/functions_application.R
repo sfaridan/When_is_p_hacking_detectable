@@ -44,10 +44,11 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
   rh        <- projection$residual 
   
   #The bootstrap
-  orig_resid    <- rh # test statistic
-  orig_coeffs   <- coeffs_ts #coeffs_ts
-  projpoint     <- U%*%projection$alpha_opt
-  resids_boot   <- rep(NA,boots)
+  orig_resid          <- rh # test statistic
+  orig_coeffs         <- coeffs_ts #coeffs_ts
+  projpoint           <- U%*%projection$alpha_opt
+  resids_boot         <- rep(NA,boots)
+  resids_boot_smooth  <- rep(NA,boots)
   for (b in 1:boots){
     
     # 1. Split the data into a list of data.frames, one per article:
@@ -69,14 +70,17 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
     v_boot                 <- projpoint+(coeffs_boot - orig_coeffs)
     resids_boot[b]         <- compute_residual_fast(v_boot,solver,alpha_start=projection$alpha_opt)$residual # compute_residual(v_boot,U)$residual
     
-    #resids_boot[b]         <-  compute_residual(coeffs_boot,U)$residual-orig_resid
+    resids_boot_smooth[b]  <- compute_residual_fast(coeffs_boot,solver,alpha_start=projection$alpha_opt)$residual-orig_resid
     print(paste0("boot ", b, " of ", boots))
     print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90)))
+    print(c( orig_resid,quantile(resids_boot_smooth[1:b],0.95),quantile(resids_boot_smooth[1:b],0.90)))
   }
-  pval       <- mean(resids_boot+epsilon_U>orig_resid)
-  breakdown  <- orig_resid - quantile(resids_boot,0.95)-epsilon_U
+  pval             <- mean(resids_boot+epsilon_U>orig_resid)
+  pval_smooth      <- mean(resids_boot_smooth+epsilon_U>orig_resid)
+  breakdown        <- orig_resid - quantile(resids_boot,0.95)-epsilon_U
+  breakdown_smooth <- orig_resid - quantile(resids_boot_smooth,0.95)-epsilon_U
   
-  return(list(n=length(data$t),articles=length(unique(data$title)),resid=orig_resid,epsilon_U=epsilon_U,boot95=quantile(resids_boot,0.95),pval=pval,breakdown=breakdown))
+  return(list(n=length(data$t),articles=length(unique(data$title)),resid=orig_resid,epsilon_U=epsilon_U,boot95=quantile(resids_boot,0.95),pval=pval,pval_smooth=pval_smooth,breakdown=breakdown,breakdown_smooth=breakdown_smooth))
 }
 
 
