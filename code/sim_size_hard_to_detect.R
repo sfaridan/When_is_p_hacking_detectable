@@ -38,7 +38,7 @@ parms <- expand.grid(nsims       =   500,            # number of sim repetitions
 )
 ### Run the simulations 
 setwd(simulation_results)
-out_file<- run_sims(parms,"sims_size_hard_to_detect")
+out_file<- run_sims(parms,"sims_size_hard_to_detect_simpleboot")
 out_parms <- readRDS(out_file)
 print(out_parms)
 
