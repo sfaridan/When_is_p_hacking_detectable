@@ -17,10 +17,10 @@ source(paste0(root,"/code/functions_sims.R"))
 ### Choose parameters for the simulations
 parms <- expand.grid(nsims       =   500,            # number of sim repetitions
                      nboots      =   100,           # number of bootstraps per sim
-                     n           = c(100000),           # meta-sample size
+                     n           = c(1000),           # meta-sample size
                      cv          = 1.96,           # critical value to shift by
                      sigma_Y     = 1,              # set this to one
-                     prob_hack   = c(0),              #probability to take the larger of two t-scores
+                     prob_hack   = c(1),              #probability to take the larger of two t-scores
                      num_coeffs  = c(30),       # the larger the less regularized
                      nu          = c(99999),    # dof for true dgp
                      theta       = c(1),       # probability of reporting t when |t|<cv
@@ -29,7 +29,7 @@ parms <- expand.grid(nsims       =   500,            # number of sim repetitions
                      h           = 1.96,              # expectation of true effect distribution
                      sigma_h     = 0.7,            # standard deviation of true effect distribution
                      expo        = FALSE,
-                     smooth_hack = TRUE,
+                     smooth_hack = FALSE,
                      omit_proj   = FALSE,
                      omit_EWK    = FALSE,
                      shift       =1,
@@ -38,7 +38,7 @@ parms <- expand.grid(nsims       =   500,            # number of sim repetitions
 )
 ### Run the simulations 
 setwd(simulation_results)
-out_file<- run_sims(parms,"sims_size_hard_to_detect_simpleboot")
+out_file<- run_sims(parms,"sims_power_threshold")
 out_parms <- readRDS(out_file)
 print(out_parms)
 

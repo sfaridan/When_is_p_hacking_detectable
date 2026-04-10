@@ -407,7 +407,8 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
           coeffs_boot           <- get_coeffs( ts_boot,sigma_Y=sigma_Y,numcoeffs = num_coeffs ) #estimate coefficients
           #resids_boot[boot]    <- sqrt(sum((coeffs_boot-coeffs)^2 )) #conservative!
           v_boot                <- projpoint+(coeffs_boot-coeffs) #
-          resids_boot[boot]     <-  compute_residual_fast(v_boot,solver,alpha_start=projection$alpha_opt)$residual #compute_residual(v_boot,Uboot)$residual #does noise get you farther away?
+          #resids_boot[boot]     <-  compute_residual_fast(v_boot,solver,alpha_start=projection$alpha_opt)$residual #compute_residual(v_boot,Uboot)$residual #does noise get you farther away?
+          resids_boot[boot]     <-  compute_residual_fast(coeffs_boot,solver,alpha_start=projection$alpha_opt)$residual - projection$residual
           
           if((boot-1) / 10 == floor((boot-1)/10)){            print(round(c(prob_hack,resids[sim],quantile(resids_boot[1:boot],0.95),boot/nboots,sim/nsims),5))
           }
