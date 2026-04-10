@@ -5,7 +5,7 @@ root               <- "C:/Users/stefa/OneDrive/Documents/GitHub/When_is_p_hackin
 this_script        <- rstudioapi::getSourceEditorContext()$path
 
 source(paste0(root,"/code/functions_sims.R"))
-source(paste0(root,"/code/functions_application.R"))
+source(paste0(root,"/code/functions_application_tangent_code.R"))
 
 #Load in the data
 data_location <- "C:/Users/stefa/OneDrive/Documents/R/Underpowered Literatures/data"
@@ -53,8 +53,8 @@ iv_results  <- run_test(MM_data[MM_data$method=="IV",] ,numcoeffs=20,sigma_Y=1,s
 empirical_results <- as.data.frame(do.call(rbind, list(rct_results, did_results,rdd_results, iv_results)))
 empirical_results$methods <- c("RCT","DID","RDD","IV")
 setwd(paste0(root,"/results"))
-saveRDS(empirical_results, file = paste0("MM_results_",20,"_coeffs"))
-print(readRDS(paste0("MM_results_",20,"_coeffs")))
+saveRDS(empirical_results, file = paste0("MM_tangcone_results_",20,"_coeffs"))
+print(readRDS(paste0("MM_tangcone_results_",20,"_coeffs")))
 
 
 
@@ -68,11 +68,10 @@ iv_results  <- run_test(MM_data[MM_data$method=="IV",] ,numcoeffs=coeffs,sigma_Y
 empirical_results_30 <- as.data.frame(do.call(rbind, list(rct_results, did_results,rdd_results, iv_results)))
 empirical_results_30$methods <- c("RCT","DID","RDD","IV")
 setwd(paste0(root,"/results"))
-saveRDS(empirical_results_30, file = paste0("MM_results_",coeffs,"_coeffs"))
-print(readRDS(paste0("MM_results_",coeffs,"_coeffs")))
+saveRDS(empirical_results_30, file = paste0("MM_tangcone_results_",coeffs,"_coeffs"))
+print(readRDS(paste0("MM_tangcone_results_",coeffs,"_coeffs")))
 
-print(readRDS(paste0("MM_results_",20,"_coeffs")))
-print(readRDS(paste0("MM_results_",30,"_coeffs")))
+print(readRDS(paste0("MM_tangcone_results_",30,"_coeffs")))
 
 
 #Run EWK

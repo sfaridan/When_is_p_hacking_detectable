@@ -178,6 +178,32 @@ setup_projection_solver <- function(U) {
 }
 
 
+setup_projection_solver_tangentcone <- function(Upre,x) {
+  U <- sweep(Upre, 1, x, FUN = "-") #Upre-x
+  
+  nvar <- ncol(U)
+  
+  P_sp <- as(2 * crossprod(U), "dgCMatrix")
+  A    <- rbind(Matrix(1, 1, nvar), Diagonal(nvar))
+  A_sp <- as(as(A, "TsparseMatrix"), "dgCMatrix")
+  l    <- c(0, rep(0, nvar))
+  u    <- c(Inf, rep(Inf, nvar))
+  
+  pars <- osqpSettings(
+    verbose = FALSE,
+    warm_start = TRUE   # or warm_starting = TRUE depending on version
+  )
+  
+  model <- osqp(P = P_sp, q = rep(0, nvar), A = A_sp, l = l, u = u, pars = pars)
+  
+  list(
+    U = U,
+    P = P_sp,
+    model = model
+  )
+}
+
+
 t_to_p_normal_approx <- function(t_score) {
   # Input validation
   if (!is.numeric(t_score)) {
