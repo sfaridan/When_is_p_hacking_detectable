@@ -178,6 +178,32 @@ setup_projection_solver <- function(U) {
 }
 
 
+setup_projection_solver_tangentcone <- function(Upre,x) {
+  U <- sweep(Upre, 1, x, FUN = "-") #Upre-x
+  
+  nvar <- ncol(U)
+  
+  P_sp <- as(2 * crossprod(U), "dgCMatrix")
+  A    <- rbind(Matrix(1, 1, nvar), Diagonal(nvar))
+  A_sp <- as(as(A, "TsparseMatrix"), "dgCMatrix")
+  l    <- c(0, rep(0, nvar))
+  u    <- c(Inf, rep(Inf, nvar))
+  
+  pars <- osqpSettings(
+    verbose = FALSE,
+    warm_start = TRUE   # or warm_starting = TRUE depending on version
+  )
+  
+  model <- osqp(P = P_sp, q = rep(0, nvar), A = A_sp, l = l, u = u, pars = pars)
+  
+  list(
+    U = U,
+    P = P_sp,
+    model = model
+  )
+}
+
+
 t_to_p_normal_approx <- function(t_score) {
   # Input validation
   if (!is.numeric(t_score)) {
@@ -400,14 +426,20 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
         
         if(((sim <10 | resids[sim]> 0.9*min(boot95[1:(sim-1)])) & parms$fastboot[parm]==FALSE)  | (sim==1 | parms$fastboot[parm]==FALSE) ){
           
+          solver_tcone        <- setup_projection_solver_tangentcone(U,projpoint)
           resids_boot <- rep(NA,nboots)
           for(boot in 1:nboots){
             ts_boot_pre           <- sample(ts_pre,n,replace=TRUE)
             ts_boot               <- c(abs(ts_boot_pre),-abs(ts_boot_pre))-cv*parms$shift[parm] #symmeterize and re-center
             coeffs_boot           <- get_coeffs( ts_boot,sigma_Y=sigma_Y,numcoeffs = num_coeffs ) #estimate coefficients
+            
+            estar                 <- sqrt(n)*(coeffs_boot-coeffs)
+            resids_boot[boot]     <- compute_residual_fast(estar,solver_tcone,alpha_start=0*projection$alpha_opt)$residual /sqrt(n)
+            
+            
             #resids_boot[boot]    <- sqrt(sum((coeffs_boot-coeffs)^2 )) #conservative!
-            v_boot                <- projpoint+sqrt(n)*(coeffs_boot-coeffs) #
-            resids_boot[boot]     <-  compute_residual_fast(v_boot,solver,alpha_start=projection$alpha_opt)$residual /sqrt(n) #compute_residual(v_boot,Uboot)$residual #does noise get you farther away?
+            #v_boot                <- projpoint+(coeffs_boot-coeffs) #
+            #resids_boot[boot]     <-  compute_residual_fast(v_boot,solver,alpha_start=projection$alpha_opt)$residual #compute_residual(v_boot,Uboot)$residual #does noise get you farther away?
             #resids_boot[boot]     <-  compute_residual_fast(coeffs_boot,solver,alpha_start=projection$alpha_opt)$residual - projection$residual
             
             if((boot-1) / 10 == floor((boot-1)/10)){            print(round(c(prob_hack,resids[sim],quantile(resids_boot[1:boot],0.95),boot/nboots,sim/nsims),5))
@@ -421,7 +453,6 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       
       
       if(sim / 1 == floor(sim/1)){
-        print("Using tangent cone method")
         print(paste0("parm: ", parm, " of ", num_parameterizations,", sim: ", sim, " of ", nsims, ", prob hack: ", prob_hack, " CS1: ", mean(CS1_EWK[1:sim]<.05,na.rm=TRUE), " CS2B: ", mean(CS2B_EWK[1:sim]<.05,na.rm=TRUE), " proj: ", mean(rejects[1:sim]), " pr no adj: ",  mean(resids[1:sim] > boot95[1:sim])))
         print(paste0("epsilon: ",epsilon_U, ", eps1: ", eps1, ", boot 95: ", boot95[sim], ", teststat: ", mean(resids[1:sim]) ))
         print(paste0("rej adj proj: ",mean(resids[1:sim] > (boot95[1:sim]+eps1) ) ))
