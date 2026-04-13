@@ -74,16 +74,16 @@ points(x0, y0, pch = 19, cex = 1.4, col = "firebrick3")
 points(xp, yp, pch = 19, cex = 1.4, col = "navy")
 
 # Labels
-text(x0 + 0.15, y0 + 0.1, "Suspicous", col = "firebrick3", adj = 0)
+text(x0 + 0.15, y0 + 0.1, "Too Distorted", col = "firebrick3", adj = 0)
 #text(xp + 0.15, yp - 0.1, "Closest clean t-curve", col = "navy", adj = 0)
-text(-0.2, 0, "All Possible Clean t-curves", col = "steelblue4")
+text(-0.2, 0, "All Possible Honest t-curves", col = "steelblue4")
 
 # Optional: show center
 #points(cx, cy, pch = 16, cex = 0.8, col = "steelblue4")
 
 #second point
 points(x1, y1, pch = 19, cex = 1.4, col = "firebrick3")
-text(x1 + 0.15, y0 + 0.1, "Innocuous", col = "firebrick3", adj = 0)
+text(x1-0.5, y1+0.5, "Barely Distorted", col = "firebrick3", adj = 0)
 points(xp2, yp2, pch = 19, cex = 1.4, col = "navy")
 segments(x1, y1, xp2, yp2, lty = 2, lwd = 2, col = "gray30")
 #text((x1 + xp2)/2+0.6, (y1 + yp2)/2, "close", pos = 3, col = "gray30")

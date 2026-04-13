@@ -76,8 +76,8 @@ points(xp, yp, pch = 19, cex = 1.4, col = "navy")
 
 # Labels
 text(x0 + 0.15, y0 + 0.1, "Observed", col = "firebrick3", adj = 0)
-text(xp + 0.15, yp - 0.1, "Closest clean t-curve", col = "navy", adj = 0)
-text(-0.2, 0, "All Possible Clean t-curves", col = "steelblue4")
+text(xp + 0.15, yp - 0.1, "Closest honest t-curve", col = "navy", adj = 0)
+text(-0.2, 0, "All Possible Honest t-curves", col = "steelblue4")
 
 
 
