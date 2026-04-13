@@ -75,14 +75,30 @@ print(readRDS(paste0("MM_tangcone_results_",30,"_coeffs")))
 
 
 #Run EWK
+
+
 source(paste0(root,"/code/Tests.R"))
-ps <- pnorm(-abs(MM_data$t[MM_data$method=="RCT"]))
-pmax <- 0.15
-pmin <- min(ps[ps>0])
-lcms_EWK <- LCM(ps,pmin,pmax)
-Fisher_EWK <- Fisher(ps,pmin,pmax)
-disconts_EWK <- Discontinuity_test(ps,.05)
-binomial_EWK <- Binomial(ps,.04, .05, "c")
-CS1_EWK_s <- CoxShi(ps, 1:length(ps), pmin, pmax, 30, 1, 0)
-CS2_EWK_s <-CoxShi(ps, 1:length(ps), pmin, pmax, 30, 2, 1)
-c(lcms_EWK,Fisher_EWK,disconts_EWK,binomial_EWK,CS1_EWK_s,CS2_EWK_s)
+
+run_ewk <- function(ps,pmax=0.15){
+  pmin <- min(ps[ps>0])
+  out <- list()
+  
+  out$lcms_EWK <- LCM(ps,pmin,pmax)
+  out$Fisher_EWK <- Fisher(ps,pmin,pmax)
+  out$disconts_EWK <- Discontinuity_test(ps,.05)
+  out$binomial_EWK <- Binomial(ps,.04, .05, "c")
+  out$CS1_EWK_s <- CoxShi(ps, 1:length(ps), pmin, pmax, 30, 1, 0)
+  out$CS2_EWK_s <-CoxShi(ps, 1:length(ps), pmin, pmax, 30, 2, 1)
+  
+  out$min <- min(out$lcms_EWK,out$Fisher_EWK,out$disconts_EWK, out$binomial_EWK,  out$CS1_EWK_s, out$CS2_EWK_s)
+  
+  return(out)
+}
+ewk_rct <- run_ewk(pnorm(-abs(MM_data$t[MM_data$method=="RCT"])))
+ewk_iv <- run_ewk(pnorm(-abs(MM_data$t[MM_data$method=="IV"])))
+ewk_did <- run_ewk(pnorm(-abs(MM_data$t[MM_data$method=="DID"])))
+ewk_rdd <- run_ewk(pnorm(-abs(MM_data$t[MM_data$method=="RDD"])))
+
+setwd(paste0(root,"/results")) <-cbind(ewk_rct,ewk_iv,ewk_did,ewk_rdd)
+setwd(paste0(root,"/results"))
+saveRDS(empirical_ewk, file = paste0("EWK_results"))
