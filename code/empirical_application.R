@@ -99,6 +99,6 @@ ewk_iv <- run_ewk(pnorm(-abs(MM_data$t[MM_data$method=="IV"])))
 ewk_did <- run_ewk(pnorm(-abs(MM_data$t[MM_data$method=="DID"])))
 ewk_rdd <- run_ewk(pnorm(-abs(MM_data$t[MM_data$method=="RDD"])))
 
-setwd(paste0(root,"/results")) <-cbind(ewk_rct,ewk_iv,ewk_did,ewk_rdd)
+empirical_ewk <-cbind(ewk_rct,ewk_iv,ewk_did,ewk_rdd)
 setwd(paste0(root,"/results"))
 saveRDS(empirical_ewk, file = paste0("EWK_results"))
