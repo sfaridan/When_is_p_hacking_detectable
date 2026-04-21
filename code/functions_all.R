@@ -476,7 +476,7 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
     estar                  <- (coeffs_boot - coeffs_orig)
     resids_boot[b]         <- compute_residual_fast(estar,solver_tcone,alpha_start=warmstart)$residual 
     print(paste0("boot ", b, " of ", boots))
-    print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90)))
+    print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90),mean(orig_resid < resids_boot[1:b]+epsilon_U)))
   }
   pval             <- mean(orig_resid < resids_boot+epsilon_U)
   breakdown        <- orig_resid - quantile(resids_boot,0.95)-epsilon_U
