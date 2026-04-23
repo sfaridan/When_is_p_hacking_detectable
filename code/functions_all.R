@@ -350,7 +350,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
         boot95[sim] <- sim_results$boot95
         
         rejects[sim] <- sim_results$pval <= .05  #1*(resids[sim]>boot95[sim]+epsilon_U+nu_resid) 
-        print("Pval =", sim_results$pval)
+        print(paste0("Pval =", sim_results$pval))
       }
       
       
