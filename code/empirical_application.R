@@ -4,8 +4,9 @@
 root               <- "C:/Users/stefa/OneDrive/Documents/GitHub/When_is_p_hacking_detectable"  #"C:/Users/sfaridani6/Documents/Research/smoothness test for p-hacking"
 this_script        <- rstudioapi::getSourceEditorContext()$path
 
-source(paste0(root,"/code/functions_sims.R"))
-source(paste0(root,"/code/functions_application_tangent_code.R"))
+#source(paste0(root,"/code/functions_sims.R"))
+#source(paste0(root,"/code/functions_application_tangent_code.R"))
+source(paste0(root,"/code/functions_all.R"))
 
 #Load in the data
 data_location <- "C:/Users/stefa/OneDrive/Documents/R/Underpowered Literatures/data"
