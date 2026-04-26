@@ -58,13 +58,15 @@ kernel_diff <- function(x, y, rel.tol = 1e-8) {
 
 ## Approximate max_{|x - y| <= delta/2} of that quantity
 ## over a search box x,y ∈ [-L, L] with a grid of size nx × ny
-max_diff_over_delta <- function(delta, L = 6, nx = 3000,ny=100,
+max_diff_over_delta <- function(L = 6, nx = 3000,ny=100,
                                 rel.tol = 1e-8) {
+  
+  delta      <- (2*L)/(nx-1)
   xs <- seq(-L, L, length.out = nx)
   max_val <- 0
   
   for (x in xs) {
-    ys <- seq(x+delta/2, x-delta/2,length.out = ny)
+    ys <- seq(max(-L, x - delta/2), min(L, x + delta/2), length.out = ny) #seq(x+delta/2, x-delta/2,length.out = ny)
     for (y in ys) {
       
       val <- kernel_diff(x, y, rel.tol = rel.tol)
@@ -82,21 +84,24 @@ compute_eps2 <- function(L){
   integrand2 <- function(x) {
     dnorm(x) * (dnorm(x-L))^2
   }
-  eps2<-  sqrt(integrate(integrand2, lower = -10, upper = 10)$value)
+  eps2<-  sqrt(integrate(integrand2, lower = -Inf, upper = Inf)$value)
   return(eps2)
 }
 
-compute_epsilons<- function(L,delta, nx = 3000){
- eps1 <-  max_diff_over_delta(delta,L=L,nx=nx)
+compute_epsilons<- function(L, nx = 3000){
+ eps1 <-  max_diff_over_delta(L=L,nx=nx)
   eps2 <- compute_eps2(L) # error from finite L
   return(list(eps1=eps1,eps2=eps2,epsilon_U = eps1+eps2))
   
 }
 
 draw_exp_matrix <- function(n, k, rate = 1) {
-  if (!is.numeric(n) || !is.numeric(k) || n <= 0 || k <= 0) {
+  
+  if (!is.numeric(n) || !is.numeric(k) || n <= 0 || k <= 0 ||
+      n != as.integer(n) || k != as.integer(k)) {
     stop("n and k must be positive integers.")
   }
+  
   if (!is.numeric(rate) || rate <= 0) {
     stop("rate must be a positive number.")
   }
@@ -105,15 +110,13 @@ draw_exp_matrix <- function(n, k, rate = 1) {
   matrix(rexp(n * k, rate = rate), nrow = n, ncol = k)
 }
 
-draw_unif_matrix <- function(n, k, rate = 1) {
-  if (!is.numeric(n) || !is.numeric(k) || n <= 0 || k <= 0) {
+draw_unif_matrix <- function(n, k) {
+  
+  if (!is.numeric(n) || !is.numeric(k) || n <= 0 || k <= 0 || n != as.integer(n) || k != as.integer(k)) {
     stop("n and k must be positive integers.")
   }
-  if (!is.numeric(rate) || rate <= 0) {
-    stop("rate must be a positive number.")
-  }
   
-  # Generate n * k samples from Exponential(rate), and convert to matrix
+  # Generate n * k samples from the uniform, and convert to matrix
   matrix(runif(n * k, min = -sqrt(3),max=sqrt(3)), nrow = n, ncol = k)
 }
 
@@ -223,9 +226,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     prob_hack  <- parms$prob_hack[parm] # 2
     
     start_time <- Sys.time()
-    
-    # Pre-compute important quantities 
-    eta_1      <- sqrt(sigma_Y^2/(1+sigma_Y^2))
+
     
     if(parms$expo[parm]){
       nu_resid <- .0745/nu #2*.378/sqrt(nu)/6
@@ -239,16 +240,6 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     #Projection basis
     U          <- create_basis(num_coeffs,L=L,numgrid=numgrid,sigma_Y=sigma_Y)
     
-    #True dgp: T ~N(h,1)=h+Z
-    #Calculate the true coefficients for this dgp
-    null_true_coeffs <- rep(NA,num_coeffs)
-    for(j in 0:(num_coeffs-1)){
-      null_true_coeffs[j+1] <- 0.5*eta_1^(j)*hermite_general(h-cv,j,sqrt(sigma_Y^2+1) )*dnorm((h-cv)/sqrt(sigma_Y^2+1))/sqrt(sigma_Y^2+1)+0.5*eta_1^(j)*hermite_general(-h-cv,j,sqrt(sigma_Y^2+1) )*dnorm((-h-cv)/sqrt(sigma_Y^2+1))/sqrt(sigma_Y^2+1)
-    }
-    
-    #For warm-starting
-    solver <-  setup_projection_solver(U)
-    
     #Set up Elliott et al pval vectors
     lcms_EWK        <- rep(NA,nsims)
     disconts_EWK    <- rep(NA,nsims)
@@ -260,14 +251,12 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     resids    <- rep(NA,nsims)
     boot95    <- rep(NA,nsims)
     rejects   <- rep(NA,nsims)
-    true_dist <- rep(NA,nsims)
-    proj_error <- rep(NA,nsims) # distance between projection point and true coefficients
-    
+
     for(sim in 1:nsims){
       
       
       tic()
-      numsimsper <- 100
+      #numsimsper <- 100
       if (TRUE){ #( (sim) /numsimsper == floor( (sim) /numsimsper) ){
         print("")
         print("")
@@ -316,7 +305,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       }
       
       ts_pre <- trunc_population(ts_pre,cv,theta)
-      ts <-  ts_pre #ts <- c(abs(ts_pre),-abs(ts_pre))-cv*parms$shift[parm] #symmeterize and re-center
+      ts <-  ts_pre
       ps <- t_to_p_normal_approx(ts_pre)
       
       #Run tests from Elliott et al.
@@ -324,21 +313,21 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
         print("Running EWK:")
         
         
-        pmax <- 0.15
+        maxp <- 0.15
         pmin <- min(ps[ps>0])
-        lcms_EWK[sim] <- LCM(ps,pmin,pmax)
-        Fisher_EWK[sim] <- Fisher(ps,pmin,pmax)
+        lcms_EWK[sim] <- LCM(ps,pmin,maxp)
+        Fisher_EWK[sim] <- Fisher(ps,pmin,maxp)
         disconts_EWK[sim] <- Discontinuity_test(ps,.05)
         binomial_EWK[sim] <- Binomial(ps,.04, .05, "c")
         
-        #Cox-shi tests occaisonally fail to converge. We ignore these simulation iterations.
-        #CoxShi(ps, 1:n, pmin, pmax, 30, 1, 0) #for debugging to see why CoxShi sometimes fails to converge
-        CS1_EWK_s <- try({CoxShi(ps, 1:n, pmin, pmax, 30, 1, 0)},silent=TRUE)
+        #Cox-shi tests occasionally fail to converge. We ignore these simulation iterations.
+        #CoxShi(ps, 1:n, pmin, maxp, 30, 1, 0) #for debugging to see why CoxShi sometimes fails to converge
+        CS1_EWK_s <- try({CoxShi(ps, 1:length(ps), pmin, maxp, 30, 1, 0)},silent=TRUE)
         if(inherits(CS1_EWK_s,"try-error")){  
           CS1_EWK[sim]<- NA
           print("cs1 NA")
         }else{CS1_EWK[sim] <- CS1_EWK_s}
-        CS2_EWK_s <- try({ CoxShi(ps, 1:n, pmin, pmax, 30, 2, 1)},silent=TRUE)
+        CS2_EWK_s <- try({ CoxShi(ps, 1:length(ps), pmin, maxp, 30, 2, 1)},silent=TRUE)
         if(inherits(CS2_EWK_s,"try-error")){  
           CS2B_EWK[sim]<- NA
           print("cs2 NA")
@@ -353,15 +342,15 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       if(parms$omit_proj[parm]==FALSE){
         print("Running Projection method:")
         
-        data        <- data.frame(t=ts,title = as.character(1:n))
+        data        <- data.frame(t=ts,title = as.character(1:length(ts)))
         sim_results <- run_test(data,num_coeffs,sigma_Y=sigma_Y,shift=cv,L=L,numgrid=numgrid,boots=nboots,U=U)
         
         epsilon_U   <- sim_results$epsilon_U
         resids[sim] <- sim_results$resid
         boot95[sim] <- sim_results$boot95
-        epsilon_U   <- sim_results$epsilon_U
         
         rejects[sim] <- sim_results$pval <= .05  #1*(resids[sim]>boot95[sim]+epsilon_U+nu_resid) 
+        print(paste0("Pval =", sim_results$pval))
       }
       
       
@@ -377,7 +366,6 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     #Record the results
     parms$epsilon_U[parm]          <- epsilon_U
     parms$nu_resid[parm]           <- nu_resid
-    parms$reject_rate_eps1[parm]   <- mean(resids > boot95+eps1)
     parms$reject_rate_no_adj[parm] <- mean(resids > boot95)
     parms$reject_rate_no_nu[parm]  <- mean(rejects_no_nu)
     parms$reject_rate[parm]        <- mean(rejects)
@@ -406,9 +394,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     results <- list(
       resids = resids,
       boot95 = boot95,
-      rejects = rejects,
-      proj_error = proj_error,
-      true_dist = true_dist
+      rejects = rejects
     )
     saveRDS(results, file = filename)
     results <- readRDS(filename)
@@ -446,19 +432,19 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
 
 run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots=150,U=NULL){
   
-  delta      <- (2*L)/numgrid
+  
   
   #Projection basis
   if(is.null(U)){ #option to pass in U 
     U          <- create_basis(numcoeffs,L=L,numgrid=numgrid,sigma_Y=sigma_Y)
   }
   
-  epsilon_U  <- compute_epsilons(delta,L,nx=numgrid)$epsilon_U
+  epsilon_U  <- compute_epsilons(L,nx=numgrid)$epsilon_U
   
   
   solver <-  setup_projection_solver(U)
   
-  ts                <- c(abs(data$t),-abs(data$t))-shift #symmeterize and then shift
+  ts                <- c(abs(data$t),-abs(data$t))-shift #symmetrize and then shift
   coeffs_orig       <- get_coeffs( ts,sigma_Y=sigma_Y,numcoeffs=numcoeffs)
   projection        <- compute_residual_fast(coeffs_orig,solver) 
   orig_resid        <- projection$residual 
@@ -467,7 +453,6 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
   projpoint           <- U%*%projection$alpha_opt
   solver_tcone        <- setup_projection_solver_tangentcone(U,projpoint)
   resids_boot         <- rep(NA,boots)
-  resids_boot_smooth  <- rep(NA,boots)
   for (b in 1:boots){
     
     warmstart <- 0*projection$alpha_opt
@@ -488,13 +473,12 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
     coeffs_boot            <- get_coeffs( ts_boot,sigma_Y=sigma_Y,numcoeffs=numcoeffs)
     
     #project onto tangent cone
-    n                      <- length(data$t)
-    estar                  <- sqrt(n)*(coeffs_boot - coeffs_orig)
-    resids_boot[b]         <- compute_residual_fast(estar,solver_tcone,alpha_start=warmstart)$residual /sqrt(n)
+    estar                  <- (coeffs_boot - coeffs_orig)
+    resids_boot[b]         <- compute_residual_fast(estar,solver_tcone,alpha_start=warmstart)$residual 
     print(paste0("boot ", b, " of ", boots))
-    print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90)))
+    print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90),mean(orig_resid < resids_boot[1:b]+epsilon_U)))
   }
-  pval             <- mean(resids_boot+epsilon_U>orig_resid)
+  pval             <- mean(orig_resid < resids_boot+epsilon_U)
   breakdown        <- orig_resid - quantile(resids_boot,0.95)-epsilon_U
   
   return(list(n=length(data$t),articles=length(unique(data$title)),resid=orig_resid,epsilon_U=epsilon_U,boot95=quantile(resids_boot,0.95),pval=pval,breakdown=breakdown,projpoint =projpoint))

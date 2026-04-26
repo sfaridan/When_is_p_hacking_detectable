@@ -19,7 +19,7 @@ parms <- expand.grid(nsims       =  200,            # number of sim repetitions
                      n           =  c(100000),           # meta-sample size
                      cv          = 1.96,           # critical value to shift by
                      sigma_Y     = 1,              # set this to one
-                     prob_hack   = c(0.25,.75),              #probability to take the larger of two t-scores
+                     prob_hack   = c(1.0, 0.75),              #probability to take the larger of two t-scores
                      num_coeffs  = c(30),       # the larger the less regularized
                      nu          = c(99999),    # dof for true dgp
                      theta       = c(1),       # probability of reporting t when |t|<cv
@@ -37,7 +37,7 @@ parms <- expand.grid(nsims       =  200,            # number of sim repetitions
 )
 ### Run the simulations 
 setwd(simulation_results)
-out_file<- run_sims(parms,"sims_hard_to_detect_desktop_27")
+out_file<- run_sims(parms,"sims_hard_to_detect_desktop_1_75")
 out_parms <- readRDS(out_file)
 print(out_parms)
 
