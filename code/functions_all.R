@@ -439,15 +439,15 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
     U          <- create_basis(numcoeffs,L=L,numgrid=numgrid,sigma_Y=sigma_Y)
   }
   
-  epsilon_U  <- compute_epsilons(L,nx=numgrid)$epsilon_U
   
-  
+  n                      <- length(data$t)
+  epsilon_U  <- sqrt(n)*compute_epsilons(L,nx=numgrid)$epsilon_U
   solver <-  setup_projection_solver(U)
   
   ts                <- c(abs(data$t),-abs(data$t))-shift #symmetrize and then shift
   coeffs_orig       <- get_coeffs( ts,sigma_Y=sigma_Y,numcoeffs=numcoeffs)
   projection        <- compute_residual_fast(coeffs_orig,solver) 
-  orig_resid        <- projection$residual 
+  orig_resid        <- sqrt(n)*projection$residual 
   
   #The bootstrap
   projpoint           <- U%*%projection$alpha_opt
@@ -473,8 +473,7 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
     coeffs_boot            <- get_coeffs( ts_boot,sigma_Y=sigma_Y,numcoeffs=numcoeffs)
     
     #project onto tangent cone
-    estar                  <- (coeffs_boot - coeffs_orig)
-    n                      <- length(boot_data$t)
+    estar                  <- sqrt(n)*(coeffs_boot - coeffs_orig)
     
     #thethat tangent cone
     #resids_boot[b]         <- compute_residual_fast(estar,solver_tcone,alpha_start=warmstart)$residual /sqrt(n)
@@ -482,7 +481,7 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
     #tangent cone: line (25) of Fang and Santos (2019)
     sn                     <- n^(-1/3)
     proj_pertrubed         <- compute_residual_fast(coeffs_orig+estar*sn,solver,alpha_start = projection$alpha_opt)$residual
-    resids_boot[b]         <- (proj_pertrubed-orig_resid)/sn #numerical estimator of tangent cone
+    resids_boot[b]         <- (proj_pertrubed-orig_resid/sqrt(n))/sn #numerical estimator of tangent cone
     
     
     print(paste0("boot ", b, " of ", boots))
