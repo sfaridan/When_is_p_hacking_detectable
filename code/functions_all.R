@@ -474,7 +474,8 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
     
     #project onto tangent cone
     estar                  <- (coeffs_boot - coeffs_orig)
-
+    n                      <- length(boot_data$t)
+    
     #thethat tangent cone
     #resids_boot[b]         <- compute_residual_fast(estar,solver_tcone,alpha_start=warmstart)$residual /sqrt(n)
     
