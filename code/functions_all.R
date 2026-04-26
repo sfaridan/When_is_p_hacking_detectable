@@ -474,7 +474,16 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
     
     #project onto tangent cone
     estar                  <- (coeffs_boot - coeffs_orig)
-    resids_boot[b]         <- compute_residual_fast(estar,solver_tcone,alpha_start=warmstart)$residual 
+
+    #thethat tangent cone
+    #resids_boot[b]         <- compute_residual_fast(estar,solver_tcone,alpha_start=warmstart)$residual /sqrt(n)
+    
+    #tangent cone: line (25) of Fang and Santos (2019)
+    sn                     <- n^(-1/3)
+    proj_pertrubed         <- compute_residual_fast(coeffs_orig+estar*sn,solver)$residual
+    resids_boot[b]         <- (proj_pertrubed-orig_resid)/sn #numerical estimator of tangent cone
+    
+    
     print(paste0("boot ", b, " of ", boots))
     print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90),mean(orig_resid < resids_boot[1:b]+epsilon_U)))
   }
@@ -486,5 +495,26 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
 
 
 
+#returns number of decimal places in x for de-rounding
+decimalplaces <- function(x) {
+  options(scipen=999)
+  if ((x %% 1) != 0) {
+    nchar(strsplit(sub('0+$', '', as.character(x)), ".", fixed=TRUE)[[1]][[2]])
+  } else {
+    return(0)
+  }
+}
+
+de_round <- function(x){
+  
+  for (i in 1:length(x)){
+    if(!is.na(x[i])){
+      decimals <- decimalplaces(x[i])
+      x[i] <- 10^(-decimals)*( 10^decimals*x[i] +(runif(1)-0.5)  ) 
+    }
+  }
+  
+  return( x )
+}
 
 
