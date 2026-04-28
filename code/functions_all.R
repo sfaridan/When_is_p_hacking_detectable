@@ -248,70 +248,53 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     CS2B_EWK        <- rep(NA,nsims)
     binomial_EWK        <- rep(NA,nsims)
     
+    #Begin the simulation loop
     resids    <- rep(NA,nsims)
     boot95    <- rep(NA,nsims)
     rejects   <- rep(NA,nsims)
-
     for(sim in 1:nsims){
       
       
       tic()
-      #numsimsper <- 100
-      if (TRUE){ #( (sim) /numsimsper == floor( (sim) /numsimsper) ){
+
         print("")
         print("")
         print(paste0("Parm: ", parm, " of ",num_parameterizations, ", Sim: ", sim, " of ", parms$nsims[parm] ))
         print(Sys.time())
         toc()
         tic()
-      }
       
-      #Draw sample
-      #ts_pre <-  rnorm(n)+h         #draw the sample
-      rands   <- runif(n)
+      rands   <- runif(n) #random numbers to determine who p-hacks
+      hs      <- h +rnorm(n)*parms$sigma_h[parm] # latent true effects
       
-      hs <- h +rnorm(n)*parms$sigma_h[parm]
-      
-      #Instead, make ts not exactly normal
-      if(parms$expo[parm]){
-        ts1 <-  hs + (draw_unif_matrix(n,nu))%*%rep(1/sqrt(nu),nu)
-        ts2 <-  hs + (draw_unif_matrix(n,nu))%*%rep(1/sqrt(nu),nu)
-        ts3 <-  hs + (draw_unif_matrix(n,nu))%*%rep(1/sqrt(nu),nu)
-        ts4 <-  hs + (draw_unif_matrix(n,nu))%*%rep(1/sqrt(nu),nu)
-        ts5 <-  hs + (draw_unif_matrix(n,nu))%*%rep(1/sqrt(nu),nu)
-        ts6 <-  hs + (draw_unif_matrix(n,nu))%*%rep(1/sqrt(nu),nu)
-        ts7 <-  hs + (draw_unif_matrix(n,nu))%*%rep(1/sqrt(nu),nu)
-        ts8 <-  hs + (draw_unif_matrix(n,nu))%*%rep(1/sqrt(nu),nu)
-        #print(mean((ts1-h)^3) )
-      }
-      else{
+      #Draw individual t-scores
         ts1     <- rt(n,nu)+hs
         ts2     <- rt(n,nu)+hs
+      
+      if(parms$smooth_hack[parm]){ #maximization p-hacking with no threshold 
         ts3     <- rt(n,nu)+hs
         ts4     <- rt(n,nu)+hs
         ts5     <- rt(n,nu)+hs
         ts6     <- rt(n,nu)+hs
         ts7     <- rt(n,nu)+hs
         ts8     <- rt(n,nu)+hs
-      }
-      #print(mean((ts1-h)^3) )
-      
-      
-      if(parms$smooth_hack[parm]){ #maximization p-hacking with no threshold and h~N(0,1)
         ts_pre<- pmax(ts1,ts2,ts3,ts4,ts5,ts6,ts7,ts8 )*(1*(rands<= prob_hack))+ts1*(rands>prob_hack)  #maximization p-hacking that doesn't add any discontinuities
       }
       else{
-        ts_pre <- ts1*(rands>prob_hack | abs(ts1)>cv)+(rands<= prob_hack & abs(ts1)<=cv)*pmax(ts1,ts2 )
+        ts_pre <- ts1*(rands>prob_hack | abs(ts1)>cv)+(rands<= prob_hack & abs(ts1)<=cv)*pmax(ts1,ts2 ) #Draw 1 t-score. Report it if you don't phack or if it is significant. Otherwise draw a second and report the max of the two
       }
       
-      ts_pre <- trunc_population(ts_pre,cv,theta)
-      ts <-  ts_pre
-      ps <- t_to_p_normal_approx(ts_pre)
+      if(theta != 1){  #putlication bias if theta < 1
+        ts_pre <- trunc_population(ts_pre,cv,theta) 
+      }
+       
+      ts <-  ts_pre # finalize observed t-scores
       
       #Run tests from Elliott et al.
       if(parms$omit_EWK[parm]==FALSE){
         print("Running EWK:")
         
+        ps <- t_to_p_normal_approx(ts_pre) #convert to p-values
         
         maxp <- 0.15
         pmin <- min(ps[ps>0])
@@ -333,8 +316,6 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
           print("cs2 NA")
         }else{
           CS2B_EWK[sim] <- CS2_EWK_s
-          # print("cs2 ok")
-          #print(CS2_EWK[sim])
         }
       }
       
@@ -349,7 +330,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
         resids[sim] <- sim_results$resid
         boot95[sim] <- sim_results$boot95
         
-        rejects[sim] <- sim_results$pval <= .05  #1*(resids[sim]>boot95[sim]+epsilon_U+nu_resid) 
+        rejects[sim] <- (sim_results$pval <= .05)  
         print(paste0("Pval =", sim_results$pval))
       }
       
