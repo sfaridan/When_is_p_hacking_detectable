@@ -228,13 +228,10 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     start_time <- Sys.time()
 
     
-    if(parms$expo[parm]){
-      nu_resid <- .0745/nu #2*.378/sqrt(nu)/6
-    }
-    else{
-      integrand <- function(x) { dnorm(x) * (dt(x, df = nu) - dnorm(x))^2 }
-      nu_resid  <- sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value) #this is Delta if we assum t~student-t(nu)
-    }
+   
+    integrand <- function(x) { dnorm(x) * (dt(x, df = nu) - dnorm(x))^2 }
+    nu_resid  <- sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value) #this is Delta if we assume t~student-t(nu)
+    
     
     
     #Projection basis
@@ -459,7 +456,7 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
     #thethat tangent cone
     #resids_boot[b]         <- compute_residual_fast(estar,solver_tcone,alpha_start=warmstart)$residual /sqrt(n)
     
-    #tangent cone: line (25) of Fang and Santos (2019)
+    #numerical tangent cone: line (25) of Fang and Santos (2019)
     sn                     <- n^(-1/3)
     proj_pertrubed         <- compute_residual_fast(coeffs_orig+estar*sn,solver,alpha_start = projection$alpha_opt)$residual
     resids_boot[b]         <- (proj_pertrubed-orig_resid/sqrt(n))/sn #numerical estimator of tangent cone
