@@ -39,7 +39,7 @@ sigma_Y    <- 1
 shift      <- cv
 L          <- 6.5 #grid support [-L,L] \cup 9999
 numgrid    <- 3000 #total number of elements in grid (density)
-boots      <- 50 #bootstrap repetitions
+boots      <- 200 #bootstrap repetitions
 
 #Run the projection test
 J <- 20
