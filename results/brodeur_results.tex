@@ -1,0 +1,19 @@
+\begin{table}[h!]
+ \begin{center}
+ \caption{\label{tab:brodeur_results} Empirical Application Results}
+ \resizebox{\textwidth}{!}{%
+ \begin{tabular}{lccccccccccccccccc}
+ & & & & &\multicolumn{2}{c}{J=30} && \multicolumn{2}{c}{J=20} && \multicolumn{7}{c}{EKW p-values} \\
+ \cline{6-7} \cline{9-10} \cline{12-18}
+ & n & Articles & Med. $\\nu$ & $\\Delta_\\nu$ & $p$ & $\\widehat{B}$ & & $p$ & $\\widehat{B}$ & & LCM & Fisher & Disc. & Binomial & CS1 & CS2 & Min \\
+ \hline
+RCT & 7569 & 145 & 185 & .0014 & .00 & .0034 && .00 & .0018 && 1.00 & 1.00 & .31 & .98 & .94 & .93 & .31\\
+IV & 5170 & 281 & 287 & .0014 & .00 & .0032 && .00 & .0026 && 1.00 & 1.00 & .59 & .50 & .45 & .43 & .43\\
+DID & 5853 & 241 & 261 & .0012 & .04 & .0004 && .01 & .0009 && 1.00 & 1.00 & .29 & .05 & .70 & .50 & .05\\
+RDD & 3148 & 85 & $\cdot$ & $\cdot$ & .07 & $\cdot$ && .06 & $\cdot$ && 1.00 & 1.00 & .57 & .91 & .47 & .32 & .32\\
+ \hline
+ \end{tabular}%
+ }
+ \end{center}
+ {\footnotesize Columns 6 and 9 report the $p$-value of the projection test of $\mathbf{H}_0$ for $J=30$ and $J=20$, respectively. The EKW columns report the p-values from the additional tests saved in \texttt{EWK\_results}: LCM, Fisher, discontinuity, binomial, CS1, CS2, and their minimum. Med. $\nu$ is the median effective sample size as measured by the median number of clusters in a random sample of 100 articles for each causal inference method. In ambiguous cases, the smallest cluster count was always used. $\Delta_\nu = \frac{1}{100}\sum_{j=1}^{100}\|\varphi - t_{\nu_j}\|_T$ is the average difference between the PDFs of the standard normal and Student-$t$ over the sampled effective sample sizes. Results for $J=30$ and $J=20$ are both included to show low sensitivity to the smoothing parameter. We form $\widetilde{U}$ using a grid of 3000 elements evenly spaced between $\pm 6.5$. Discretization incurs error $\epsilon=0.00037$, which is already accounted for in $\widehat{B}$ and the projection-test p-values. Computation used \texttt{osqp}. Data: \cite{bb}}
+\end{table}
