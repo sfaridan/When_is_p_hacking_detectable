@@ -43,4 +43,23 @@ for (i in 1:length(iv_ess_numbers)){
   }
   deltas_ivs[i] <- sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value)
 }
+
+Delta_nu_maxh <- function(nu){
+  hgrid <- c((0:1000)/1000,9999)
+  ints <- rep(0,length(hgrid))
+  for (hh in 1:length(hgrid)){
+    h <- hgrid[hh]
+    integrand <- function(x) {
+      dnorm(x) * (dt(x-h, df = nu) - dnorm(x-h))^2
+    }
+    ints[hh] <- sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value)
+  }
+  return(max(ints))
+}
+
 c("RCTS: ", mean(deltas_rcts), ", DIDs: ", mean(deltas_dids), ", IVs: ",mean(deltas_ivs))
+c("RCTS: ", median(rct_ess_numbers), ", DIDs: ", median(did_ess_numbers), ", IVs: ",median(iv_ess_numbers))
+c("RCTS: ", Delta_nu_maxh(median(rct_ess_numbers)), ", DIDs: ", Delta_nu_maxh(median(did_ess_numbers)), ", IVs: ",Delta_nu_maxh(median(iv_ess_numbers)))
+
+Delta_nu_maxh(120)
+
