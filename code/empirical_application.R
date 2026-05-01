@@ -29,9 +29,6 @@ if (sum(is.infinite(MM_data$t))+sum(is.na(MM_data$t))+sum(is.nan(MM_data$t)) > 0
   stop("Tscores not clean")
 }
 
-
-
-
 ### Run the tests
 
 cv         <- 1.96

@@ -128,17 +128,20 @@ stopifnot(identical(ewk$methods, row_order))
 # Manuscript-only columns
 # (not computed in empirical_application.R)
 # -----------------------------
+
+Deltas <-  readRDS(paste0(root,"/results/delta_summary.RDS"))
+
 med_nu <- c(
-  RCT = "185",
-  IV  = "287",
-  DID = "261",
+  RCT = Deltas$RCT[1], #"185",
+  IV  = Deltas$IV[1], #"287",
+  DID = Deltas$DID[1], #"261",
   RDD = "$\\cdot$"
 )
 
 delta_nu <- c(
-  RCT = ".0014",
-  IV  = ".0014",
-  DID = ".0012",
+  RCT = Deltas$RCT[2], #".0014",
+  IV  = Deltas$IV[2], #".0014",
+  DID = Deltas$DID[2], #".0012",
   RDD = "$\\cdot$"
 )
 
@@ -211,8 +214,7 @@ table_lines <- c(
   " \\end{tabular}%",
   " }",
   " \\end{center}",
-  " {\\footnotesize Columns 6 and 9 report the $p$-value of the projection test of $\\mathbf{H}_0$ for $J=30$ and $J=20$, respectively. The EKW columns report the p-values from the additional tests saved in \\texttt{EWK\\_results}: LCM, Fisher, discontinuity, binomial, CS1, CS2, and their minimum. Med. $\\nu$ is the median effective sample size as measured by the median number of clusters in a random sample of 100 articles for each causal inference method. In ambiguous cases, the smallest cluster count was always used. $\\Delta_\\nu = \\frac{1}{100}\\sum_{j=1}^{100}\\|\\varphi - t_{\\nu_j}\\|_T$ is the average difference between the PDFs of the standard normal and Student-$t$ over the sampled effective sample sizes. Results for $J=30$ and $J=20$ are both included to show low sensitivity to the smoothing parameter. We form $\\widetilde{U}$ using a grid of 3000 elements evenly spaced between $\\pm 6.5$. Discretization incurs error $\\epsilon=0.00037$, which is already accounted for in $\\widehat{B}$ and the projection-test p-values. Computation used \\texttt{osqp}. Data: \\cite{bb}}",
-  "\\end{table}"
+    "\\end{table}"
 )
 
 # -----------------------------
