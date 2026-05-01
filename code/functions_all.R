@@ -91,7 +91,7 @@ compute_eps2 <- function(L){
 compute_epsilons<- function(L, nx = 3000){
  eps1 <-  max_diff_over_delta(L=L,nx=nx)
   eps2 <- compute_eps2(L) # error from finite L
-  return(list(eps1=eps1,eps2=eps2,epsilon_U = eps1+eps2))
+  return(list(eps1=eps1,eps2=eps2,epsilon_U = 1.01*max(eps1,eps2)))
   
 }
 
