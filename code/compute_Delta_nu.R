@@ -1,3 +1,19 @@
+
+Delta_nu_maxh <- function(nu){
+  hgrid <- c((0:1000)/1000,9999)
+  ints <- rep(0,length(hgrid))
+  for (hh in 1:length(hgrid)){
+    h <- hgrid[hh]
+    integrand <- function(x) {
+      dnorm(x) * (dt(x-h, df = nu) - dnorm(x-h))^2
+    }
+    ints[hh] <- sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value)
+  }
+  return(max(ints))
+}
+
+
+
 # Define the integrand function
 integrand <- function(x) {
   dnorm(x) * (dt(x, df = 14) - dnorm(x))^2
@@ -23,43 +39,19 @@ iv_ess_numbers <- iv_ess_numbers[!is.na(iv_ess_numbers)]
 
 deltas_rcts <- 0*rct_ess_numbers
 for (i in 1:length(rct_ess_numbers)){
-  integrand <- function(x) {
-    dnorm(x) * (dt(x, df = rct_ess_numbers[i]) - dnorm(x))^2
-  }
-  deltas_rcts[i] <- sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value)
+  deltas_rcts[i] <-Delta_nu_maxh(rct_ess_numbers[i])
+  print(c(i, deltas_rcts[i] ))
 }
 deltas_dids <- 0*did_ess_numbers
 for (i in 1:length(did_ess_numbers)){
-  integrand <- function(x) {
-    dnorm(x) * (dt(x, df = did_ess_numbers[i]) - dnorm(x))^2
-  }
-  deltas_dids[i] <- sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value)
-  print(i)
+  deltas_dids[i] <-Delta_nu_maxh(did_ess_numbers[i])
 }
 deltas_ivs <- 0*iv_ess_numbers
 for (i in 1:length(iv_ess_numbers)){
-  integrand <- function(x) {
-    dnorm(x) * (dt(x, df = iv_ess_numbers[i]) - dnorm(x))^2
-  }
-  deltas_ivs[i] <- sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value)
-}
-
-Delta_nu_maxh <- function(nu){
-  hgrid <- c((0:1000)/1000,9999)
-  ints <- rep(0,length(hgrid))
-  for (hh in 1:length(hgrid)){
-    h <- hgrid[hh]
-    integrand <- function(x) {
-      dnorm(x) * (dt(x-h, df = nu) - dnorm(x-h))^2
-    }
-    ints[hh] <- sqrt(integrate(integrand, lower = -Inf, upper = Inf)$value)
-  }
-  return(max(ints))
+  deltas_ivs[i] <-Delta_nu_maxh(iv_ess_numbers[i])
 }
 
 c("RCTS: ", mean(deltas_rcts), ", DIDs: ", mean(deltas_dids), ", IVs: ",mean(deltas_ivs))
 c("RCTS: ", median(rct_ess_numbers), ", DIDs: ", median(did_ess_numbers), ", IVs: ",median(iv_ess_numbers))
-c("RCTS: ", Delta_nu_maxh(median(rct_ess_numbers)), ", DIDs: ", Delta_nu_maxh(median(did_ess_numbers)), ", IVs: ",Delta_nu_maxh(median(iv_ess_numbers)))
 
 Delta_nu_maxh(120)
-
