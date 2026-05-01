@@ -8,7 +8,6 @@ hermite_general<- function(x,j,sigma_Y){
   ans <- 0*x
   for (l in 0:floor(j/2)){
     ans <- ans+(-1)^l*factorial(2*l)/2^l/factorial(l)*choose(j,2*l)*(x/sigma_Y)^(j-2*l)
-    #print((-1)^l*factorial(2*l)/2^l/factorial(l)*choose(j,2*l))
   }
   return(ans/sqrt(factorial(j)))
 }
@@ -164,32 +163,6 @@ setup_projection_solver <- function(U) {
 }
 
 
-setup_projection_solver_tangentcone <- function(Upre,x) {
-  U <- sweep(Upre, 1, x, FUN = "-") #Upre-x
-  
-  nvar <- ncol(U)
-  
-  P_sp <- as(2 * crossprod(U), "dgCMatrix")
-  A    <- rbind(Matrix(1, 1, nvar), Diagonal(nvar))
-  A_sp <- as(as(A, "TsparseMatrix"), "dgCMatrix")
-  l    <- c(0, rep(0, nvar))
-  u    <- c(Inf, rep(Inf, nvar))
-  
-  pars <- osqpSettings(
-    verbose = FALSE,
-    warm_start = TRUE   # or warm_starting = TRUE depending on version
-  )
-  
-  model <- osqp(P = P_sp, q = rep(0, nvar), A = A_sp, l = l, u = u, pars = pars)
-  
-  list(
-    U = U,
-    P = P_sp,
-    model = model
-  )
-}
-
-
 t_to_p_normal_approx <- function(t_score) {
   # Input validation
   if (!is.numeric(t_score)) {
@@ -278,7 +251,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
         ts_pre<- pmax(ts1,ts2,ts3,ts4,ts5,ts6,ts7,ts8 )*(1*(rands<= prob_hack))+ts1*(rands>prob_hack)  #maximization p-hacking that doesn't add any discontinuities
       }
       else{
-        ts_pre <- ts1*(rands>prob_hack | abs(ts1)>cv)+(rands<= prob_hack & abs(ts1)<=cv)*pmax(ts1,ts2 ) #Draw 1 t-score. Report it if you don't phack or if it is significant. Otherwise draw a second and report the max of the two
+        ts_pre <- ts1*(rands>prob_hack | (ts1)>cv)+(rands<= prob_hack & (ts1)<=cv)*pmax(ts1,ts2 ) #Draw 1 t-score. Report it if you don't phack or if it is significant and positive. Otherwise draw a second and report the max of the two
       }
       
       if(theta != 1){  #putlication bias if theta < 1
@@ -418,9 +391,9 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
   }
   
   
-  n                      <- length(data$t)
+  n          <- length(data$t)
   epsilon_U  <- sqrt(n)*compute_epsilons(L,nx=numgrid)$epsilon_U
-  solver <-  setup_projection_solver(U)
+  solver     <-  setup_projection_solver(U)
   
   ts                <- c(abs(data$t),-abs(data$t))-shift #symmetrize and then shift
   coeffs_orig       <- get_coeffs( ts,sigma_Y=sigma_Y,numcoeffs=numcoeffs)
@@ -429,7 +402,6 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
   
   #The bootstrap
   projpoint           <- U%*%projection$alpha_opt
-  solver_tcone        <- setup_projection_solver_tangentcone(U,projpoint)
   resids_boot         <- rep(NA,boots)
   for (b in 1:boots){
     
@@ -453,9 +425,7 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
     #project onto tangent cone
     estar                  <- sqrt(n)*(coeffs_boot - coeffs_orig)
     
-    #thethat tangent cone
-    #resids_boot[b]         <- compute_residual_fast(estar,solver_tcone,alpha_start=warmstart)$residual /sqrt(n)
-    
+
     #numerical tangent cone: line (25) of Fang and Santos (2019)
     sn                     <- n^(-1/3)
     proj_pertrubed         <- compute_residual_fast(coeffs_orig+estar*sn,solver,alpha_start = projection$alpha_opt)$residual
@@ -463,10 +433,11 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
     
     
     print(paste0("boot ", b, " of ", boots))
-    print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90),epsilon_U,mean(orig_resid < resids_boot[1:b]+epsilon_U)))
+    print("Resid, 95%, 90%, eps, p, Bhat ")
+    print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90),epsilon_U,mean(orig_resid < resids_boot[1:b]+epsilon_U),(orig_resid - quantile(resids_boot[1:b],0.95)-epsilon_U)/sqrt(n)))
   }
   pval             <- mean(orig_resid < resids_boot+epsilon_U)
-  breakdown        <- orig_resid - quantile(resids_boot,0.95)-epsilon_U
+  breakdown        <- max(c(0,(orig_resid - quantile(resids_boot,0.95)-epsilon_U)/sqrt(n)))
   
   return(list(n=length(data$t),articles=length(unique(data$title)),resid=orig_resid,epsilon_U=epsilon_U,boot95=quantile(resids_boot,0.95),pval=pval,breakdown=breakdown,projpoint =projpoint))
 }
