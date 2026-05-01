@@ -55,3 +55,19 @@ c("RCTS: ", mean(deltas_rcts), ", DIDs: ", mean(deltas_dids), ", IVs: ",mean(del
 c("RCTS: ", median(rct_ess_numbers), ", DIDs: ", median(did_ess_numbers), ", IVs: ",median(iv_ess_numbers))
 
 Delta_nu_maxh(120)
+
+# Create 2x3 results data frame
+delta_summary <- data.frame(
+  RCT = c(median(rct_ess_numbers), mean(deltas_rcts)),
+  DID = c(median(did_ess_numbers), mean(deltas_dids)),
+  IV  = c(median(iv_ess_numbers),  mean(deltas_ivs))
+)
+
+rownames(delta_summary) <- c("median_nu", "delta_nu")
+
+# Save to disk
+saveRDS(delta_summary, file = paste0(root, "/delta_summary.rds"))
+write.csv(delta_summary, file = paste0(root, "/delta_summary.csv"), row.names = TRUE)
+
+# Optional: print it
+print(delta_summary)
