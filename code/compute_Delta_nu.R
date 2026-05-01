@@ -66,8 +66,7 @@ delta_summary <- data.frame(
 rownames(delta_summary) <- c("median_nu", "delta_nu")
 
 # Save to disk
-saveRDS(delta_summary, file = paste0(root, "/delta_summary.rds"))
-write.csv(delta_summary, file = paste0(root, "/delta_summary.csv"), row.names = TRUE)
+saveRDS(delta_summary, file = paste0("C:/Users/sfaridani6/Documents/GitHub/When_is_p_hacking_detectable/results/delta_summary.rds"))
 
 # Optional: print it
 print(delta_summary)
