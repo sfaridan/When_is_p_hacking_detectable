@@ -380,10 +380,11 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
 
 
 
-
-run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots=150,U=NULL){
+#deprecated as of 5/2
+run_test_slow<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots=150,U=NULL,seed=1){
   
-  
+  set.seed(seed)
+  start_time <- Sys.time()
   
   #Projection basis
   if(is.null(U)){ #option to pass in U 
@@ -404,7 +405,7 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
   projpoint           <- U%*%projection$alpha_opt
   resids_boot         <- rep(NA,boots)
   for (b in 1:boots){
-    
+    tic()
     warmstart <- 0*projection$alpha_opt
     
     # 1. Split the data into a list of data.frames, one per article:
@@ -431,15 +432,16 @@ run_test<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots
     proj_pertrubed         <- compute_residual_fast(coeffs_orig+estar*sn,solver,alpha_start = projection$alpha_opt)$residual
     resids_boot[b]         <- (proj_pertrubed-orig_resid/sqrt(n))/sn #numerical estimator of tangent cone
     
-    
-    print(paste0("boot ", b, " of ", boots))
-    print("Resid, 95%, 90%, eps, p, Bhat ")
-    print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90),epsilon_U,mean(orig_resid < resids_boot[1:b]+epsilon_U),(orig_resid - quantile(resids_boot[1:b],0.95)-epsilon_U)/sqrt(n)))
+    toc()
+    #print(paste0("boot ", b, " of ", boots))
+    #print("Resid, 95%, 90%, eps, p, Bhat ")
+    #print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90),epsilon_U,mean(orig_resid < resids_boot[1:b]+epsilon_U),(orig_resid - quantile(resids_boot[1:b],0.95)-epsilon_U)/sqrt(n)))
   }
   pval             <- mean(orig_resid < resids_boot+epsilon_U)
   breakdown        <- max(c(0,(orig_resid - quantile(resids_boot,0.95)-epsilon_U)/sqrt(n)))
   
-  return(list(n=length(data$t),articles=length(unique(data$title)),resid=orig_resid,epsilon_U=epsilon_U,boot95=quantile(resids_boot,0.95),pval=pval,breakdown=breakdown,projpoint =projpoint))
+  return(list(n=length(data$t),articles=length(unique(data$title)),resid=orig_resid,epsilon_U=epsilon_U,boot95=quantile(resids_boot,0.95),pval=pval,breakdown=breakdown,projpoint =projpoint,
+              runtime = Sys.time()-start_time))
 }
 
 
@@ -465,5 +467,87 @@ de_round <- function(x){
   
   return( x )
 }
+
+
+get_coeff_matrix <- function(data, sigma_Y = 1, numcoeffs = 100) {
+  sig <- sigma_Y
+  out <- matrix(NA_real_, nrow = length(data), ncol = numcoeffs)
+  w   <- dnorm(data / sig) / sig
+  for (j in 0:(numcoeffs - 1)) {
+    out[, j + 1] <- hermite_general(data, j, sigma_Y) * w
+  }
+  out
+}
+
+
+run_test <- function(data, numcoeffs, sigma_Y = 1, shift = 1.96,
+                     L = 6.5, numgrid = 3000, boots = 150, U = NULL,seed=1) {
+  
+  set.seed(seed)
+  start_time <- Sys.time()
+  
+  if (is.null(U)) {
+    U <- create_basis(numcoeffs, L = L, numgrid = numgrid, sigma_Y = sigma_Y)
+  }
+  
+  n <- length(data$t)
+  epsilon_U <- sqrt(n) * compute_epsilons(L, nx = numgrid)$epsilon_U
+  solver <- setup_projection_solver(U)
+  
+  # Symmetrize and shift once
+  ts <- c(abs(data$t), -abs(data$t)) - shift
+  
+  # Precompute all coefficient contributions once
+  coeff_mat   <- get_coeff_matrix(ts, sigma_Y = sigma_Y, numcoeffs = numcoeffs)
+  coeffs_orig <- colMeans(coeff_mat)
+  
+  projection <- compute_residual_fast(coeffs_orig, solver)
+  orig_resid <- sqrt(n) * projection$residual
+  
+  projpoint    <- U %*% projection$alpha_opt
+  solver_tcone <- setup_projection_solver_tangentcone(U, projpoint)
+  
+  # Precompute article -> rows mapping in coeff_mat
+  article_index <- split(seq_len(n), data$title)
+  article_rows  <- lapply(article_index, function(idx) c(idx, idx + n))
+  m <- length(article_rows)
+  
+  resids_boot <- rep(NA, boots)
+  for (b in 1:boots) {
+    tic()
+    sampled_articles <- sample.int(m, size = m, replace = TRUE)
+    boot_rows <- unlist(article_rows[sampled_articles], use.names = FALSE)
+    
+    coeffs_boot <- colMeans(coeff_mat[boot_rows, , drop = FALSE])
+    
+    estar <- sqrt(n) * (coeffs_boot - coeffs_orig)
+    
+    sn             <- n^(-1/3)
+    proj_pertrubed <- compute_residual_fast(
+      coeffs_orig + estar * sn,
+      solver,
+      alpha_start = projection$alpha_opt
+    )$residual
+    
+    resids_boot[b] <- (proj_pertrubed - orig_resid / sqrt(n)) / sn
+    toc()
+  }
+  
+  pval      <- mean(orig_resid < resids_boot + epsilon_U)
+  breakdown <- max(c(0, (orig_resid - quantile(resids_boot, 0.95) - epsilon_U) / sqrt(n)))
+  
+  return(list(
+    n = length(data$t),
+    articles = length(unique(data$title)),
+    resid = orig_resid,
+    epsilon_U = epsilon_U,
+    boot95 = quantile(resids_boot, 0.95),
+    pval = pval,
+    breakdown = breakdown,
+    projpoint = projpoint,
+    runtime = Sys.time()-start_time
+  ))
+}
+
 
 
