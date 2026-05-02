@@ -506,8 +506,7 @@ run_test <- function(data, numcoeffs, sigma_Y = 1, shift = 1.96,
   orig_resid <- sqrt(n) * projection$residual
   
   projpoint    <- U %*% projection$alpha_opt
-  solver_tcone <- setup_projection_solver_tangentcone(U, projpoint)
-  
+
   # Precompute article -> rows mapping in coeff_mat
   article_index <- split(seq_len(n), data$title)
   article_rows  <- lapply(article_index, function(idx) c(idx, idx + n))
