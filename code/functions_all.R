@@ -307,7 +307,8 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       
       if(sim / 1 == floor(sim/1)){
         print(paste0("parm: ", parm, " of ", num_parameterizations,", sim: ", sim, " of ", nsims, ", prob hack: ", prob_hack, " CS1: ", mean(CS1_EWK[1:sim]<.05,na.rm=TRUE), " CS2B: ", mean(CS2B_EWK[1:sim]<.05,na.rm=TRUE), " proj: ", mean(rejects[1:sim])))
-      }
+        print(sim_results$runtime)
+        }
       toc()
       
     } # ends sim loop
@@ -514,7 +515,7 @@ run_test <- function(data, numcoeffs, sigma_Y = 1, shift = 1.96,
   
   resids_boot <- rep(NA, boots)
   for (b in 1:boots) {
-    tic()
+    #tic()
     sampled_articles <- sample.int(m, size = m, replace = TRUE)
     boot_rows <- unlist(article_rows[sampled_articles], use.names = FALSE)
     
@@ -530,7 +531,11 @@ run_test <- function(data, numcoeffs, sigma_Y = 1, shift = 1.96,
     )$residual
     
     resids_boot[b] <- (proj_pertrubed - orig_resid / sqrt(n)) / sn
-    toc()
+    #toc()
+    print(paste0("boot ", b, " of ", boots))
+    print("Resid, 95%, 90%, eps, p, Bhat ")
+    print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90),epsilon_U,mean(orig_resid < resids_boot[1:b]+epsilon_U),(orig_resid - quantile(resids_boot[1:b],0.95)-epsilon_U)/sqrt(n)))
+    
   }
   
   pval      <- mean(orig_resid < resids_boot + epsilon_U)
