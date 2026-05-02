@@ -6,8 +6,8 @@
 #   LaTeX table tab:brodeur_results, now including EKW p-values.
 #
 # Expected input files:
-#   results/MM_tangcone_results_20_coeffs
-#   results/MM_tangcone_results_30_coeffs
+#   results/MM_tangcone_results_20_J
+#   results/MM_tangcone_results_30_J
 #   results/EWK_results
 #
 # Output:
@@ -24,8 +24,8 @@ out_file <- file.path(results_dir, "brodeur_results.tex")
 # -----------------------------
 # Input files
 # -----------------------------
-file20 <- file.path(results_dir, "MM_tangcone_results_20_coeffs")
-file30 <- file.path(results_dir, "MM_tangcone_results_30_coeffs")
+file20 <- file.path(results_dir, "MM_tangcone_results_20_J")
+file30 <- file.path(results_dir, "MM_tangcone_results_30_J")
 file_ewk <- file.path(results_dir, "EWK_results")
 
 if (!file.exists(file20)) stop("Missing file: ", file20)
@@ -139,9 +139,9 @@ med_nu <- c(
 )
 
 delta_nu <- c(
-  RCT = Deltas$RCT[2], #".0014",
-  IV  = Deltas$IV[2], #".0014",
-  DID = Deltas$DID[2], #".0012",
+  RCT = round(Deltas$RCT[2],4), #".0014",
+  IV  = round(Deltas$IV[2],4), #".0014",
+  DID = round(Deltas$DID[2],4), #".0012",
   RDD = "$\\cdot$"
 )
 
@@ -156,13 +156,12 @@ fmt_p <- function(p) {
   fmt_no_leading_zero(p, 2)
 }
 
-# Stored breakdown is on sqrt(n) scale.
-# To match the manuscript table, report breakdown / sqrt(n).
+
 fmt_Bhat <- function(breakdown, n, pval, alpha = 0.05) {
   if (is.na(breakdown) || is.na(n) || is.na(pval) || pval >= alpha || breakdown <= 0) {
     return("$\\cdot$")
   }
-  fmt_no_leading_zero(breakdown / sqrt(n), 4)
+  fmt_no_leading_zero(breakdown , 4)
 }
 
 make_row <- function(method_name) {
@@ -223,4 +222,3 @@ table_lines <- c(
 writeLines(table_lines, con = out_file)
 cat(paste(table_lines, collapse = "\n"))
 cat("\n\nSaved LaTeX table to:\n", out_file, "\n")
-``
