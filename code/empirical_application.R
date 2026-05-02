@@ -54,8 +54,8 @@ rct_results_slow <- run_test_slow(MM_data[MM_data$method=="RCT",],numcoeffs=coef
 rdd_results_fast <- run_test(MM_data[MM_data$method=="RDD",],numcoeffs=coeffs,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots)
 rdd_results_slow <- run_test_slow(MM_data[MM_data$method=="RDD",],numcoeffs=coeffs,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots)
 
-did_results_fast <- run_test(MM_data[MM_data$method=="RDD",],numcoeffs=coeffs,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots)
-did_results_slow <- run_test_slow(MM_data[MM_data$method=="RDD",],numcoeffs=coeffs,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots)
+did_results_fast <- run_test(MM_data[MM_data$method=="DID",],numcoeffs=coeffs,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots)
+did_results_slow <- run_test_slow(MM_data[MM_data$method=="DID",],numcoeffs=coeffs,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots)
 
 iv_results_fast <- run_test(MM_data[MM_data$method=="IV",],numcoeffs=coeffs,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots)
 iv_results_slow <- run_test_slow(MM_data[MM_data$method=="IV",],numcoeffs=coeffs,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots)
