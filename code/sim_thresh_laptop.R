@@ -1,3 +1,6 @@
+rm(list=ls())
+gc()
+
 #install.packages("osqp")                 # CRAN package for OSQP interface :contentReference[oaicite:2]{index=2}
 #install.packages("Matrix")               # Sparse‐matrix support :contentReference[oaicite:3]{index=3}
 library(osqp)
@@ -19,14 +22,14 @@ parms <- expand.grid(nsims       = 200,            # number of sim repetitions
                      n           = c(1000),           # meta-sample size
                      cv          = 1.96,           # critical value to shift by
                      sigma_Y     = 1,              # set this to one
-                     prob_hack   = c(0,0.5),              #probability to take the larger of two t-scores
+                     prob_hack   = c(1,0.75,0.25,0),              #probability to take the larger of two t-scores
                      num_coeffs  = c(31),       # the larger the less regularized
                      nu          = c(99999),    # dof for true dgp
                      theta       = c(1),       # probability of reporting t when |t|<cv
                      numgrid     = 3000,           # number of hn grid to make U
                      L           = 6.5,            # width of grid of hs to make U  
-                     h           = 0,              # expectation of true effect distribution
-                     sigma_h     = 0.7,            # standard deviation of true effect distribution
+                     h           = 2,              # expectation of true effect distribution
+                     sigma_h     = 0.5,            # standard deviation of true effect distribution
                      expo        = FALSE,
                      smooth_hack = FALSE,
                      omit_proj   = FALSE,
@@ -37,7 +40,7 @@ parms <- expand.grid(nsims       = 200,            # number of sim repetitions
 )
 ### Run the simulations 
 setwd(simulation_results)
-out_file<- run_sims(parms,"sims_test_LAPTOP")
+out_file<- run_sims(parms,"sims_thresh_LAPTOP")
 out_parms <- readRDS(out_file)
 print(out_parms)
 

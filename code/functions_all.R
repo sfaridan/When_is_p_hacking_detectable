@@ -484,7 +484,7 @@ get_coeff_matrix <- function(data, sigma_Y = 1, numcoeffs = 100) {
 run_test <- function(data, numcoeffs, sigma_Y = 1, shift = 1.96,
                      L = 6.5, numgrid = 3000, boots = 150, U = NULL,seed=1) {
   
-  set.seed(seed)
+  #set.seed(seed)
   start_time <- Sys.time()
   
   if (is.null(U)) {
