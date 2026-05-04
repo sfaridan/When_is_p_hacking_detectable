@@ -245,6 +245,11 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       if(pi0_shape == "point")  { hnoise <- rep(0,n)}
       if(pi0_shape == "chi2")   { hnoise <- rnorm(n)^2}
       if(pi0_shape == "poisson") { hnoise <- rpois(n,1)}
+      if(pi0_shape == "double_normal") { 
+        hnoise <- rnorm(n)
+        rr <- runif(n)
+        hnoise[rr >= 0.5]  <- hnoise[rr >= 0.5] + 2
+      }
       
       if(bimodal){  
         rr <- runif(n)
