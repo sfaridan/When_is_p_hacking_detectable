@@ -28,8 +28,8 @@ parms <- expand.grid(nsims       = 200,            # number of sim repetitions
                      theta       = c(1),       # probability of reporting t when |t|<cv
                      numgrid     = 3000,           # number of hn grid to make U
                      L           = 6.5,            # width of grid of hs to make U  
-                     pi0_shape   = c("point","normal"),       # shape of distribution of h
-                     h_center    = c(0,2),              # center of true effect distribution
+                     pi0_shape   = c("poisson","point","normal"),       # shape of distribution of h
+                     h_center    = c(0),              # center of true effect distribution
                      sigma_h     = 1,              # increases sd of h
                      bimodal     = c(FALSE),          # separate distribution of h by 2
                      hack_type   = "threshold",         # maximization hacking (threshold is default)  
@@ -40,7 +40,7 @@ parms <- expand.grid(nsims       = 200,            # number of sim repetitions
 )
 ### Run the simulations 
 setwd(simulation_results)
-out_file<- run_sims(parms,"sims_size_LAPTOP")
+out_file<- run_sims(parms,"sims_size_0center_LAPTOP")
 out_parms <- readRDS(out_file)
 print(out_parms)
 
