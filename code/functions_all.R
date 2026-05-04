@@ -188,15 +188,19 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     n          <- parms$n[parm] #5000    # meta-sample size
     cv         <- parms$cv[parm] #1.96    # critical value to shift by
     theta      <- parms$theta[parm] #0.7     # probability of reporting t when |t|<cv
-    sigma_Y    <- parms$sigma_Y[parm] #1 
+    sigma_Y    <- 1 
     num_coeffs <- parms$num_coeffs[parm] #20
     nsims      <- parms$nsims[parm] #200 #simulations
     nboots     <- parms$nboots[parm] #400 #bootstrap repetitions
     nu         <- parms$nu[parm] #9999999
     numgrid    <- parms$numgrid[parm] #1500
     L          <- parms$L[parm] #6.5
-    h          <- parms$h[parm] # 2
+    h_center   <- parms$h_center[parm] # 2
+    sigma_h    <- parms$sigma_h[parm]
+    bimodal    <- parms$bimodal[parm]
+    pi0_shape        <- parms$pi0_shape[parm]
     prob_hack  <- parms$prob_hack[parm] # 2
+    hack_type  <- parms$hack_type[parm]
     
     start_time <- Sys.time()
 
@@ -207,16 +211,18 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     
     
     
-    #Projection basis
-    U          <- create_basis(num_coeffs,L=L,numgrid=numgrid,sigma_Y=sigma_Y)
+    #Precompute to accelerate the projection test
+    U             <- create_basis(num_coeffs,L=L,numgrid=numgrid,sigma_Y=sigma_Y)
+    solver        <- setup_projection_solver(U)
+    epsilon_U_pre <- compute_epsilons(L, nx = numgrid)$epsilon_U
     
     #Set up Elliott et al pval vectors
     lcms_EWK        <- rep(NA,nsims)
     disconts_EWK    <- rep(NA,nsims)
-    CS1_EWK      <- rep(NA,nsims)
-    Fisher_EWK     <- rep(NA,nsims)
+    CS1_EWK         <- rep(NA,nsims)
+    Fisher_EWK      <- rep(NA,nsims)
     CS2B_EWK        <- rep(NA,nsims)
-    binomial_EWK        <- rep(NA,nsims)
+    binomial_EWK    <- rep(NA,nsims)
     
     #Begin the simulation loop
     resids    <- rep(NA,nsims)
@@ -224,24 +230,34 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     rejects   <- rep(NA,nsims)
     for(sim in 1:nsims){
       
-      
-      tic()
-
-        print("")
-        print("")
+      sim_start  <- Sys.time()
+        print("******************************")
         print(paste0("Parm: ", parm, " of ",num_parameterizations, ", Sim: ", sim, " of ", parms$nsims[parm] ))
         print(Sys.time())
-        toc()
-        tic()
+
+        
       
       rands   <- runif(n) #random numbers to determine who p-hacks
-      hs      <- h +rnorm(n)*parms$sigma_h[parm] # latent true effects
+      
+      
+      if(pi0_shape == "normal") { hnoise <- rnorm(n)}
+      if(pi0_shape == "uniform"){ hnoise <- unif(n)}
+      if(pi0_shape == "point")  { hnoise <- rep(0,n)}
+      if(pi0_shape == "chi2")   { hnoise <- rnorm(n)^2}
+      
+      if(bimodal){  
+        rr <- runif(n)
+        hnoise[rr < 0.5]   <- hnoise[rr < 0.5]  - 1
+        hnoise[rr >= 0.5]  <- hnoise[rr >= 0.5] + 1
+      }
+      
+      hs      <- h_center + hnoise*sigma_h # latent true effects
       
       #Draw individual t-scores
         ts1     <- rt(n,nu)+hs
         ts2     <- rt(n,nu)+hs
       
-      if(parms$smooth_hack[parm]){ #maximization p-hacking with no threshold 
+      if(hack_type == "max"){ #maximization p-hacking with no threshold 
         ts3     <- rt(n,nu)+hs
         ts4     <- rt(n,nu)+hs
         ts5     <- rt(n,nu)+hs
@@ -250,7 +266,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
         ts8     <- rt(n,nu)+hs
         ts_pre<- pmax(ts1,ts2,ts3,ts4,ts5,ts6,ts7,ts8 )*(1*(rands<= prob_hack))+ts1*(rands>prob_hack)  #maximization p-hacking that doesn't add any discontinuities
       }
-      else{
+      if(hack_type=="threshold"){
         ts_pre <- ts1*(rands>prob_hack | (ts1)>cv)+(rands<= prob_hack & (ts1)<=cv)*pmax(ts1,ts2 ) #Draw 1 t-score. Report it if you don't phack or if it is significant and positive. Otherwise draw a second and report the max of the two
       }
       
@@ -260,9 +276,14 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
        
       ts <-  ts_pre # finalize observed t-scores
       
+      print(paste0("H: ", pi0_shape, ", center=", h_center, ", sigma_h=",sigma_h,", bim=",bimodal))
+      print(summary(hs))
+      print(paste0("frac hacking: ", prob_hack,", hacktype: ", hack_type))
+      print(summary(ts))
+      
       #Run tests from Elliott et al.
       if(parms$omit_EWK[parm]==FALSE){
-        print("Running EWK:")
+        ewk_start  <- Sys.time()
         
         ps <- t_to_p_normal_approx(ts_pre) #convert to p-values
         
@@ -287,29 +308,33 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
         }else{
           CS2B_EWK[sim] <- CS2_EWK_s
         }
+        print(paste0("EWK time: ", Sys.time() -ewk_start ))
       }
       
       #Projection method
       if(parms$omit_proj[parm]==FALSE){
-        print("Running Projection method:")
+        proj_start  <- Sys.time()
         
         data        <- data.frame(t=ts,title = as.character(1:length(ts)))
-        sim_results <- run_test(data,num_coeffs,sigma_Y=sigma_Y,shift=cv,L=L,numgrid=numgrid,boots=nboots,U=U)
+        sim_results <- run_test(data,num_coeffs,sigma_Y=sigma_Y,shift=cv,L=L,numgrid=numgrid,boots=nboots,
+                                U=U, solver=solver, epsilon_U_pre=epsilon_U_pre)
         
         epsilon_U   <- sim_results$epsilon_U
         resids[sim] <- sim_results$resid
         boot95[sim] <- sim_results$boot95
         
-        rejects[sim] <- (sim_results$pval <= .05)  
-        print(paste0("Pval =", sim_results$pval))
+        rejects[sim] <- (sim_results$pval <= .05) 
+        print(paste0("proj time: ", Sys.time() -proj_start ))
       }
       
       
       if(sim / 1 == floor(sim/1)){
-        print(paste0("parm: ", parm, " of ", num_parameterizations,", sim: ", sim, " of ", nsims, ", prob hack: ", prob_hack, " CS1: ", mean(CS1_EWK[1:sim]<.05,na.rm=TRUE), " CS2B: ", mean(CS2B_EWK[1:sim]<.05,na.rm=TRUE), " proj: ", mean(rejects[1:sim])))
-        print(sim_results$runtime)
+        #print(paste0("parm: ", parm, " of ", num_parameterizations,", sim: ", sim, " of ", nsims))
+        print(parms[parm,])
+        print( paste0("Rejections: CS1: ", mean(CS1_EWK[1:sim]<.05,na.rm=TRUE), ", CS2B: ", mean(CS2B_EWK[1:sim]<.05,na.rm=TRUE), ", proj: ", mean(rejects[1:sim])))
         }
-      toc()
+  
+      print(paste0("sim time: ", Sys.time() -sim_start ))
       
     } # ends sim loop
     
@@ -375,74 +400,8 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
   print("Results here:")
   print(filename)
   
-  toc()
+ 
   return(filename)
-}
-
-
-
-#deprecated as of 5/2
-run_test_slow<- function(data,numcoeffs,sigma_Y=1,shift=1.96,L=6.5,numgrid=3000,boots=150,U=NULL,seed=1){
-  
-  set.seed(seed)
-  start_time <- Sys.time()
-  
-  #Projection basis
-  if(is.null(U)){ #option to pass in U 
-    U          <- create_basis(numcoeffs,L=L,numgrid=numgrid,sigma_Y=sigma_Y)
-  }
-  
-  
-  n          <- length(data$t)
-  epsilon_U  <- sqrt(n)*compute_epsilons(L,nx=numgrid)$epsilon_U
-  solver     <-  setup_projection_solver(U)
-  
-  ts                <- c(abs(data$t),-abs(data$t))-shift #symmetrize and then shift
-  coeffs_orig       <- get_coeffs( ts,sigma_Y=sigma_Y,numcoeffs=numcoeffs)
-  projection        <- compute_residual_fast(coeffs_orig,solver) 
-  orig_resid        <- sqrt(n)*projection$residual 
-  
-  #The bootstrap
-  projpoint           <- U%*%projection$alpha_opt
-  resids_boot         <- rep(NA,boots)
-  for (b in 1:boots){
-    tic()
-    warmstart <- 0*projection$alpha_opt
-    
-    # 1. Split the data into a list of data.frames, one per article:
-    article_list <- split(data, data$title)
-    
-    # 2. Number of clusters (articles):
-    m <- length(article_list)
-    
-    # 3. Resample m clusters with replacement:
-    sampled_list <- sample(article_list, size = m, replace = TRUE)
-    
-    # 4. Re‐combine into one bootstrapped dataset:
-    boot_data <- do.call(rbind, sampled_list)
-    
-    ts_boot                <- c(abs(boot_data$t),-abs(boot_data$t))-shift # symmeterize and center
-    coeffs_boot            <- get_coeffs( ts_boot,sigma_Y=sigma_Y,numcoeffs=numcoeffs)
-    
-    #project onto tangent cone
-    estar                  <- sqrt(n)*(coeffs_boot - coeffs_orig)
-    
-
-    #numerical tangent cone: line (25) of Fang and Santos (2019)
-    sn                     <- n^(-1/3)
-    proj_pertrubed         <- compute_residual_fast(coeffs_orig+estar*sn,solver,alpha_start = projection$alpha_opt)$residual
-    resids_boot[b]         <- (proj_pertrubed-orig_resid/sqrt(n))/sn #numerical estimator of tangent cone
-    
-    toc()
-    #print(paste0("boot ", b, " of ", boots))
-    #print("Resid, 95%, 90%, eps, p, Bhat ")
-    #print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90),epsilon_U,mean(orig_resid < resids_boot[1:b]+epsilon_U),(orig_resid - quantile(resids_boot[1:b],0.95)-epsilon_U)/sqrt(n)))
-  }
-  pval             <- mean(orig_resid < resids_boot+epsilon_U)
-  breakdown        <- max(c(0,(orig_resid - quantile(resids_boot,0.95)-epsilon_U)/sqrt(n)))
-  
-  return(list(n=length(data$t),articles=length(unique(data$title)),resid=orig_resid,epsilon_U=epsilon_U,boot95=quantile(resids_boot,0.95),pval=pval,breakdown=breakdown,projpoint =projpoint,
-              runtime = Sys.time()-start_time))
 }
 
 
@@ -482,18 +441,25 @@ get_coeff_matrix <- function(data, sigma_Y = 1, numcoeffs = 100) {
 
 
 run_test <- function(data, numcoeffs, sigma_Y = 1, shift = 1.96,
-                     L = 6.5, numgrid = 3000, boots = 150, U = NULL,seed=1) {
+                     L = 6.5, numgrid = 3000, boots = 150, verbose=FALSE,
+                     U = NULL, solver=NULL,epsilon_U_pre=NULL) {
   
   #set.seed(seed)
   start_time <- Sys.time()
   
+  n <- length(data$t)
+  
   if (is.null(U)) {
     U <- create_basis(numcoeffs, L = L, numgrid = numgrid, sigma_Y = sigma_Y)
   }
+  if (is.null(solver)) {
+    solver <- setup_projection_solver(U)
+  }
+  if (is.null(epsilon_U_pre)) {
+    epsilon_U_pre <- compute_epsilons(L, nx = numgrid)$epsilon_U
+  }
   
-  n <- length(data$t)
-  epsilon_U <- sqrt(n) * compute_epsilons(L, nx = numgrid)$epsilon_U
-  solver <- setup_projection_solver(U)
+  epsilon_U <- sqrt(n) * epsilon_U_pre
   
   # Symmetrize and shift once
   ts <- c(abs(data$t), -abs(data$t)) - shift
@@ -512,9 +478,10 @@ run_test <- function(data, numcoeffs, sigma_Y = 1, shift = 1.96,
   article_rows  <- lapply(article_index, function(idx) c(idx, idx + n))
   m <- length(article_rows)
   
+  tic()
   resids_boot <- rep(NA, boots)
   for (b in 1:boots) {
-    #tic()
+
     sampled_articles <- sample.int(m, size = m, replace = TRUE)
     boot_rows <- unlist(article_rows[sampled_articles], use.names = FALSE)
     
@@ -530,12 +497,14 @@ run_test <- function(data, numcoeffs, sigma_Y = 1, shift = 1.96,
     )$residual
     
     resids_boot[b] <- (proj_pertrubed - orig_resid / sqrt(n)) / sn
-    #toc()
-    print(paste0("boot ", b, " of ", boots))
-    print("Resid, 95%, 90%, eps, p, Bhat ")
-    print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90),epsilon_U,mean(orig_resid < resids_boot[1:b]+epsilon_U),(orig_resid - quantile(resids_boot[1:b],0.95)-epsilon_U)/sqrt(n)))
-    
+
+    if(verbose){
+      print(paste0("boot ", b, " of ", boots))
+      print("Resid, 95%, 90%, eps, p, Bhat ")
+      print(c( orig_resid,quantile(resids_boot[1:b],0.95),quantile(resids_boot[1:b],0.90),epsilon_U,mean(orig_resid < resids_boot[1:b]+epsilon_U),(orig_resid - quantile(resids_boot[1:b],0.95)-epsilon_U)/sqrt(n)))
+    }
   }
+
   
   pval      <- mean(orig_resid < resids_boot + epsilon_U)
   breakdown <- max(c(0, (orig_resid - quantile(resids_boot, 0.95) - epsilon_U) / sqrt(n)))
