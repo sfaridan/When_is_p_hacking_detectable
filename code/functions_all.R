@@ -131,6 +131,10 @@ compute_residual_fast <- function(v, solver, alpha_start = NULL) {
   result <- solver$model$Solve()
   alpha  <- result$x
   
+  if (!result$info$status %in% c("solved", "solved inaccurate")) {
+    stop(paste("OSQP failed:", result$info$status))
+  }
+  
   # residual from quadratic form (see below)
   cvec     <- as.numeric(crossprod(solver$U, v))
   resid_sq <- drop(crossprod(v)) - 2 * sum(cvec * alpha) +
@@ -139,7 +143,7 @@ compute_residual_fast <- function(v, solver, alpha_start = NULL) {
 }
 
 
-setup_projection_solver <- function(U) {
+setup_projection_solver <- function(U,tight=FALSE) {
   nvar <- ncol(U)
   
   P_sp <- as(2 * crossprod(U), "dgCMatrix")
@@ -152,6 +156,16 @@ setup_projection_solver <- function(U) {
     verbose = FALSE,
     warm_start = TRUE   # or warm_starting = TRUE depending on version
   )
+  if(tight){
+    print("**tight**")
+    pars <- osqpSettings(
+      verbose    = FALSE,
+      eps_abs    = 1e-6,
+      eps_rel    = 1e-6,
+      polish     = TRUE,
+      warm_start = TRUE   # or warm_starting = TRUE depending on version
+    )
+  }
   
   model <- osqp(P = P_sp, q = rep(0, nvar), A = A_sp, l = l, u = u, pars = pars)
   
@@ -213,7 +227,8 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     
     #Precompute to accelerate the projection test
     U             <- create_basis(num_coeffs,L=L,numgrid=numgrid,sigma_Y=sigma_Y)
-    solver        <- setup_projection_solver(U)
+    solver        <- setup_projection_solver(U,tight=TRUE)
+    solver_boot   <- setup_projection_solver(U)
     epsilon_U_pre <- compute_epsilons(L, nx = numgrid)$epsilon_U
     
     #Set up Elliott et al pval vectors
@@ -323,7 +338,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
         
         data        <- data.frame(t=ts,title = as.character(1:length(ts)))
         sim_results <- run_test(data,num_coeffs,sigma_Y=sigma_Y,shift=cv,L=L,numgrid=numgrid,boots=nboots,
-                                U=U, solver=solver, epsilon_U_pre=epsilon_U_pre)
+                                U=U, solver=solver,solver_boot=solver_boot, epsilon_U_pre=epsilon_U_pre)
         
         epsilon_U   <- sim_results$epsilon_U
         resids[sim] <- sim_results$resid
@@ -448,7 +463,7 @@ get_coeff_matrix <- function(data, sigma_Y = 1, numcoeffs = 100) {
 
 run_test <- function(data, numcoeffs, sigma_Y = 1, shift = 1.96,
                      L = 6.5, numgrid = 3000, boots = 150, verbose=FALSE,
-                     U = NULL, solver=NULL,epsilon_U_pre=NULL) {
+                     U = NULL, solver=NULL,solver_boot=NULL,epsilon_U_pre=NULL) {
   
   #set.seed(seed)
   start_time <- Sys.time()
@@ -459,7 +474,10 @@ run_test <- function(data, numcoeffs, sigma_Y = 1, shift = 1.96,
     U <- create_basis(numcoeffs, L = L, numgrid = numgrid, sigma_Y = sigma_Y)
   }
   if (is.null(solver)) {
-    solver <- setup_projection_solver(U)
+    solver <- setup_projection_solver(U,tight=TRUE)
+  }
+  if (is.null(solver_boot)) {
+    solver_boot <- setup_projection_solver(U)
   }
   if (is.null(epsilon_U_pre)) {
     epsilon_U_pre <- compute_epsilons(L, nx = numgrid)$epsilon_U
@@ -484,7 +502,7 @@ run_test <- function(data, numcoeffs, sigma_Y = 1, shift = 1.96,
   article_rows  <- lapply(article_index, function(idx) c(idx, idx + n))
   m <- length(article_rows)
   
-  tic()
+
   resids_boot <- rep(NA, boots)
   for (b in 1:boots) {
 
@@ -498,7 +516,7 @@ run_test <- function(data, numcoeffs, sigma_Y = 1, shift = 1.96,
     sn             <- n^(-1/3)
     proj_pertrubed <- compute_residual_fast(
       coeffs_orig + estar * sn,
-      solver,
+      solver_boot, #uses looser tolerances for speed and conservativeness
       alpha_start = projection$alpha_opt
     )$residual
     
