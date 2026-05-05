@@ -157,7 +157,7 @@ setup_projection_solver <- function(U,tight=FALSE) {
     warm_start = TRUE   # or warm_starting = TRUE depending on version
   )
   if(tight){
-    print("**tight**")
+    #print("**tight**")
     pars <- osqpSettings(
       verbose    = FALSE,
       eps_abs    = 1e-6,
