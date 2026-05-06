@@ -17,9 +17,9 @@ source(paste0(root,"/code/functions_all.R"))
 
 
 ### Choose parameters for the simulations
-parms <- expand.grid(nsims       = 5,            # number of sim repetitions
+parms <- expand.grid(nsims       = 200,            # number of sim repetitions
                      nboots      = 100,           # number of bootstraps per sim
-                     n           = c(5000),           # meta-sample size
+                     n           = c(10000),           # meta-sample size
                      cv          = 1.96,           # critical value to shift by
                      sigma_Y     = 1,              # set this to one
                      prob_hack   = c(0),              #probability to take the larger of two t-scores
@@ -28,8 +28,8 @@ parms <- expand.grid(nsims       = 5,            # number of sim repetitions
                      theta       = c(1),       # probability of reporting t when |t|<cv
                      numgrid     = 3000,           # number of hn grid to make U
                      L           = 6.5,            # width of grid of hs to make U  
-                     pi0_shape   = c("poisson","chi2","null","double_normal"),       # shape of distribution of h
-                     h_center    = c(2),              # center of true effect distribution
+                     pi0_shape   = c("point","poisson","normal","double_normal"),       # shape of distribution of h
+                     h_center    = c(0),              # center of true effect distribution
                      sigma_h     = 1,              # increases sd of h
                      bimodal     = c(FALSE),          # separate distribution of h by 2
                      hack_type   = "threshold",         # maximization hacking (threshold is default)  
