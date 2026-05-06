@@ -17,7 +17,7 @@ source(paste0(root,"/code/functions_all.R"))
 
 
 ### Choose parameters for the simulations
-parms <- expand.grid(nsims       = 5,            # number of sim repetitions
+parms <- expand.grid(nsims       = 200,            # number of sim repetitions
                      nboots      = 100,           # number of bootstraps per sim
                      n           = c(5000),           # meta-sample size
                      cv          = 1.96,           # critical value to shift by
