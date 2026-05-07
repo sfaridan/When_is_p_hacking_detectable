@@ -157,7 +157,7 @@ setup_projection_solver <- function(U,tight=FALSE) {
     warm_start = TRUE   # or warm_starting = TRUE depending on version
   )
   if(tight){
-    #print("**tight**")
+    print("**tight**")
     pars <- osqpSettings(
       verbose    = FALSE,
       eps_abs    = 1e-6,
@@ -255,18 +255,16 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       rands   <- runif(n) #random numbers to determine who p-hacks
       
       
-      if(pi0_shape == "normal") { hnoise <- rnorm(n)*sigma_h + h_center}
-      if(pi0_shape == "uniform"){ hnoise <- (unif(n)-0.5)*sigma_h  + h_center}
-      if(pi0_shape == "point")  { hnoise <- rep(0,n)*sigma_h +h_center}
-      if(pi0_shape == "chi2")   { hnoise <- rchisq(n,h_center)}  # ignores other paramters
-      if(pi0_shape == "poisson") { hnoise <- rpois(n,h_center)}
-      if(pi0_shape == "null")   { hnoise <- rep(0,n)}
+      if(pi0_shape == "normal") { hnoise <- rnorm(n)}
+      if(pi0_shape == "uniform"){ hnoise <- unif(n)}
+      if(pi0_shape == "point")  { hnoise <- rep(0,n)}
+      if(pi0_shape == "chi2")   { hnoise <- rnorm(n)^2}
+      if(pi0_shape == "poisson") { hnoise <- rpois(n,1)}
       if(pi0_shape == "double_normal") { 
-          hnoise <- rnorm(n)*sigma_h + h_center
+        hnoise <- rnorm(n)
         rr <- runif(n)
-        hnoise[rr >= 0.5]  <- hnoise[rr >= 0.5] - 2
+        hnoise[rr >= 0.5]  <- hnoise[rr >= 0.5] + 2
       }
-      if(pi0_shape == "cauchy") { hnoise <- rcauchy(n)}
       
       if(bimodal){  
         rr <- runif(n)
@@ -274,14 +272,14 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
         hnoise[rr >= 0.5]  <- hnoise[rr >= 0.5] + 1
       }
       
-      hs      <- hnoise #h_center + hnoise*sigma_h # latent true effects
+      hs      <- h_center + hnoise*sigma_h # latent true effects
       
       #Draw individual t-scores
         ts1     <- rt(n,nu)+hs
         ts2     <- rt(n,nu)+hs
-        ts3     <- rt(n,nu)+hs
       
       if(hack_type == "max"){ #maximization p-hacking with no threshold 
+        ts3     <- rt(n,nu)+hs
         ts4     <- rt(n,nu)+hs
         ts5     <- rt(n,nu)+hs
         ts6     <- rt(n,nu)+hs
@@ -293,7 +291,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
         ts_pre <- ts1*(rands>prob_hack | (ts1)>cv)+(rands<= prob_hack & (ts1)<=cv)*pmax(ts1,ts2 ) #Draw 1 t-score. Report it if you don't phack or if it is significant and positive. Otherwise draw a second and report the max of the two
       }
       
-      if(theta != 1){  #publication bias if theta < 1
+      if(theta != 1){  #putlication bias if theta < 1
         ts_pre <- trunc_population(ts_pre,cv,theta) 
       }
        
