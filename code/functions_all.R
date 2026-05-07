@@ -260,7 +260,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       if(pi0_shape == "point")  { hnoise <- rep(0,n)*sigma_h +h_center}
       if(pi0_shape == "chi2")   { hnoise <- rchisq(n,h_center)}  # ignores other paramters
       if(pi0_shape == "poisson") { hnoise <- rpois(n,h_center)}
-      if(pi0_shape == "null")   { hnoise <- rep(n,0)}
+      if(pi0_shape == "null")   { hnoise <- rep(0,n)}
       if(pi0_shape == "double_normal") { 
           hnoise <- rnorm(n)*sigma_h + h_center
         rr <- runif(n)
