@@ -256,7 +256,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       
       
       if(pi0_shape == "normal") { hnoise <- rnorm(n)*sigma_h + h_center}
-      if(pi0_shape == "uniform"){ hnoise <- (unif(n)-0.5)*sigma_h  + h_center}
+      if(pi0_shape == "uniform"){ hnoise <- (runif(n)-0.5)*sigma_h  + h_center}
       if(pi0_shape == "point")  { hnoise <- rep(0,n)*sigma_h +h_center}
       if(pi0_shape == "chi2")   { hnoise <- rchisq(n,h_center)}  # ignores other paramters
       if(pi0_shape == "poisson") { hnoise <- rpois(n,h_center)}
