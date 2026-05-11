@@ -29,12 +29,12 @@ table_power1 <- table_power1[,vars_all]
 # add the h=2 size simulation
 size_h2 <- readRDS("sims_size_moredgps_LAPTOP3_nsims500_2026-05-09_18-07-18.rds")
 table_size_h2 <- size_h2[1,vars_all]
-table_size_h2$pi0_shape <- "point h=0.5"
+table_size_h2$pi0_shape <- "H=0.5"
 
 # add the h=2 power simulation
 power_h2 <- readRDS("sims_power_moredgps_LAPTOP3_nsims500_2026-05-09_23-29-09.rds")
 table_power_h2 <- power_h2[1,vars_all]
-table_power_h2$pi0_shape <- "point h=0.5"
+table_power_h2$pi0_shape <- "H=0.5"
 
 #add nearzero size simulation
 size_unif <- readRDS("sims_size_nearzero_LAPTOP2_nsims500_2026-05-10_15-09-40.rds")
@@ -45,4 +45,31 @@ power_unif <- readRDS("sims_power_nearzero_LAPTOP2_nsims500_2026-05-11_01-44-10.
 table_power_unif <- power_unif[,vars_all]
 
 table_all <- rbind(table_size1,table_size_h2,table_size_unif, table_power1,table_power_h2,table_power_unif)
+
+#adjust names
+table_all$pi0_shape <- as.character(table_all$pi0_shape)
+table_all$pi0_shape[table_all$pi0_shape == "null"] <- "H=0"
+table_all$pi0_shape[table_all$pi0_shape == "uniform"] <- "Unif(-0.5,0.5)"
+table_all$pi0_shape[table_all$pi0_shape == "double_normal"] <- "Mix Normals"
+table_all$pi0_shape[table_all$pi0_shape == "normal"] <- "Norm(0,1)"
+table_all$pi0_shape[table_all$pi0_shape == "chi2"] <- "chi^2(2)"
+table_all$pi0_shape[table_all$pi0_shape == "poisson"] <- "Poisson(2)"
 table_all
+
+
+library(knitr)
+
+table_out <- table_all
+num_cols <- sapply(table_out, is.numeric)
+table_out[num_cols] <- lapply(table_out[num_cols], function(x) round(x, 3))
+
+latex_tab <- kable(
+  table_out,
+  format = "latex",
+  booktabs = TRUE,
+  escape = FALSE,
+  caption = "Simulation results"
+)
+
+writeLines(latex_tab, file.path(paste0(root,"/tables/"), "simulation_results.tex"))
+latex_tab
