@@ -1,3 +1,6 @@
+###### Creates table of simulations for threshold p-hacking ######
+
+
 rm(list = ls())
 gc()
 
@@ -73,3 +76,7 @@ latex_tab <- kable(
 
 writeLines(latex_tab, file.path(paste0(root,"/tables/"), "simulation_results.tex"))
 latex_tab
+
+
+
+######
