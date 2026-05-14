@@ -17,7 +17,7 @@ source(paste0(root,"/code/functions_all.R"))
 
 
 ### Choose parameters for the simulations
-parms <- expand.grid(nsims       = 300,            # number of sim repetitions
+parms <- expand.grid(nsims       = 3,            # number of sim repetitions
                      nboots      = 100,           # number of bootstraps per sim
                      n           = c(5000),           # meta-sample size
                      cv          = 1.96,           # critical value to shift by
@@ -26,21 +26,21 @@ parms <- expand.grid(nsims       = 300,            # number of sim repetitions
                      num_coeffs  = c(31),       # the larger the less regularized
                      nu          = c(99999),    # dof for true dgp
                      theta       = c(1),       # probability of reporting t when |t|<cv
-                     numgrid     = 3000,           # number of hn grid to make U
-                     L           = 6.5,            # width of grid of hs to make U  
-                     pi0_shape   = c("null","double_normal","poisson","chi2"),       # shape of distribution of h
-                     h_center    = c(2),              # center of true effect distribution
+                     numgrid     = 2500,           # number of hn grid to make U
+                     L           = 6,            # width of grid of hs to make U  
+                     pi0_shape   = c("null"),       # shape of distribution of h
+                     h_center    = c(0),              # center of true effect distribution
                      sigma_h     = 1,              # increases sd of h
                      bimodal     = c(FALSE),          # separate distribution of h by 2
                      hack_type   = "threshold",         # maximization hacking (threshold is default)  
                      omit_proj   = FALSE,
-                     omit_EWK    = FALSE,
+                     omit_EWK    = TRUE,
                      shift       =1.96,
                      seed        =3 
 )
 ### Run the simulations 
 setwd(simulation_results)
-out_file<- run_sims(parms,"sims_size_secondround_LAPTOP")
+out_file<- run_sims(parms,"sims_size_null_sandbox_LAPTOP")
 out_parms <- readRDS(out_file)
 print(out_parms)
 

@@ -36,11 +36,12 @@ sigma_Y    <- 1
 shift      <- cv
 L          <- 6.5 #grid support [-L,L] \cup 9999
 numgrid    <- 3000 #total number of elements in grid (density)
-boots      <- 200 #bootstrap repetitions
+boots      <- 1000 #bootstrap repetitions
 
 #Run the projection test
 J <- 20
 coeffs <- J+1
+
 rct_results <- run_test(MM_data[MM_data$method=="RCT",],numcoeffs=coeffs,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots)
 did_results <- run_test(MM_data[MM_data$method=="DID",],numcoeffs=coeffs,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots)
 rdd_results <- run_test(MM_data[MM_data$method=="RDD",],numcoeffs=coeffs,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots)

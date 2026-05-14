@@ -17,7 +17,7 @@ source(paste0(root,"/code/functions_all.R"))
 
 
 ### Choose parameters for the simulations
-parms <- expand.grid(nsims       = 300,            # number of sim repetitions
+parms <- expand.grid(nsims       = 500,            # number of sim repetitions
                      nboots      = 100,           # number of bootstraps per sim
                      n           = c(5000),           # meta-sample size
                      cv          = 1.96,           # critical value to shift by
@@ -28,8 +28,8 @@ parms <- expand.grid(nsims       = 300,            # number of sim repetitions
                      theta       = c(1),       # probability of reporting t when |t|<cv
                      numgrid     = 3000,           # number of hn grid to make U
                      L           = 6.5,            # width of grid of hs to make U  
-                     pi0_shape   = c("null","double_normal","poisson","chi2"),       # shape of distribution of h
-                     h_center    = c(2),              # center of true effect distribution
+                     pi0_shape   = c("point","uniform","normal"),       # shape of distribution of h
+                     h_center    = c(0.5),              # center of true effect distribution
                      sigma_h     = 1,              # increases sd of h
                      bimodal     = c(FALSE),          # separate distribution of h by 2
                      hack_type   = "threshold",         # maximization hacking (threshold is default)  
@@ -40,7 +40,7 @@ parms <- expand.grid(nsims       = 300,            # number of sim repetitions
 )
 ### Run the simulations 
 setwd(simulation_results)
-out_file<- run_sims(parms,"sims_size_secondround_LAPTOP")
+out_file<- run_sims(parms,"sims_size_moredgps_LAPTOP")
 out_parms <- readRDS(out_file)
 print(out_parms)
 
