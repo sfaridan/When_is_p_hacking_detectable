@@ -28,7 +28,7 @@ latex_tab <- kable(
   caption = "Simulation results"
 )
 
-writeLines(latex_tab, file.path(paste0(root,"/tables/"), "simulation_results.tex"))
+writeLines(latex_tab, file.path(paste0(root,"/tables/"), "sim_nearly_undetectable_results.tex"))
 latex_tab
 
 
