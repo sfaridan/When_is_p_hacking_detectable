@@ -8,7 +8,6 @@ create_weights <- function(numcoeffs, p = 4, J0=20) {
   if (J0 <= 0) stop("J0 must be positive.")
   if (p <= 0.5) stop("p must exceed 1/2 so that the weights are square-summable.")
   j <- 0:(numcoeffs - 1)
-  #pmin(1, (j / J0)^(-p))
   pmin(1, ( 1/p)^(j-J0) )
 }
 

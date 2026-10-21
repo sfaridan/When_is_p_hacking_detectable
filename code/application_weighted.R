@@ -43,10 +43,11 @@ numgrid    <- 3000 #total number of elements in grid (density)
 boots      <- 1000 #bootstrap repetitions
 J          <- 40
 coeffs     <- J+1
+p          <- 2
 epsilon_U_pre <- compute_epsilons(L, nx = numgrid)$epsilon_U #pre-compute for speed
 
 #Run the projection test with more coefficients
-p <- 2
+
 for (J0 in c(20,30)){
   rct_results <- run_test_weight_fast(MM_data[MM_data$method=="RCT",],numcoeffs=coeffs,epsilon_U_pre=epsilon_U_pre,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots,J0=J0,p=p)
   did_results <- run_test_weight_fast(MM_data[MM_data$method=="DID",],numcoeffs=coeffs,epsilon_U_pre=epsilon_U_pre,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots,J0=J0,p=p)
@@ -56,7 +57,7 @@ for (J0 in c(20,30)){
   #Save results
   empirical_results <- as.data.frame(do.call(rbind, list(rct_results,iv_results, did_results,rdd_results )))
   empirical_results$methods <- c("RCT","IV","DID","RDD")
-  empirical_results<- empirical_results[,c("methods","n","articles","pval","breakdown","coeffs","J0")]
+  empirical_results<- empirical_results[,c("methods","n","articles","pval","breakdown","numcoeffs","J0")]
   setwd(paste0(root,"/results"))
   name <- paste0("MM_weights_results_",J0,"_J0")
   saveRDS(empirical_results, file = name)

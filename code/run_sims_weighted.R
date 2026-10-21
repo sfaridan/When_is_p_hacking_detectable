@@ -32,7 +32,7 @@ parms <- expand.grid(nsims       =  500,            # number of sim repetitions
                      omit_EWK    = TRUE,
                      shift       = 1.96,
                      J0          = 30,
-                     p           = 4,
+                     p           = 2,
                      seed        = 3 
 )
 ### Run the simulations 
@@ -42,8 +42,8 @@ out_parms <- readRDS(out_file)
 print(out_parms)
 
 ### Choose parameters for the simulations
-parms <- expand.grid(nsims       =  500,            # number of sim repetitions
-                     nboots      =  100,           # number of bootstraps per sim
+parms <- expand.grid(nsims       = 500,            # number of sim repetitions
+                     nboots      = 100,           # number of bootstraps per sim
                      n           = c(100000),           # meta-sample size
                      cv          = 1.96,           # critical value to shift by
                      sigma_Y     = 1,              # set this to one
