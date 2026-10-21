@@ -327,20 +327,29 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       if(pi0_shape == "uniform"){ hnoise <- (runif(n)-0.5)*sigma_h  + h_center}
       if(pi0_shape == "point")  { hnoise <- rep(0,n)*sigma_h +h_center}
       if(pi0_shape == "chi2")   { hnoise <- rchisq(n,h_center)}  # ignores other paramters
-      if(pi0_shape == "poisson") { hnoise <- rpois(n,h_center)}
-      if(pi0_shape == "null")   { hnoise <- rep(0,n)}
       if(pi0_shape == "double_normal") { 
         hnoise <- rnorm(n)*sigma_h + h_center
         rr <- runif(n)
         hnoise[rr >= 0.5]  <- hnoise[rr >= 0.5] - 2
       }
       if(pi0_shape == "cauchy") { hnoise <- rcauchy(n)}
+      if(pi0_shape == "poisson") { hnoise <- rpois(n,h_center)}
       
-      if(bimodal){  
-        rr <- runif(n)
-        hnoise[rr < 0.5]   <- hnoise[rr < 0.5]  - 1
-        hnoise[rr >= 0.5]  <- hnoise[rr >= 0.5] + 1
+      if(pi0_shape == "poisson(2)") { hnoise <- rpois(n,2)}
+      if(pi0_shape == "chi2(2)")   { hnoise <- rchisq(n,2)}  # ignores other paramters
+      if(pi0_shape == "null")   { hnoise <- rep(0,n)}
+      if(pi0_shape == "onehalf")   { hnoise <- rep(0.5,n)}
+      if(pi0_shape == "fitted")   { #Fitted by zcurve from Faridani (2026)
+        vv <- c(0, 1, 2, 3, 4, 5, 6)
+        p_vv  <- c(0.02, 0.47, 0.01, 0.27, 0.14, 0.00, 0.09)
+        hnoise <-   sample(vv, size = n, replace = TRUE, prob = p_vv)
       }
+      if(pi0_shape == "unif_half"){ hnoise <- runif(n)-0.5  }
+      if(pi0_shape == "standard_normal") { hnoise <- rnorm(n)}
+      if(pi0_shape == "hard") { hnoise <- rnorm(n)*.7+2 }
+      
+     
+      
       
       hs      <- hnoise #h_center + hnoise*sigma_h # latent true effects
       
