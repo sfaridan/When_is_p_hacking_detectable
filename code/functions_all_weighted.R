@@ -333,6 +333,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       }
       if(pi0_shape == "cauchy") { hnoise <- rcauchy(n)}
       if(pi0_shape == "poisson") { hnoise <- rpois(n,h_center)}
+      if(pi0_shape == "kudrin_gamma") { hnoise <- rgamma(n, shape = 1.4134, rate = 1.2980) }
       
       if(pi0_shape == "poisson(2)") { hnoise <- rpois(n,2)}
       if(pi0_shape == "chi2(2)")   { hnoise <- rchisq(n,2)}  # ignores other paramters
@@ -367,6 +368,9 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       }
       if(hack_type=="threshold"){
         ts_pre <- ts1*(rands>prob_hack | (ts1)>cv)+(rands<= prob_hack & (ts1)<=cv)*pmax(ts1,ts2 ) #Draw 1 t-score. Report it if you don't phack or if it is significant and positive. Otherwise draw a second and report the max of the two
+      }
+      if(startsWith(as.character(hack_type), "kudrin")){
+        ts_pre <- kudrin_tstats(hs, hacker = (rands <= prob_hack), hack_type = hack_type, parms_row = parms[parm, ])
       }
       
       if(theta != 1){  #publication bias if theta < 1

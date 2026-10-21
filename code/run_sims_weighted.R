@@ -8,8 +8,10 @@ root               <- "C:/Users/stefa/OneDrive/Documents/GitHub/When_is_p_hackin
 this_script        <- rstudioapi::getSourceEditorContext()$path
 simulation_results <- paste0(root,"/simulations")
 
-source(paste0(root,"/code/Tests.R"))
+source(paste0(root,"/code/Tests.R")) #EKW tests - their code
+source(paste0(root,"/code/reproduce_kudrin_simulations_functions.R")) #reverse-engineer Kudrin (2024)'s simulations
 source(paste0(root,"/code/functions_all_weighted.R"))
+
 
 
 ### Choose parameters for the simulations
@@ -61,7 +63,7 @@ parms <- expand.grid(nsims       = 500,            # number of sim repetitions
                      omit_EWK    = TRUE,
                      shift       = 1.96,
                      J0          = 30,
-                     p           = 4,
+                     p           = 2,
                      seed        = 3 
 )
 ### Run the simulations 
