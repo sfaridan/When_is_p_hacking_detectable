@@ -54,7 +54,11 @@ print(out_parms[, c("kudrin_K", "pi0_shape", "h_center", "n", "prob_hack", "reje
 ### The other minimum-approach panels where Kudrin's tests have little or no power:
 ### h = 2 (all K, S in {1000, 5000}; Figs. 2, 3, 8, 9) and h ~ Gamma for K in {5, 7} (Figs. 8, 9).
 ### The full grid below is 60 parameterizations (~20 hours at ~2.5 s per sim); trim as needed.
-parms <- expand.grid(nsims       = 50, #500,
+
+
+
+#### Stefan's parameterization
+parms <- expand.grid(nsims       = 500,
                      nboots      = 100,
                      n           = 5000, #c(1000, 5000),
                      cv          = 1.96,
@@ -65,15 +69,15 @@ parms <- expand.grid(nsims       = 50, #500,
                      theta       = 1,
                      numgrid     = 3000,
                      L           = 6.5,
-                     pi0_shape   = c("point", "kudrin_gamma"),   # h = 2, or h ~ Gamma(1.4134, rate 1.2980)
-                     h_center    = 2,                            # ignored by "kudrin_gamma"
+                     pi0_shape   = c("point"), #c("point", "kudrin_gamma"),   # h = 2, or h ~ Gamma(1.4134, rate 1.2980)
+                     h_center    = c(2,1),                            # ignored by "kudrin_gamma"
                      sigma_h     = 1,
                      hack_type   = "kudrin_min",
                      kudrin_K    = 3, #c(3, 5, 7),
                      kudrin_N    = 200,
                      kudrin_dgp  = "regression",
                      omit_proj   = FALSE,
-                     omit_EWK    = TRUE,
+                     omit_EWK    = FALSE,
                      shift       = 1.96,
                      J0          = 30,
                      p           = 2,
@@ -81,6 +85,6 @@ parms <- expand.grid(nsims       = 50, #500,
                      stringsAsFactors = FALSE)
 parms$nu <- parms$kudrin_N - parms$kudrin_K - 1
 setwd(simulation_results)
-out_file  <- run_sims(parms, "sims_weighted_kudrin_lowpower")
+out_file  <- run_sims(parms, "sims_weighted_kudrin_Fig3_bottom")
 out_parms <- readRDS(out_file)
 print(out_parms[, c("kudrin_K", "pi0_shape", "h_center", "n", "prob_hack", "reject_rate")])
