@@ -4,7 +4,7 @@ gc()
 library(Matrix)
 library(tictoc)
 
-root               <- "C:/Users/stefa/OneDrive/Documents/GitHub/When_is_p_hacking_detectable"  #"C:/Users/sfaridani6/Documents/Research/smoothness test for p-hacking"
+root               <- "C:/Users/sfaridani6/Documents/GitHub/When_is_p_hacking_detectable"  #"C:/Users/sfaridani6/Documents/Research/smoothness test for p-hacking"
 this_script        <- rstudioapi::getSourceEditorContext()$path
 simulation_results <- paste0(root,"/simulations")
 

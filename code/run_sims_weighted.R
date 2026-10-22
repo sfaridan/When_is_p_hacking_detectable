@@ -4,14 +4,17 @@ gc()
 library(Matrix)
 library(tictoc)
 
-root               <- "C:/Users/stefa/OneDrive/Documents/GitHub/When_is_p_hacking_detectable"  #"C:/Users/sfaridani6/Documents/Research/smoothness test for p-hacking"
+root               <- "C:/Users/sfaridani6/Documents/GitHub/When_is_p_hacking_detectable"
 this_script        <- rstudioapi::getSourceEditorContext()$path
 simulation_results <- paste0(root,"/simulations")
 
 source(paste0(root,"/code/Tests.R")) #EKW tests - their code
 source(paste0(root,"/code/reproduce_kudrin_simulations_functions.R")) #reverse-engineer Kudrin (2024)'s simulations
 source(paste0(root,"/code/functions_all_weighted.R"))
+source(paste0(root, "/code/kudrin_tests.R"))     # Kudrin (2025) tests
+source(paste0(root, "/code/smooth pub dgp.R"))   # smooth publication-bias DGP
 
+kudrin_tests_selfcheck()
 
 
 ### Choose parameters for the simulations
