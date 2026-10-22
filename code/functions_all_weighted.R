@@ -306,6 +306,9 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     CS2B_EWK        <- rep(NA,nsims)
     binomial_EWK    <- rep(NA,nsims)
     
+    #set up kudrin tests
+    kt_pvals        <- matrix(NA_real_, nsims, 3, dimnames = list(NULL, c("T_inf", "T_H", "T_H_hybrid")))  # Kudrin (2025) tests
+    
     #Begin the simulation loop
     resids    <- rep(NA,nsims)
     boot95    <- rep(NA,nsims)
@@ -414,6 +417,14 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
         print(paste0("EWK time: ", Sys.time() -ewk_start ))
       }
       
+      #Kudrin (2025) tests T_inf, T_H, T_H_hybrid; requires kudrin_tests.R
+      if(isTRUE(parms[["kudrin_tests"]][parm])){
+        kt_start <- Sys.time()
+        kt_s <- try(kudrin_tests(ts_pre, boots = nboots)$pval, silent = TRUE)
+        if(inherits(kt_s, "try-error")){ print(paste0("Kudrin tests NA: ", kt_s)) }else{ kt_pvals[sim, ] <- kt_s }
+        print(paste0("Kudrin tests time: ", Sys.time() - kt_start))
+      }
+      
       #Projection method
       if(parms$omit_proj[parm]==FALSE){
         proj_start  <- Sys.time()
@@ -466,6 +477,11 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
     parms$binomial_EWK[parm] <- mean(binomial_EWK < .05)
     parms$CS1_EWK[parm]      <- mean(CS1_EWK < .05,na.rm=TRUE)
     parms$CS2B_EWK[parm]     <- mean(CS2B_EWK < .05,na.rm=TRUE)
+    
+    #Record Kudrin test results
+    if(isTRUE(parms[["kudrin_tests"]][parm])){   # Kudrin (2025) tests
+      for(nm in colnames(kt_pvals)) parms[parm, paste0("Kudrin_", nm)] <- mean(kt_pvals[, nm] <= .05, na.rm = TRUE)
+    }
     
     # Save full results of this parameterization
     setwd(paste0(simulation_results,"/raw"))
