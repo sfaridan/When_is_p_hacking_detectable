@@ -15,12 +15,12 @@ source(paste0(root,"/code/kudrin_tests.R"))
 
 
 ### Choose parameters for the simulations
-parms <- expand.grid(nsims       = 30, #500,            # number of sim repetitions
+parms <- expand.grid(nsims       = 500,            # number of sim repetitions
                      nboots      = 100,           # number of bootstraps per sim
                      n           = c(100000),           # meta-sample size
                      cv          = 1.96,           # critical value to shift by
                      sigma_Y     = 1,              # set this to one
-                     prob_hack   = 1, #c(0,1),              #probability to take the larger of two t-scores
+                     prob_hack   = c(0,1),              #probability to take the larger of two t-scores
                      num_coeffs  = c(41),       # the larger the less regularized
                      nu          = c(99999),    # dof for true dgp
                      theta       = c(1),       # probability of reporting t when |t|<cv

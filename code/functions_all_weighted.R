@@ -351,7 +351,7 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       if(pi0_shape == "standard_normal") { hnoise <- rnorm(n)}
       if(pi0_shape == "hard") { hnoise <- rnorm(n)*.7+2 }
       
-     
+      if(pi0_shape == "smooth_pub") { hnoise <- rnorm(n)*sqrt(smooth_pub_par(parms, parm)$tau2) } # smooth_pub: latent effects (printed only)
       
       
       hs      <- hnoise #h_center + hnoise*sigma_h # latent true effects
@@ -378,6 +378,14 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       
       if(theta != 1){  #publication bias if theta < 1
         ts_pre <- trunc_population(ts_pre,cv,theta) 
+      }
+      
+      if(pi0_shape == "smooth_pub"){ # smooth_pub DGP (smooth_pub_dgp.R): exactly n published t-stats; replaces hacking/truncation above
+        sp     <- smooth_pub_par(parms, parm)
+        ts_pre <- r_smooth_pub(n, tau2 = sp$tau2, sw2 = sp$sw2, theta = sp$theta, nu = nu)
+        print(paste0("smooth_pub: tau2=", sp$tau2, ", sw2=", sp$sw2, ", theta=", sp$theta,
+                     ", P(R)=", round(smooth_pub_prob(sp$tau2, sp$sw2, sp$theta), 3),
+                     ", detectable=", sp$theta > smooth_pub_threshold(sp$tau2, sp$sw2)))
       }
       
       ts <-  ts_pre # finalize observed t-scores
