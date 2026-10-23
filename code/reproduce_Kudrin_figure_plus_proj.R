@@ -507,7 +507,7 @@ plot_fig2_minimum <- function(res, stem, overlay_published = FALSE, add_projecti
     par(cex = 1, mar = c(2.5, 2.9, 1.1, 0.7), oma = c(if (overlay_published) 1.2 else 0, 0, 1.5, 0),
         mgp = c(1.4, 0.3, 0), tcl = 0.25, las = 1, family = "sans")
     for (k in seq_along(CFG$panels)) {
-      draw_panel(res, CFG$panels[k], overlay_published, add_projection, legend_here = legend && k == 1)
+      draw_panel(res, CFG$panels[k], overlay_published, add_projection, legend_here = legend && k == 2)
     }
     mtext("Minimum", side = 3, outer = TRUE, line = 0.25, font = 2, cex = 1.3, family = "serif")
     if (overlay_published) {
