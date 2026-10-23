@@ -37,7 +37,7 @@ parms <- expand.grid(nsims       =  500,            # number of sim repetitions
                      omit_EWK    = FALSE,
                      kudrin_tests= TRUE,
                      shift       = 1.96,
-                     J0          = 30,
+                     J0          = 20,
                      p           = 2,
                      seed        = 3 
 )
