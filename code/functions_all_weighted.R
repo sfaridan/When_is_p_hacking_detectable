@@ -337,11 +337,15 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       if(pi0_shape == "cauchy") { hnoise <- rcauchy(n)}
       if(pi0_shape == "poisson") { hnoise <- rpois(n,h_center)}
       if(pi0_shape == "kudrin_gamma") { hnoise <- rgamma(n, shape = 1.4134, rate = 1.2980) }
+      if(pi0_shape == "normal_11") { hnoise <- rnorm(n)+1 }
+      
       
       if(pi0_shape == "poisson(2)") { hnoise <- rpois(n,2)}
       if(pi0_shape == "chi2(2)")   { hnoise <- rchisq(n,2)}  # ignores other paramters
       if(pi0_shape == "null")   { hnoise <- rep(0,n)}
       if(pi0_shape == "onehalf")   { hnoise <- rep(0.5,n)}
+      if(pi0_shape == "two")   { hnoise <- rep(2,n)}
+      
       if(pi0_shape == "fitted")   { #Fitted by zcurve from Faridani (2026)
         vv <- c(0, 1, 2, 3, 4, 5, 6)
         p_vv  <- c(0.02, 0.47, 0.01, 0.27, 0.14, 0.00, 0.09)
@@ -390,9 +394,8 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
       
       ts <-  ts_pre # finalize observed t-scores
       
-      print(paste0("H: ", pi0_shape, ", center=", h_center, ", sigma_h=",sigma_h,", bim=",bimodal))
-      print(summary(hs))
-      print(paste0("frac hacking: ", prob_hack,", hacktype: ", hack_type))
+      print(paste0("H: ", pi0_shape,"frac hacking: ", prob_hack,", hacktype: ", hack_type))
+      #print(paste0("frac hacking: ", prob_hack,", hacktype: ", hack_type))
       #print(summary(ts))
       
       #Run tests from Elliott et al.
@@ -455,6 +458,9 @@ run_sims<- function(parms,sim_file_prefix="sim_parms_"){
         #print(paste0("parm: ", parm, " of ", num_parameterizations,", sim: ", sim, " of ", nsims))
         print(parms[parm,])
         print( paste0("Rejections: CS1: ", mean(CS1_EWK[1:sim]<.05,na.rm=TRUE), ", CS2B: ", mean(CS2B_EWK[1:sim]<.05,na.rm=TRUE), ", proj: ", mean(rejects[1:sim])))
+        if(isTRUE(parms[["kudrin_tests"]][parm])){   # Kudrin (2025) tests
+          for(nm in colnames(kt_pvals)) print(paste0(nm,": ", round(mean(kt_pvals[, nm] <= .05, na.rm = TRUE),3)))
+        }
       }
       
       print(paste0("sim time: ", Sys.time() -sim_start ))
