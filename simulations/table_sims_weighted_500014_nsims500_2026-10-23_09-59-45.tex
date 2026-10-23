@@ -1,0 +1,54 @@
+% Made by make_sim_table.R from sims_weighted_500014_nsims500_2026-10-23_09-59-45.rds on 2026-10-23 10:04
+% Needs booktabs (\bottomrule), url or hyperref (\url) and, with shrink_to_fit, graphicx (\resizebox)
+\begin{table}[htbp]
+\centering
+\caption{Threshold $p$-hacking}
+\label{tab:sims_threshold}
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{%
+\begin{tabular}{ll|c|cccccc|ccc}
+\hline
+ &  &  & \multicolumn{6}{c|}{\textbf{Elliott et al. (2022)}} & \multicolumn{3}{c}{\textbf{Kudrin (2024)}} \\
+\hline
+$p$-Hacking & $\Pi_0$ & Proj. & LCM & Fisher & Disc. & Binom. & CS1 & CS2B & $T_{\infty}$ & $T_{H}$ & $T_{H,\mathrm{hyb}}$ \\
+\hline
+\multicolumn{12}{c}{Size} \\
+\hline
+None & Poisson(2) & 0.006 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+None & $\chi^2(2)$ & 0.006 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+None & $H = 0$ & 0.072 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+None & $H = 0.5$ & 0.028 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+None & Fitted (z-curve) & 0.022 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+None & Unif(-0.5,0.5) & 0.020 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+None & N(0,1) & 0.016 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\hline
+\multicolumn{12}{c}{Power} \\
+\hline
+Threshold & Poisson(2) & 0.800 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Threshold & $\chi^2(2)$ & 0.340 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Threshold & $H = 0$ & 0.088 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Threshold & $H = 0.5$ & 1.000 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Threshold & Fitted (z-curve) & 0.268 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Threshold & Unif(-0.5,0.5) & 0.024 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Threshold & N(0,1) & 0.054 & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}}
+
+\medskip
+\begin{minipage}{\linewidth}
+\footnotesize
+The upper panel corresponds to size (no $p$-hacking) and the lower panel to power (threshold
+$p$-hacking). Under threshold $p$-hacking, researchers report the first $t$-statistic $T_1$ they
+draw if $T_1 > 1.96$ or the maximum of two $t$-statistics $\max\{T_1, T_2\}$ otherwise. Column 3 is
+the rejection rate of the projection test, columns 4--9 are the rejection rates of the six tests
+from Elliott et al. (2022), and columns 10--12 are the rejection rates of the three tests of Kudrin
+(2024). All tests are run at the 5\% level. The sample size is $n = 5000$. For the tests in Elliott
+et al. (2022) we use their values of the tuning parameters and their code file Tests.R. For the
+tests of Kudrin (2024) we use the sinc kernel with $\kappa = 3$, and the critical value of
+$T_{\infty}$ comes from 100 nonparametric bootstrap draws. For the projection test we set $w_j =
+\min\{1, 0.5^{j - 20}\}$ and $J = 40$. We form $\mathcal{X}$ using a grid of 3000 elements evenly
+spaced between $\pm 6.5$ plus the points 0 and 9999. We symmetrize about zero and shift by 1.96 as
+described in Remarks 12 and 13. We run 100 bootstrap repetitions and 500 simulation repetitions.
+Projection used \texttt{nnls} package in R by Mullen and van Stokkum (2024). Transparency R package
+available at: \url{https://github.com/sfaridan/When_is_p_hacking_detectable}
+\end{minipage}
+\end{table}
