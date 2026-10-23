@@ -31,10 +31,10 @@ parms <- expand.grid(nsims       = 500,            # number of sim repetitions
                      sigma_h     = 0.7,              # increases sd of h
                      hack_type   = "max",         # maximization hacking (threshold is default)  
                      omit_proj   = FALSE,
-                     omit_EWK    = TRUE,
+                     omit_EWK    = FALSE,
                      kudrin_tests= TRUE,
                      shift       = 1.96,
-                     J0          = 30,
+                     J0          = 20,
                      p           = 2,
                      seed        = 3 
 )
