@@ -37,7 +37,7 @@ rm(list = ls())
 ROOT     <- "C:/Users/stefa/OneDrive/Documents/GitHub/When_is_p_hacking_detectable"  #"C:/Users/sfaridani6/Documents/Research/smoothness test for p-hacking"
 
 CODE_DIR <- file.path(ROOT, "code")
-OUT_DIR  <- file.path(ROOT, "simulations", "kudrin_fig2_minimum")
+OUT_DIR  <- file.path(ROOT, "simulations", "kudrin_fig2_minimum_J0_20")
 
 QUICK <- FALSE   # TRUE: small run that checks the pipeline; FALSE: Kudrin's settings
 
@@ -70,7 +70,7 @@ CFG <- list(
   # Projection test: your run_test_weight_fast(), with the paper's settings
   run_projection = TRUE,
   num_coeffs     = 41,                    # J = 40
-  J0             = 30,                    # weights w_j = min(1, (1/p)^(j - J0))
+  J0             = 20,                    # weights w_j = min(1, (1/p)^(j - J0))
   p_weight       = 2,
   shift          = 1.96,
   L              = 6.5,
