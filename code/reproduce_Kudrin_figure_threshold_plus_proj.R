@@ -49,11 +49,11 @@ rm(list = ls())
 
 ## ---- 0. Settings -------------------------------------------------------------------------
 
-ROOT     <- "C:/Users/stefa/OneDrive/Documents/GitHub/When_is_p_hacking_detectable"  #"C:/Users/sfaridani6/Documents/Research/smoothness test for p-hacking"
+ROOT     <- "C:/Users/sfaridani6/Documents/GitHub/When_is_p_hacking_detectable" #"C:/Users/stefa/OneDrive/Documents/GitHub/When_is_p_hacking_detectable"  #"C:/Users/sfaridani6/Documents/Research/smoothness test for p-hacking"
 
 CODE_DIR <- file.path(ROOT, "code")
-OUT_DIR  <- file.path(ROOT, "simulations", "kudrin_fig2_threshold_J0_20")
-MIN_DIR  <- file.path(ROOT, "simulations", "kudrin_fig2_minimum_J0_20")   # OUT_DIR of the Minimum script
+OUT_DIR  <- file.path(ROOT, "simulations", "kudrin_fig2_threshold_J0_20_check")
+MIN_DIR  <- file.path(ROOT, "simulations", "kudrin_fig2_minimum_J0_20_check")   # OUT_DIR of the Minimum script
 
 QUICK <- FALSE   # TRUE: small run that checks the pipeline; FALSE: Kudrin's settings
 
