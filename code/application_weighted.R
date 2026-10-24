@@ -92,3 +92,26 @@ ewk_rdd <- run_ewk(2*pnorm(-abs(MM_data$t[MM_data$method=="RDD"])))
 empirical_ewk <-cbind(ewk_rct,ewk_iv,ewk_did,ewk_rdd)
 setwd(paste0(root,"/results"))
 saveRDS(empirical_ewk, file = paste0("EWK_results"))
+
+
+#Run Kudrin (2025) Tests: T_inf, T_H, T_H_hybrid
+
+source(paste0(root,"/code/kudrin_tests.R"))
+#kudrin_tests_selfcheck() #optional one-time check of kudrin_tests.R
+
+run_kudrin <- function(data){
+  kt <- kudrin_tests(data$t, cluster = data$title, boots = boots) #cluster by article, as in the projection test
+  data.frame(n = length(data$t), articles = length(unique(data$title)), as.list(kt$pval),
+             min = min(kt$pval), restricted = kt$restricted) #restricted = FALSE means T_H_hybrid = T_H
+}
+
+set.seed(1) #T_inf is bootstrapped; reset the seed so these results don't depend on the code above
+kudrin_rct <- run_kudrin(MM_data[MM_data$method=="RCT",])
+kudrin_iv  <- run_kudrin(MM_data[MM_data$method=="IV",])
+kudrin_did <- run_kudrin(MM_data[MM_data$method=="DID",])
+kudrin_rdd <- run_kudrin(MM_data[MM_data$method=="RDD",])
+
+empirical_kudrin <- cbind(methods = c("RCT","IV","DID","RDD"), rbind(kudrin_rct,kudrin_iv,kudrin_did,kudrin_rdd))
+setwd(paste0(root,"/results"))
+saveRDS(empirical_kudrin, file = "Kudrin_results")
+print(readRDS("Kudrin_results"))
