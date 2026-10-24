@@ -37,9 +37,9 @@ rm(list = ls())
 ROOT     <- "C:/Users/stefa/OneDrive/Documents/GitHub/When_is_p_hacking_detectable"  #"C:/Users/sfaridani6/Documents/Research/smoothness test for p-hacking"
 
 CODE_DIR <- file.path(ROOT, "code")
-OUT_DIR  <- file.path(ROOT, "simulations", "kudrin_fig2_minimum_J0_20")
+OUT_DIR  <- file.path(ROOT, "simulations", "kudrin_fig2_minimum_J0_20_neweps")
 
-QUICK <- FALSE   # TRUE: small run that checks the pipeline; FALSE: Kudrin's settings
+QUICK <- TRUE   # TRUE: small run that checks the pipeline; FALSE: Kudrin's settings
 
 CFG <- list(
   S              = 1000,                  # t-statistics per meta-sample (his Fig. 2)

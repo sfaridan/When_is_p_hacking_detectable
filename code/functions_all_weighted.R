@@ -211,7 +211,21 @@ compute_eps2 <- function(L){
   return(eps2)
 }
 
-compute_epsilons<- function(L, nx = 3000){
+compute_epsilons <- function(L, nx = 1000, x_inf = 9999) {
+  if (!is.numeric(L) || length(L) != 1 || !is.finite(L) || L <= 0) stop("L must be a positive number.")
+  if (!is.numeric(nx) || length(nx) != 1 || nx < 2) stop("nx must be at least 2.")
+  if (x_inf < 2 * L) stop("Lemma 6' needs a far grid point x_inf >= 2L (create_basis_stable() uses 9999).")
+  
+  delta <- 2 * L / (nx - 1)                                    # spacing of seq(-L, L, length.out = nx)
+  eps1  <- delta^2 / (8 * sqrt(2 * pi))                        # interior: chord between neighbours
+  eps2  <- 3^(1/4) * exp(-1 - L^2 / 6) / (sqrt(2 * pi) * L) +  # tail: chord between L and x_inf
+    exp(-2 * L^2 / 3) / sqrt(2 * pi * sqrt(3))
+  
+  list(eps1 = eps1, eps2 = eps2, epsilon_U = eps1 + eps2)
+}
+
+#deprecated 10/24/26
+compute_epsilons_old<- function(L, nx = 3000){
   eps1 <-  max_diff_over_delta(L=L,nx=nx)
   eps2 <- compute_eps2(L) # error from finite L
   return(list(eps1=eps1,eps2=eps2,epsilon_U = eps1+eps2))
