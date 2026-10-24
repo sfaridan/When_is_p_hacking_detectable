@@ -37,9 +37,9 @@ rm(list = ls())
 ROOT     <- "C:/Users/stefa/OneDrive/Documents/GitHub/When_is_p_hacking_detectable"  #"C:/Users/sfaridani6/Documents/Research/smoothness test for p-hacking"
 
 CODE_DIR <- file.path(ROOT, "code")
-OUT_DIR  <- file.path(ROOT, "simulations", "kudrin_fig2_minimum_J0_20_neweps")
+OUT_DIR  <- file.path(ROOT, "simulations", "kudrin_fig2_minimum_J0_20")
 
-QUICK <- FALSE   # TRUE: small run that checks the pipeline; FALSE: Kudrin's settings
+QUICK <- TRUE   # TRUE: small run that checks the pipeline; FALSE: Kudrin's settings
 
 CFG <- list(
   S              = 1000,                  # t-statistics per meta-sample (his Fig. 2)
@@ -73,8 +73,8 @@ CFG <- list(
   J0             = 20,                    # weights w_j = min(1, (1/p)^(j - J0))
   p_weight       = 2,
   shift          = 1.96,
-  L              = 7,
-  numgrid        = 1000,
+  L              = 6.5,
+  numgrid        = 3000,
   proj_boots     = 100,
   proj_mode      = "full",                # "full": proj_boots bootstrap draws per meta-sample, as in
   # the paper; "warp": one draw per meta-sample and a pooled

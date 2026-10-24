@@ -68,22 +68,6 @@ make_worker <- function(Asum, Rg, coeffs_orig, coeffs_w, p_hat_w, w, n, sn,
     cnt         <- tabulate(sampled_articles, nbins = nrow(Asum))
     coeffs_boot <- as.numeric(crossprod(cnt, Asum)) / sum(cnt * Rg)
     estar_w     <- w * sqrt(n) * (coeffs_boot - coeffs_orig)          # weighted bootstrap draw
-    #d_fs <- project(coeffs_w + estar_w * sn, A_aug, Uw, M)$residual    # FS perturbation
-    #c(fs   = (d_fs - orig_resid / sqrt(n)) / sn)
-    d_pp <- project(p_hat_w + estar_w * sn, A_aug, Uw, M)$residual   # perturb the fitted honest point (conservative)
-    c(fs = d_pp / sn)
-  }
-}
-
-# Builds the per-draw computation as a self-contained closure, so it can be shipped to workers
-make_worker_nocorrection <- function(Asum, Rg, coeffs_orig, coeffs_w, p_hat_w, w, n, sn,
-                        orig_resid, A_aug, Uw, M, project) {
-  force(Asum); force(Rg); force(coeffs_orig); force(coeffs_w); force(p_hat_w); force(w)
-  force(n); force(sn); force(orig_resid); force(A_aug); force(Uw); force(M); force(project)
-  function(sampled_articles) {
-    cnt         <- tabulate(sampled_articles, nbins = nrow(Asum))
-    coeffs_boot <- as.numeric(crossprod(cnt, Asum)) / sum(cnt * Rg)
-    estar_w     <- w * sqrt(n) * (coeffs_boot - coeffs_orig)          # weighted bootstrap draw
     d_fs <- project(coeffs_w + estar_w * sn, A_aug, Uw, M)$residual    # FS perturbation
     c(fs   = (d_fs - orig_resid / sqrt(n)) / sn)
   }
@@ -227,7 +211,7 @@ compute_eps2 <- function(L){
   return(eps2)
 }
 
-compute_epsilons <- function(L, nx = 1000, x_inf = 9999) {
+compute_epsilons_candidate <- function(L, nx = 1000, x_inf = 9999) {
   if (!is.numeric(L) || length(L) != 1 || !is.finite(L) || L <= 0) stop("L must be a positive number.")
   if (!is.numeric(nx) || length(nx) != 1 || nx < 2) stop("nx must be at least 2.")
   if (x_inf < 2 * L) stop("Lemma 6' needs a far grid point x_inf >= 2L (create_basis_stable() uses 9999).")
@@ -240,8 +224,7 @@ compute_epsilons <- function(L, nx = 1000, x_inf = 9999) {
   list(eps1 = eps1, eps2 = eps2, epsilon_U = eps1 + eps2)
 }
 
-#deprecated 10/24/26
-compute_epsilons_old<- function(L, nx = 3000){
+compute_epsilons<- function(L, nx = 3000){
   eps1 <-  max_diff_over_delta(L=L,nx=nx)
   eps2 <- compute_eps2(L) # error from finite L
   return(list(eps1=eps1,eps2=eps2,epsilon_U = eps1+eps2))
