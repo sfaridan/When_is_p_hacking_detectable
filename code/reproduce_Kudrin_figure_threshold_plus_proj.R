@@ -89,8 +89,8 @@ CFG <- list(
   J0             = 20,                    # weights w_j = min(1, (1/p)^(j - J0))
   p_weight       = 2,
   shift          = 1.96,
-  L              = 6.5,
-  numgrid        = 3000,
+  L              = 7,
+  numgrid        = 1000,
   proj_boots     = 100,
   proj_mode      = "full",                # "full": proj_boots bootstrap draws per meta-sample, as in
   # the paper; "warp": one draw per meta-sample and a pooled

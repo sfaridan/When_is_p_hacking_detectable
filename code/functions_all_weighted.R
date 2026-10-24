@@ -68,6 +68,22 @@ make_worker <- function(Asum, Rg, coeffs_orig, coeffs_w, p_hat_w, w, n, sn,
     cnt         <- tabulate(sampled_articles, nbins = nrow(Asum))
     coeffs_boot <- as.numeric(crossprod(cnt, Asum)) / sum(cnt * Rg)
     estar_w     <- w * sqrt(n) * (coeffs_boot - coeffs_orig)          # weighted bootstrap draw
+    #d_fs <- project(coeffs_w + estar_w * sn, A_aug, Uw, M)$residual    # FS perturbation
+    #c(fs   = (d_fs - orig_resid / sqrt(n)) / sn)
+    d_pp <- project(p_hat_w + estar_w * sn, A_aug, Uw, M)$residual   # perturb the fitted honest point (conservative)
+    c(fs = d_pp / sn)
+  }
+}
+
+# Builds the per-draw computation as a self-contained closure, so it can be shipped to workers
+make_worker_nocorrection <- function(Asum, Rg, coeffs_orig, coeffs_w, p_hat_w, w, n, sn,
+                        orig_resid, A_aug, Uw, M, project) {
+  force(Asum); force(Rg); force(coeffs_orig); force(coeffs_w); force(p_hat_w); force(w)
+  force(n); force(sn); force(orig_resid); force(A_aug); force(Uw); force(M); force(project)
+  function(sampled_articles) {
+    cnt         <- tabulate(sampled_articles, nbins = nrow(Asum))
+    coeffs_boot <- as.numeric(crossprod(cnt, Asum)) / sum(cnt * Rg)
+    estar_w     <- w * sqrt(n) * (coeffs_boot - coeffs_orig)          # weighted bootstrap draw
     d_fs <- project(coeffs_w + estar_w * sn, A_aug, Uw, M)$residual    # FS perturbation
     c(fs   = (d_fs - orig_resid / sqrt(n)) / sn)
   }
