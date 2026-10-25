@@ -72,7 +72,7 @@ CODE_DIR <- file.path(ROOT, "code")
 QUICK <- FALSE   # TRUE: small run that checks the pipeline; FALSE: the settings below
 
 CFG <- list(
-  name           = "kudrin_style_mean_dial",   # names the output folder and files
+  name           = "kudrin_style_mean_dial_EKW",   # names the output folder and files
   S_values       = c(1000, 5000),        # one figure per S (his Figs. 2 and 3)
   taus           = seq(0, 1, by = 0.1),  # share of results that are p-hacked
   reps           = 1000,                 # Monte Carlo repetitions per (S, method, panel, tau)
@@ -110,11 +110,11 @@ CFG <- list(
   smooth_pub     = list(sw2 = NULL, theta = NULL),   # "smooth_pub": r_smooth_pub()'s sw2, theta
   
   # Kudrin tests: your kudrin_tests()
-  kudrin_boots   = 199,                  # T_inf bootstrap draws
+  kudrin_boots   = 1,                  # T_inf bootstrap draws
   eig_floor      = 1e-8,                 # hybrid metric floor; extra values add sensitivity columns
   
   # Projection test: your run_test_weight_fast(), with the paper's settings
-  run_projection = TRUE,
+  run_projection = FALSE,
   num_coeffs     = 41,                   # J = 40
   J0             = 20,                   # weights w_j = min(1, (1/p)^(j - J0))
   p_weight       = 2,
@@ -458,3 +458,158 @@ if (length(CFG$eig_floor) > 1) {
   print(res[, c("S", "row", "panel", "tau", "T_H_hybrid", sapply(CFG$eig_floor[-1], hyb_name))], digits = 3)
 }
 message("Figures and tables written to ", OUT_DIR)
+
+
+## ---- 6. LaTeX tables ----------------------------------------------------------------------
+## Paste at the end of kudrin_style_figures.R. One table per S, laid out like the figure: a
+## block of rows per p-hacking method (the figure's rows), tau down each block, and a column
+## group per panel (the figure's panels) with one column per test. Written to
+## OUT_DIR/NAME_S1000.tex, OUT_DIR/NAME_S5000.tex; \input{} them in the paper, which needs
+## \usepackage{booktabs}. Rates are among the repetitions in which a test could be computed;
+## cells where Kudrin's tests (dagger) or the projection test (double dagger) failed in some
+## repetitions are marked.
+## Panel headers come from the panel's pi0; to set one yourself, add latex = "..." to that
+## panel in CFG$panels, e.g. list(id = "N05", pi0 = ..., latex = "$h \\sim N(2, 0.5^2)$").
+## Method headers come from the row titles; to set them yourself, add to CFG, e.g.
+## CFG$row_latex <- c(max = "Maximum of 8 specifications").
+## To rebuild the tables from saved results without rerunning the simulations, run
+## sections 0-3, then res <- readRDS(file.path(OUT_DIR, paste0("results_", CFG$name, ".rds")))
+## and this section.
+
+TABLE_OPTS <- list(
+  taus      = NULL,     # NULL: every tau in the results; or a subset such as seq(0, 1, by = 0.2)
+  digits    = 3,        # decimals of the rejection rates
+  bold_best = FALSE,    # TRUE: bold the highest rejection rate in each panel (tau > 0 only)
+  fragment  = FALSE     # TRUE: write only the tabular, without the table environment and notes
+)
+
+TEST_LATEX <- c(proj = "Proj.", T_inf = "$T_\\infty$", T_H = "$T_H$",
+                T_H_hybrid = "$T_H^{\\mathrm{hyb}}$", EKW_max = "EKW")
+
+# Plain-text titles: escape the characters LaTeX treats as special (math in $...$ is kept)
+latex_text <- function(x) {
+  x <- gsub("([&%#_])", "\\\\\\1", x)
+  x <- gsub("<=", "$\\\\le$", x)
+  gsub(">=", "$\\\\ge$", x)
+}
+
+# Panel header from a pi0 spec (as pi0_label(), in LaTeX)
+pi0_latex <- function(spec) {
+  g <- function(x) format(signif(x, 4))
+  s <- spec$shape
+  if (identical(spec, PI0_ALIASES$kudrin_pi_hat)) return("$h \\sim \\hat{\\Pi}$")
+  if (s == "point")   return(sprintf("$h = %s$", g(spec$h_center)))
+  if (s == "normal")  return(sprintf("$h \\sim N(%s, %s^2)$", g(spec$h_center), g(spec$sigma_h)))
+  if (s == "uniform") return(sprintf("$h \\sim U[%s, %s]$", g(spec$h_center - spec$sigma_h / 2),
+                                     g(spec$h_center + spec$sigma_h / 2)))
+  if (s == "chi2")    return(sprintf("$h \\sim \\chi^2_{%s}$", g(spec$h_center)))
+  if (s == "poisson") return(sprintf("$h \\sim \\mathrm{Poisson}(%s)$", g(spec$h_center)))
+  if (s == "gamma") {
+    if (is.null(spec$gamma_scale)) {
+      return(sprintf("$h \\sim \\Gamma(%s, \\mathrm{rate}\\ %s)$", g(spec$gamma_shape), g(spec$gamma_rate)))
+    }
+    return(sprintf("$h \\sim \\Gamma(%s, \\mathrm{scale}\\ %s)$", g(spec$gamma_shape), g(spec$gamma_scale)))
+  }
+  if (s == "double_normal") {
+    return(sprintf("$h \\sim \\frac{1}{2} N(%s, %s^2) + \\frac{1}{2} N(%s, %s^2)$", g(spec$h_center),
+                   g(spec$sigma_h), g(spec$h_center - 2), g(spec$sigma_h)))
+  }
+  if (s == "fitted") return("$h \\sim$ z-curve fit")
+  "$h \\sim$ custom"
+}
+
+write_latex_tables <- function(res, opts = TABLE_OPTS) {
+  tests <- intersect(c("proj", "T_inf", "T_H", "T_H_hybrid", "EKW_max"), names(res))
+  kt    <- intersect(c("T_inf", "T_H", "T_H_hybrid"), tests)
+  nt    <- length(tests)
+  np    <- length(PANELS)
+  ncols <- 1 + nt * np
+  plab  <- vapply(seq_along(PANELS), function(k) {
+    l <- CFG$panels[[k]]$latex
+    if (is.null(l)) pi0_latex(PANELS[[k]]$spec) else l
+  }, "")
+  rlab  <- vapply(ROWS, function(rw) {
+    if (!is.null(CFG$row_latex) && rw$id %in% names(CFG$row_latex)) CFG$row_latex[[rw$id]] else latex_text(rw$title)
+  }, "")
+  head <- c(paste0(" & ", paste(sprintf("\\multicolumn{%d}{c}{%s}", nt, plab), collapse = " & "), " \\\\"),
+            paste(sprintf("\\cmidrule(lr){%d-%d}", 2 + (seq_len(np) - 1) * nt, 1 + seq_len(np) * nt),
+                  collapse = " "),
+            paste0("$\\tau$ & ", paste(rep(TEST_LATEX[tests], np), collapse = " & "), " \\\\"))
+  files <- character(0)
+  
+  for (S in sort(unique(res$S))) {
+    rs   <- res[res$S == S, , drop = FALSE]
+    taus <- sort(unique(rs$tau))
+    if (!is.null(opts$taus)) taus <- taus[round(taus, 8) %in% round(opts$taus, 8)]
+    tdig <- if (all(abs(taus * 10 - round(taus * 10)) < 1e-8)) 1 else 2
+    dag_k <- FALSE
+    dag_p <- FALSE
+    body  <- character(0)
+    for (i in seq_along(ROWS)) {
+      if (i > 1) body <- c(body, "\\midrule")
+      body <- c(body, sprintf("\\multicolumn{%d}{l}{\\textit{%s}} \\\\", ncols, rlab[i]))
+      for (tau in taus) {
+        entries <- character(0)
+        for (k in seq_along(PANELS)) {
+          r <- rs[rs$row == ROWS[[i]]$id & rs$panel == PANELS[[k]]$id & abs(rs$tau - tau) < 1e-8, ,
+                  drop = FALSE]
+          if (nrow(r) == 0) {
+            entries <- c(entries, rep("", nt))
+            next
+          }
+          v  <- vapply(tests, function(tn) as.numeric(r[[tn]][1]), 0)
+          tx <- ifelse(is.finite(v), formatC(v, format = "f", digits = opts$digits), "--")
+          if (isTRUE(opts$bold_best) && tau > 0 && any(is.finite(v))) {
+            b <- is.finite(v) & v >= max(v, na.rm = TRUE) - 1e-12
+            tx[b] <- paste0("\\textbf{", tx[b], "}")
+          }
+          if (length(kt) > 0 && isTRUE(r$kudrin_failed[1] > 0)) {
+            j <- match(kt, tests)
+            tx[j] <- paste0(tx[j], "$^\\dagger$")
+            dag_k <- TRUE
+          }
+          if ("proj" %in% tests && isTRUE(r$proj_failed[1] > 0)) {
+            j <- match("proj", tests)
+            tx[j] <- paste0(tx[j], "$^\\ddagger$")
+            dag_p <- TRUE
+          }
+          entries <- c(entries, tx)
+        }
+        body <- c(body, paste0(formatC(tau, format = "f", digits = tdig), " & ",
+                               paste(entries, collapse = " & "), " \\\\"))
+      }
+    }
+    
+    tab <- c(sprintf("\\begin{tabular}{l%s}", strrep(strrep("c", nt), np)),
+             "\\toprule", head, "\\midrule", body, "\\bottomrule", "\\end{tabular}")
+    S_tex <- gsub(",", "{,}", format(S, big.mark = ",", scientific = FALSE), fixed = TRUE)
+    notes <- paste0(
+      sprintf("Rejection rates of %s\\%%-level tests over %s Monte Carlo repetitions; each meta-sample has ",
+              format(100 * CFG$alpha), paste(format(unique(rs$reps), big.mark = ","), collapse = "/")),
+      sprintf("$S = %s$ $t$-statistics. ", S_tex),
+      "Blocks of rows: p-hacking method. $\\tau$: share of results that are p-hacked, so the $\\tau = 0$ ",
+      "rows are sizes. Column groups: distribution of true effects $h$. ",
+      "Proj.: projection test; $T_\\infty$, $T_H$, $T_H^{\\mathrm{hyb}}$: Kudrin (2025)",
+      if ("EKW_max" %in% tests) "; EKW: highest rejection rate among the EKW (2022) tests" else "", ".",
+      if (dag_k) " $^\\dagger$Kudrin's tests could not be computed in some repetitions; the rate is among the others." else "",
+      if (dag_p) " $^\\ddagger$The projection test could not be computed in some repetitions; the rate is among the others." else "")
+    caption <- sprintf("Rejection rates, $S = %s$%s", S_tex,
+                       if (S == 1000) " (as in Kudrin's Fig.~2)" else if (S == 5000) " (as in Kudrin's Fig.~3)" else "")
+    out <- if (isTRUE(opts$fragment)) tab else c(
+      "\\begin{table}[htbp]", "\\centering",
+      sprintf("\\caption{%s}", caption),
+      sprintf("\\label{tab:%s_S%d}", CFG$name, as.integer(S)),
+      "\\footnotesize", "\\setlength{\\tabcolsep}{4pt}",
+      tab,
+      "\\par\\smallskip",
+      sprintf("\\begin{minipage}{\\linewidth}\\footnotesize\\textit{Notes:} %s\\end{minipage}", notes),
+      "\\end{table}")
+    f <- file.path(OUT_DIR, sprintf("%s_S%d.tex", CFG$name, as.integer(S)))
+    writeLines(out, f)
+    files <- c(files, f)
+  }
+  invisible(files)
+}
+
+TABLE_FILES <- write_latex_tables(res)
+message("LaTeX tables written: ", paste(basename(TABLE_FILES), collapse = ", "))
