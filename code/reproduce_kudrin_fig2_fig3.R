@@ -57,7 +57,7 @@ ROOT     <- "C:/Users/sfaridani6/Documents/GitHub/When_is_p_hacking_detectable" 
 CODE_DIR <- file.path(ROOT, "code")
 OUT_DIR  <- file.path(ROOT, "figures", "kudrin_fig2_fig3")
 
-QUICK <- TRUE   # TRUE: small run that checks the pipeline; FALSE: Kudrin's settings
+QUICK <- FALSE   # TRUE: small run that checks the pipeline; FALSE: Kudrin's settings
 
 CFG <- list(
   S_values       = c(1000, 5000),         # t-statistics per meta-sample: his Fig. 2 and Fig. 3
