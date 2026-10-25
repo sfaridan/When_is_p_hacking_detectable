@@ -80,15 +80,16 @@ CFG <- list(
   
   # Rows, top to bottom: any of "kudrin_threshold", "kudrin_minimum", "threshold", "max",
   # "smooth_pub"
-  methods        = c("threshold", "max"),
-  row_titles     = c(max = "Maximum of 8 specifications", threshold = "Re-run once if not significant"),                 # optional, e.g. c(max = "Best of 8 specifications")
+  methods        = c("max", "kudrin_minimum"),
+  row_titles     = c(max = "Maximum of 8 specifications", threshold = "Max Search"),                 # optional, e.g. c(max = "Best of 8 specifications")
   
   # Panels, left to right: distributions of true effects (see the header)
   panels         = list(
-    list(id = "N0", pi0 = list(shape = "normal", h_center = 0, sigma_h = 0.5)),
-    list(id = "N1", pi0 = list(shape = "normal", h_center = 1, sigma_h = 0.5)),
-    list(id = "N2", pi0 = list(shape = "normal", h_center = 2, sigma_h = 0.5))
-  ),
+    list(id = "N05", pi0 = list(shape = "normal", h_center = 2, sigma_h = 0.5)),
+    list(id = "N07", pi0 = list(shape = "normal", h_center = 2, sigma_h = 0.7)),
+    list(id = "N09", pi0 = list(shape = "normal", h_center = 2, sigma_h = 0.9))),
+
+  
   # Other examples:
   #   list(pi0 = list(shape = "point", h_center = 1)), list(pi0 = "kudrin_pi_hat"),
   #   list(pi0 = "poisson(2)", id = "pois2"), list(pi0 = function(n) rexp(n), label = "h ~ Exp(1)")
