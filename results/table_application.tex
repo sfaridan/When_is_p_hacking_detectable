@@ -8,21 +8,22 @@
 \cmidrule(lr){6-7} \cmidrule(lr){8-14} \cmidrule(lr){15-18}
  & $n$ & Articles & Med.\ $\nu$ & $\Delta_\nu$ & $p$ & $\widehat{B}$ & LCM & Fisher & Disc. & Binomial & CS1 & CS2B & Min & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hybrid}}$ & Min \\
 \midrule
-RCT & 7101 & 141 & 185 & 0.0014 & .00 & .0028 & 1.00 & 1.00 & .61 & .74 & .10 & .14 & .10 & .01 & .00 & .00$^{\dagger}$ & .00 \\
-IV & 5158 & 281 & 262 & 0.0013 & .00 & .0040 & 1.00 & 1.00 & .55 & .81 & .10 & .00 & .00 & .21 & .00 & .00$^{\dagger}$ & .00 \\
-DID & 5780 & 241 & 293.5 & 0.0014 & .03 & .0006 & 1.00 & 1.00 & .29 & 1.00 & .53 & .43 & .29 & .05 & .22 & .22$^{\dagger}$ & .05 \\
-RDD & 3117 & 85 & $\cdot$ & $\cdot$ & .12 & .0000 & 1.00 & 1.00 & .42 & 1.00 & .88 & .98 & .42 & .54 & .25 & .25$^{\dagger}$ & .25 \\
+RCT & 6927 & 141 & 185 & 0.0014 & .00 & .0029 & .43 & 1.00 & .17 & .01 & .75 & .76 & .01 & .00 & .00 & .00$^{\dagger}$ & .00 \\
+IV & 5031 & 278 & 262 & 0.0013 & .00 & .0029 & 1.00 & 1.00 & .15 & .09 & .84 & .23 & .09 & .40 & .06 & .06$^{\dagger}$ & .06 \\
+DID & 5506 & 240 & 293.5 & 0.0014 & .03 & .0006 & .74 & 1.00 & .02 & .02 & .20 & .01 & .01 & .04 & .01 & .01$^{\dagger}$ & .01 \\
+RDD & 2942 & 85 & $\cdot$ & $\cdot$ & .01 & .0014 & .87 & 1.00 & .82 & .06 & .83 & .70 & .06 & .17 & .01 & .01$^{\dagger}$ & .01 \\
 \bottomrule
 \end{tabular}}
 
 \medskip
 \begin{minipage}{\linewidth}
 Results for the Brodeur et al. (2020) data. Following Kudrin (2025), we drop tests whose reported coefficient is missing or zero.
+As in Appendix D.3, we divide each coefficient by the smallest standard error consistent with the reported one.
+We drop $t$-statistics whose standard error is reported as zero or whose rounding unit in $t$-units exceeds 1.
 Columns headed $J_0$ report $p$-values and breakdown statistics $\widehat{B}$ of the projection test with $J=40$.
 Med.\ $\nu$ is the median effective sample size as measured by the median number of clusters in a random sample of 100 articles for each causal inference method.
 In ambiguous cases, the smallest cluster count was always used.
 $\Delta_\nu=\frac{1}{100}\sum_{k=1}^{100}\sup_h\|\varphi(t-h)-t_{\nu_k,h}(t)\|_T$ is the average difference between the PDFs of the standard normal and Student-$t$ over the sample of 100 effective sample sizes collected (computed numerically).
-Since the $p$-value for RDDs is insignificant, we did not compute $\Delta_\nu$ for them.
 We form $\mathcal{X}$ using a grid of 3000 elements evenly spaced between $\pm 6.5$ plus the scalar 9999.
 Discretization incurs error $\mathcal{E}(L,\delta)=0.00063$, which is already accounted for in $\widehat{B}$ and the $p$-value.
 The discretization was chosen to be made of round numbers and result in error relatively small compared to $\Delta_\nu$.
