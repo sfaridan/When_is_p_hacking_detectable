@@ -72,22 +72,23 @@ CODE_DIR <- file.path(ROOT, "code")
 QUICK <- FALSE   # TRUE: small run that checks the pipeline; FALSE: the settings below
 
 CFG <- list(
-  name           = "kudrin_style_mean_dial_EKW",   # names the output folder and files
-  S_values       = c(1000, 5000),        # one figure per S (his Figs. 2 and 3)
+  name           = "kudrin_style_var_dial",   # names the output folder and files
+  S_values       = c(5000),        # one figure per S (his Figs. 2 and 3)
   taus           = seq(0, 1, by = 0.1),  # share of results that are p-hacked
   reps           = 1000,                 # Monte Carlo repetitions per (S, method, panel, tau)
   alpha          = 0.05,                 # test level
   
   # Rows, top to bottom: any of "kudrin_threshold", "kudrin_minimum", "threshold", "max",
   # "smooth_pub"
-  methods        = c("max", "kudrin_minimum"),
-  row_titles     = c(max = "Maximum of 8 specifications", threshold = "Max Search"),                 # optional, e.g. c(max = "Best of 8 specifications")
+  methods        = c("max", "threshold"),
+  row_titles     = c(max = "Maximum of 8 specifications", threshold = "Threshold: second draw if t <= 1.96"),                 # optional, e.g. c(max = "Best of 8 specifications")
   
   # Panels, left to right: distributions of true effects (see the header)
   panels         = list(
+    list(id = "N03", pi0 = list(shape = "normal", h_center = 2, sigma_h = 0.3)),
     list(id = "N05", pi0 = list(shape = "normal", h_center = 2, sigma_h = 0.5)),
-    list(id = "N07", pi0 = list(shape = "normal", h_center = 2, sigma_h = 0.7)),
-    list(id = "N09", pi0 = list(shape = "normal", h_center = 2, sigma_h = 0.9))),
+    list(id = "N07", pi0 = list(shape = "normal", h_center = 2, sigma_h = 0.7))
+       ),
 
   
   # Other examples:
@@ -110,11 +111,11 @@ CFG <- list(
   smooth_pub     = list(sw2 = NULL, theta = NULL),   # "smooth_pub": r_smooth_pub()'s sw2, theta
   
   # Kudrin tests: your kudrin_tests()
-  kudrin_boots   = 1,                  # T_inf bootstrap draws
+  kudrin_boots   = 199,                  # T_inf bootstrap draws
   eig_floor      = 1e-8,                 # hybrid metric floor; extra values add sensitivity columns
   
   # Projection test: your run_test_weight_fast(), with the paper's settings
-  run_projection = FALSE,
+  run_projection = TRUE,
   num_coeffs     = 41,                   # J = 40
   J0             = 20,                   # weights w_j = min(1, (1/p)^(j - J0))
   p_weight       = 2,
@@ -127,8 +128,8 @@ CFG <- list(
   # (slow); or 0.00063, the value in the paper
   
   # EKW tests (Tests.R); without them the figures have no EKW line
-  run_ekw        = FALSE,
-  ekw_J          = 15,
+  run_ekw        = TRUE,
+  ekw_J          = 30,
   
   # Computing
   n_cores        = max(1L, parallel::detectCores() - 1L, na.rm = TRUE),
