@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\centering
+\caption{Rejection rates, $S = 1{,}000$ (as in Kudrin's Fig.~2)}
+\label{tab:simulate_size_S1000}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccccccccccccccccccc}
+\toprule
+ & \multicolumn{4}{c}{$h = 0$} & \multicolumn{4}{c}{$h = 0.5$} & \multicolumn{4}{c}{$h \sim \mathrm{Poisson}(2)$} & \multicolumn{4}{c}{$h \sim$ custom} & \multicolumn{4}{c}{$h \sim N(0, 1^2)$} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13} \cmidrule(lr){14-17} \cmidrule(lr){18-21}
+$\tau$ & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ \\
+\midrule
+\multicolumn{21}{l}{\textit{Maximum of 8 specifications}} \\
+0.0 & 0.030 & 0.010 & 0.100 & 0.440 & 0.050 & 0.080 & 0.070 & 0.110 & 0.020 & 0.060 & 0.120 & 0.120 & 0.020 & 0.040 & 0.050 & 0.050 & 0.020 & 0.030 & 0.080 & 0.080 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}\footnotesize\textit{Notes:} Rejection rates of 5\%-level tests over 100 Monte Carlo repetitions; each meta-sample has $S = 1{,}000$ $t$-statistics. Blocks of rows: p-hacking method. $\tau$: share of results that are p-hacked, so the $\tau = 0$ rows are sizes. Column groups: distribution of true effects $h$. Proj.: projection test; $T_\infty$, $T_H$, $T_H^{\mathrm{hyb}}$: Kudrin (2025).\end{minipage}
+\end{table}
