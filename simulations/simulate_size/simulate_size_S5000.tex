@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\centering
+\caption{Rejection rates, $S = 5{,}000$ (as in Kudrin's Fig.~3)}
+\label{tab:simulate_size_S5000}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccccccccccccccccccccccc}
+\toprule
+ & \multicolumn{5}{c}{$h = 0$} & \multicolumn{5}{c}{$h = 0.5$} & \multicolumn{5}{c}{$h \sim \mathrm{Poisson}(2)$} & \multicolumn{5}{c}{$h \sim$ custom} & \multicolumn{5}{c}{$h \sim N(0, 1^2)$} \\
+\cmidrule(lr){2-6} \cmidrule(lr){7-11} \cmidrule(lr){12-16} \cmidrule(lr){17-21} \cmidrule(lr){22-26}
+$\tau$ & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & EKW & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & EKW & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & EKW & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & EKW & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & EKW \\
+\midrule
+\multicolumn{26}{l}{\textit{Maximum of 8 specifications}} \\
+0.0 & 0.077 & 0.026 & 0.021 & 0.469 & 0.130 & 0.034 & 0.039 & 0.025 & 0.027 & 0.077 & 0.018 & 0.027 & 0.018 & 0.018 & 0.048 & 0.015 & 0.034 & 0.013 & 0.013 & 0.049 & 0.023 & 0.046 & 0.020 & 0.020 & 0.052 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}\footnotesize\textit{Notes:} Rejection rates of 5\%-level tests over 1,000 Monte Carlo repetitions; each meta-sample has $S = 5{,}000$ $t$-statistics. Blocks of rows: p-hacking method. $\tau$: share of results that are p-hacked, so the $\tau = 0$ rows are sizes. Column groups: distribution of true effects $h$. Proj.: projection test; $T_\infty$, $T_H$, $T_H^{\mathrm{hyb}}$: Kudrin (2025); EKW: highest rejection rate among the EKW (2022) tests.\end{minipage}
+\end{table}
