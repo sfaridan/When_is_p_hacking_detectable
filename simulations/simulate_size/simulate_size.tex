@@ -1,0 +1,40 @@
+\begin{table}[htbp]
+\centering
+\caption{Size of 5\%-level tests}
+\label{tab:simulate_size}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\ifdefined\simtablebox\else\newsavebox{\simtablebox}\fi
+\sbox{\simtablebox}{%
+\begin{tabular}{lrccccccccccc}
+\toprule
+ &  &  & \multicolumn{3}{c}{Kudrin (2025)} & \multicolumn{7}{c}{Elliott et al. (2022)} \\
+\cmidrule(lr){4-6} \cmidrule(lr){7-13}
+$\Pi_0$ & $S$ & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & LCM & Fisher & Disc. & Binom. & CS1 & CSUB & CS2B \\
+\midrule
+$h = 0$ & 1,000 & \textbf{0.114} & 0.027 & \textbf{0.085} & \textbf{0.493} & 0.039 & 0.042 & 0.042 & 0.019 & \textbf{0.285} & 0.000 & \textbf{0.311} \\
+ & 5,000 & \textbf{0.077} & 0.026 & 0.021 & \textbf{0.469} & 0.048 & 0.054 & 0.038 & 0.033 & \textbf{0.118} & 0.000 & \textbf{0.130} \\
+ & 10,000 & 0.052 & 0.027 & 0.018 & \textbf{0.440} & 0.042 & 0.046 & 0.035 & 0.019 & \textbf{0.086} & 0.000 & \textbf{0.084} \\
+\addlinespace
+$h = 0.5$ & 1,000 & 0.061 & 0.038 & \textbf{0.083} & \textbf{0.115} & 0.000 & 0.001 & 0.026 & 0.027 & \textbf{0.205} & 0.000 & \textbf{0.282} \\
+ & 5,000 & 0.034 & 0.039 & 0.025 & 0.027 & 0.000 & 0.000 & 0.052 & 0.028 & 0.044 & 0.000 & \textbf{0.077} \\
+ & 10,000 & 0.020 & 0.028 & 0.019 & 0.019 & 0.000 & 0.000 & 0.040 & 0.029 & 0.020 & 0.000 & 0.045 \\
+\addlinespace
+$h \sim \mathrm{Poisson}(2)$ & 1,000 & 0.041 & 0.031 & 0.059 & 0.059 & 0.000 & 0.000 & 0.044 & 0.023 & 0.050 & 0.000 & \textbf{0.137} \\
+ & 5,000 & 0.018 & 0.027 & 0.018 & 0.018 & 0.000 & 0.000 & 0.048 & 0.019 & 0.018 & 0.000 & 0.044 \\
+ & 10,000 & 0.006 & 0.016 & 0.012 & 0.012 & 0.000 & 0.000 & 0.047 & 0.009 & 0.014 & 0.000 & 0.042 \\
+\addlinespace
+$h$ $\sim$ Exp(1) & 1,000 & 0.041 & 0.035 & \textbf{0.066} & \textbf{0.066} & 0.000 & 0.000 & 0.049 & 0.024 & \textbf{0.106} & 0.000 & \textbf{0.175} \\
+ & 5,000 & 0.015 & 0.034 & 0.013 & 0.013 & 0.000 & 0.000 & 0.041 & 0.022 & 0.022 & 0.000 & 0.049 \\
+ & 10,000 & 0.007 & 0.024 & 0.013 & 0.013 & 0.000 & 0.000 & 0.050 & 0.015 & 0.008 & 0.000 & 0.027 \\
+\addlinespace
+$h \sim N(0, 1^2)$ & 1,000 & 0.053 & 0.035 & 0.058 & 0.058 & 0.000 & 0.000 & 0.059 & 0.025 & \textbf{0.115} & 0.000 & \textbf{0.211} \\
+ & 5,000 & 0.023 & 0.046 & 0.020 & 0.020 & 0.000 & 0.000 & 0.045 & 0.029 & 0.021 & 0.000 & 0.052 \\
+ & 10,000 & 0.009 & 0.033 & 0.016 & 0.016 & 0.000 & 0.000 & 0.053 & 0.022 & 0.014 & 0.000 & 0.043 \\
+\bottomrule
+\end{tabular}%
+}%
+\usebox{\simtablebox}
+\par\smallskip
+\begin{minipage}{\wd\simtablebox}\footnotesize\textit{Notes:} Rejection rates in 1,000 Monte Carlo repetitions, each a meta-sample of $S$ $t$-statistics, none of them p-hacked ($\tau = 0$), so every entry is a size. Proj.: projection test; $T_\infty$, $T_H$, $T_H^{\mathrm{hyb}}$: tests of Kudrin (2025); LCM, Fisher, Disc., Binom., CS1, CSUB, CS2B: tests of Elliott et al. (2022), run with their Tests.R, where a test that cannot be computed counts as a non-rejection. Sizes in bold are more than 1.96 Monte Carlo standard errors above 0.05, i.e., above 0.0635.\end{minipage}
+\end{table}

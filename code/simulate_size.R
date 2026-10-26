@@ -462,32 +462,56 @@ if (length(CFG$eig_floor) > 1) {
 }
 message("Figures and tables written to ", OUT_DIR)
 
-
 ## ---- 6. LaTeX tables ----------------------------------------------------------------------
-## Paste at the end of kudrin_style_figures.R. One table per S, laid out like the figure: a
-## block of rows per p-hacking method (the figure's rows), tau down each block, and a column
-## group per panel (the figure's panels) with one column per test. Written to
-## OUT_DIR/NAME_S1000.tex, OUT_DIR/NAME_S5000.tex; \input{} them in the paper, which needs
-## \usepackage{booktabs}. Rates are among the repetitions in which a test could be computed;
-## cells where Kudrin's tests (dagger) or the projection test (double dagger) failed in some
-## repetitions are marked.
-## Panel headers come from the panel's pi0; to set one yourself, add latex = "..." to that
-## panel in CFG$panels, e.g. list(id = "N05", pi0 = ..., latex = "$h \\sim N(2, 0.5^2)$").
-## Method headers come from the row titles; to set them yourself, add to CFG, e.g.
-## CFG$row_latex <- c(max = "Maximum of 8 specifications").
+## Replaces section 6 of kudrin_style_figures.R. The tests are the columns, as in the paper's
+## Tables 1 and 2. The p-hacking methods head blocks of rows, and the distributions of true
+## effects (panels), the sample sizes S and the shares tau of p-hacked results are nested down
+## the rows, outermost first, in the order of TABLE_OPTS$nest. Whatever takes a single value
+## goes in the caption instead, so with CFG$taus = 0 this is one size table with a block of
+## S rows per Pi0. TABLE_OPTS$col_group puts S, the panels, tau or the methods in groups of
+## test columns instead, and TABLE_OPTS$split_by writes a separate table per value
+## (split_by = "S", col_group = "panel", nest = "tau" give the old layout).
+## Written to OUT_DIR/NAME.tex (with split_by = "S": OUT_DIR/NAME_S1000.tex, ...); \input{} it
+## in the paper, which needs \usepackage{booktabs}. Rates are among the repetitions in which a
+## test could be computed; cells where Kudrin's tests (dagger) or the projection test (double
+## dagger) failed in some repetitions are marked.
+## Panel labels come from the panel's pi0 or its plain-text label; to set one yourself, add
+## latex = "..." to that panel in CFG$panels, e.g. list(id = "exp1", pi0 = ...,
+## latex = "$h \\sim \\mathrm{Exp}(1)$"). Method labels come from the row titles; to set them
+## yourself, add to CFG, e.g. CFG$row_latex <- c(max = "Maximum of 8 specifications").
 ## To rebuild the tables from saved results without rerunning the simulations, run
 ## sections 0-3, then res <- readRDS(file.path(OUT_DIR, paste0("results_", CFG$name, ".rds")))
 ## and this section.
 
+# The EKW (2022) tests as the engine names them, in the order of the paper's Tables 1 and 2
+EKW_TESTS <- c("EKW_LCM", "EKW_Fisher", "EKW_Discontinuity", "EKW_Binomial", "EKW_CS1", "EKW_CSUB",
+               "EKW_CS2B")
+
 TABLE_OPTS <- list(
-  taus      = NULL,     # NULL: every tau in the results; or a subset such as seq(0, 1, by = 0.2)
-  digits    = 3,        # decimals of the rejection rates
-  bold_best = FALSE,    # TRUE: bold the highest rejection rate in each panel (tau > 0 only)
-  fragment  = FALSE     # TRUE: write only the tabular, without the table environment and notes
+  nest      = c("panel", "S", "tau"),  # row levels, outermost first
+  col_group = "none",  # or "S", "panel", "tau", "row" (method): a group of test columns per value
+  split_by  = "none",  # or "S", "row", "panel", "tau": a separate table and file per value
+  taus      = NULL,    # NULL: every tau in the results; or a subset such as seq(0, 1, by = 0.2)
+  S_values  = NULL,    # NULL: every S in the results; or a subset such as c(1000, 5000)
+  tests     = c("proj", "T_inf", "T_H", "T_H_hybrid", EKW_TESTS),  # columns, if in the results;
+  # "EKW_max" in place of EKW_TESTS: one column, the best of the EKW tests
+  digits    = 3,       # decimals of the rejection rates
+  mark_size = TRUE,    # tau = 0: bold sizes more than 1.96 Monte Carlo s.e. above CFG$alpha
+  bold_best = FALSE,   # tau > 0: bold the highest rejection rate in each row and column group
+  caption   = NULL,    # NULL: written from the results; or your own
+  notes     = NULL,    # text added at the end of the notes, e.g. the tests' tuning parameters
+  resize    = FALSE,   # TRUE: scale the table to the text width (needs \usepackage{graphicx})
+  fragment  = FALSE    # TRUE: write only the tabular, without the table environment and notes
 )
 
-TEST_LATEX <- c(proj = "Proj.", T_inf = "$T_\\infty$", T_H = "$T_H$",
-                T_H_hybrid = "$T_H^{\\mathrm{hyb}}$", EKW_max = "EKW")
+TEST_LATEX <- c(proj = "Proj.", T_inf = "$T_\\infty$", T_H = "$T_H$", T_H_hybrid = "$T_H^{\\mathrm{hyb}}$",
+                EKW_LCM = "LCM", EKW_Fisher = "Fisher", EKW_Discontinuity = "Disc.",
+                EKW_Binomial = "Binom.", EKW_CS1 = "CS1", EKW_CSUB = "CSUB", EKW_CS2B = "CS2B",
+                EKW_max = "EKW")
+TEST_SPAN  <- c(T_inf = "Kudrin (2025)", T_H = "Kudrin (2025)",          # header over these tests;
+                T_H_hybrid = "Kudrin (2025)",                            # character(0) for none
+                setNames(rep("Elliott et al. (2022)", length(EKW_TESTS)), EKW_TESTS))
+DIM_LATEX  <- c(panel = "$\\Pi_0$", S = "$S$", tau = "$\\tau$")          # headers of the row labels
 
 # Plain-text titles: escape the characters LaTeX treats as special (math in $...$ is kept)
 latex_text <- function(x) {
@@ -496,7 +520,7 @@ latex_text <- function(x) {
   gsub(">=", "$\\\\ge$", x)
 }
 
-# Panel header from a pi0 spec (as pi0_label(), in LaTeX)
+# Panel label from a pi0 spec (as pi0_label(), in LaTeX)
 pi0_latex <- function(spec) {
   g <- function(x) format(signif(x, 4))
   s <- spec$shape
@@ -521,97 +545,258 @@ pi0_latex <- function(spec) {
   "$h \\sim$ custom"
 }
 
+# Panel label: the panel's latex = "...", else its plain-text label ("h ~ Exp(1)"), else its pi0
+panel_latex <- function(id) {
+  k <- match(id, names(PANELS))
+  p <- CFG$panels[[k]]
+  if (!is.null(p$latex)) return(p$latex)
+  if (is.character(p$label) && length(p$label) == 1) {
+    if (grepl("$", p$label, fixed = TRUE)) return(p$label)
+    x <- gsub("~", "$\\sim$", latex_text(p$label), fixed = TRUE)
+    return(gsub("\\bh\\b", "$h$", x, perl = TRUE))
+  }
+  pi0_latex(PANELS[[k]]$spec)
+}
+
+method_latex <- function(id) {
+  if (!is.null(CFG$row_latex) && id %in% names(CFG$row_latex)) return(CFG$row_latex[[id]])
+  latex_text(ROWS[[id]]$title)
+}
+
+# A value of a dimension as a row label, or (head = TRUE) as a column-group header or in the caption
+dim_latex <- function(dim, v, tdig, head = FALSE) {
+  switch(dim,
+         row   = method_latex(v),
+         panel = panel_latex(v),
+         S     = {
+           x <- format(v, big.mark = ",", scientific = FALSE, trim = TRUE)
+           if (head) sprintf("$S = %s$", gsub(",", "{,}", x, fixed = TRUE)) else x
+         },
+         tau   = {
+           x <- formatC(v, format = "f", digits = tdig)
+           if (head) sprintf("$\\tau = %s$", x) else x
+         })
+}
+
 write_latex_tables <- function(res, opts = TABLE_OPTS) {
-  tests <- intersect(c("proj", "T_inf", "T_H", "T_H_hybrid", "EKW_max"), names(res))
-  kt    <- intersect(c("T_inf", "T_H", "T_H_hybrid"), tests)
+  dims  <- c("row", "panel", "S", "tau")
+  tests <- intersect(opts$tests, names(res))
+  if (length(tests) == 0) stop("None of TABLE_OPTS$tests is a column of the results.")
   nt    <- length(tests)
-  np    <- length(PANELS)
-  ncols <- 1 + nt * np
-  plab  <- vapply(seq_along(PANELS), function(k) {
-    l <- CFG$panels[[k]]$latex
-    if (is.null(l)) pi0_latex(PANELS[[k]]$spec) else l
-  }, "")
-  rlab  <- vapply(ROWS, function(rw) {
-    if (!is.null(CFG$row_latex) && rw$id %in% names(CFG$row_latex)) CFG$row_latex[[rw$id]] else latex_text(rw$title)
-  }, "")
-  head <- c(paste0(" & ", paste(sprintf("\\multicolumn{%d}{c}{%s}", nt, plab), collapse = " & "), " \\\\"),
-            paste(sprintf("\\cmidrule(lr){%d-%d}", 2 + (seq_len(np) - 1) * nt, 1 + seq_len(np) * nt),
-                  collapse = " "),
-            paste0("$\\tau$ & ", paste(rep(TEST_LATEX[tests], np), collapse = " & "), " \\\\"))
-  files <- character(0)
+  kt    <- intersect(c("T_inf", "T_H", "T_H_hybrid"), tests)
+  hdr   <- ifelse(tests %in% names(TEST_LATEX), TEST_LATEX[tests], latex_text(tests))
+  ekw   <- intersect(tests, EKW_TESTS)
+  tnote <- c(if ("proj" %in% tests) "Proj.: projection test",
+             if (length(kt) > 0) paste0(paste(TEST_LATEX[kt], collapse = ", "), ": tests of Kudrin (2025)"),
+             if (length(ekw) > 0) paste0(paste(TEST_LATEX[ekw], collapse = ", "),
+                                         ": tests of Elliott et al. (2022), run with their Tests.R, where ",
+                                         "a test that cannot be computed counts as a non-rejection"),
+             if ("EKW_max" %in% tests) "EKW: highest rejection rate among the EKW (2022) tests")
   
-  for (S in sort(unique(res$S))) {
-    rs   <- res[res$S == S, , drop = FALSE]
-    taus <- sort(unique(rs$tau))
-    if (!is.null(opts$taus)) taus <- taus[round(taus, 8) %in% round(opts$taus, 8)]
-    tdig <- if (all(abs(taus * 10 - round(taus * 10)) < 1e-8)) 1 else 2
-    dag_k <- FALSE
-    dag_p <- FALSE
-    body  <- character(0)
-    for (i in seq_along(ROWS)) {
-      if (i > 1) body <- c(body, "\\midrule")
-      body <- c(body, sprintf("\\multicolumn{%d}{l}{\\textit{%s}} \\\\", ncols, rlab[i]))
-      for (tau in taus) {
-        entries <- character(0)
-        for (k in seq_along(PANELS)) {
-          r <- rs[rs$row == ROWS[[i]]$id & rs$panel == PANELS[[k]]$id & abs(rs$tau - tau) < 1e-8, ,
-                  drop = FALSE]
-          if (nrow(r) == 0) {
-            entries <- c(entries, rep("", nt))
-            next
-          }
-          v  <- vapply(tests, function(tn) as.numeric(r[[tn]][1]), 0)
-          tx <- ifelse(is.finite(v), formatC(v, format = "f", digits = opts$digits), "--")
-          if (isTRUE(opts$bold_best) && tau > 0 && any(is.finite(v))) {
-            b <- is.finite(v) & v >= max(v, na.rm = TRUE) - 1e-12
-            tx[b] <- paste0("\\textbf{", tx[b], "}")
-          }
-          if (length(kt) > 0 && isTRUE(r$kudrin_failed[1] > 0)) {
-            j <- match(kt, tests)
-            tx[j] <- paste0(tx[j], "$^\\dagger$")
-            dag_k <- TRUE
-          }
-          if ("proj" %in% tests && isTRUE(r$proj_failed[1] > 0)) {
-            j <- match("proj", tests)
-            tx[j] <- paste0(tx[j], "$^\\ddagger$")
-            dag_p <- TRUE
-          }
-          entries <- c(entries, tx)
+  # Spanners over adjacent tests that share a TEST_SPAN entry (run starts rfr, ends rto, text rtx)
+  fam <- unname(TEST_SPAN[tests])
+  run <- rle(ifelse(is.na(fam), paste0("\r", seq_len(nt)), fam))
+  rto <- cumsum(run$lengths)
+  rfr <- rto - run$lengths + 1
+  rtx <- ifelse(is.na(fam[rfr]), "", fam[rfr])
+  
+  pick <- function(x, what) {
+    if (is.null(x) || identical(x, "none")) return(NULL)
+    if (!isTRUE(x %in% dims)) {
+      stop("TABLE_OPTS$", what, " must be \"none\" or one of ", paste0("\"", dims, "\"", collapse = ", "), ".")
+    }
+    x
+  }
+  split <- pick(opts$split_by, "split_by")
+  grp   <- pick(opts$col_group, "col_group")
+  if (!is.null(split) && identical(split, grp)) stop("TABLE_OPTS$split_by and $col_group must differ.")
+  if (!all(opts$nest %in% c("panel", "S", "tau"))) stop("TABLE_OPTS$nest takes \"panel\", \"S\" and \"tau\".")
+  
+  # The selected results, and the values of each dimension in the order of the figures
+  d       <- as.data.frame(res)
+  d$row   <- as.character(d$row)
+  d$panel <- as.character(d$panel)
+  d$S     <- as.numeric(d$S)
+  d$tau   <- round(as.numeric(d$tau), 8)
+  if (!is.null(opts$taus))     d <- d[d$tau %in% round(opts$taus, 8), , drop = FALSE]
+  if (!is.null(opts$S_values)) d <- d[d$S %in% opts$S_values, , drop = FALSE]
+  d <- d[d$row %in% names(ROWS) & d$panel %in% names(PANELS), , drop = FALSE]
+  if (nrow(d) == 0) stop("No results for these methods, panels, taus and S values.")
+  lev  <- list(row = intersect(names(ROWS), d$row), panel = intersect(names(PANELS), d$panel),
+               S = sort(unique(d$S)), tau = sort(unique(d$tau)))
+  tdig <- if (all(abs(lev$tau * 10 - round(lev$tau * 10)) < 1e-8)) 1 else 2
+  size_cut <- function(reps) CFG$alpha + 1.96 * sqrt(CFG$alpha * (1 - CFG$alpha) / reps)
+  
+  one_table <- function(dd, suffix, split_value) {
+    lv     <- lapply(setNames(dims, dims), function(k) lev[[k]][lev[[k]] %in% dd[[k]]])
+    vary   <- vapply(lv, length, 0L) > 1
+    g      <- if (!is.null(grp) && vary[[grp]]) grp else NULL
+    gvals  <- if (is.null(g)) NA else lv[[g]]
+    ng     <- length(gvals)
+    blocks <- if (vary[["row"]] && !identical(g, "row")) lv$row else NA
+    cand   <- setdiff(unique(c(opts$nest, "panel", "S", "tau")), c(g, split))
+    labs   <- cand[vary[cand]]                       # label columns: the levels that vary
+    if (length(labs) == 0) labs <- cand[1]
+    nl     <- length(labs)
+    grid   <- expand.grid(rev(lv[labs]), KEEP.OUT.ATTRS = FALSE, stringsAsFactors = FALSE)[, labs, drop = FALSE]
+    
+    find <- function(b, i, gv) {                     # the result for block b, grid row i, group gv
+      m <- rep(TRUE, nrow(dd))
+      if (!is.na(b)) m <- m & dd$row == b
+      for (k in labs) m <- m & dd[[k]] == grid[[k]][i]
+      if (!is.null(g)) m <- m & dd[[g]] == gv
+      if (any(m)) dd[which(m)[1], , drop = FALSE] else NULL
+    }
+    cells <- function(r) {                           # one row of results -> nt table entries
+      if (is.null(r)) return(rep("", nt))
+      v    <- vapply(tests, function(tn) as.numeric(r[[tn]]), 0)
+      tx   <- ifelse(is.finite(v), formatC(v, format = "f", digits = opts$digits), "--")
+      bold <- rep(FALSE, nt)
+      if (isTRUE(opts$mark_size) && r$tau == 0) {
+        bold <- is.finite(v) & v > size_cut(if (is.null(r[["reps"]])) CFG$reps else r[["reps"]])
+      }
+      if (isTRUE(opts$bold_best) && r$tau > 0 && any(is.finite(v))) {
+        bold <- is.finite(v) & v >= max(v[is.finite(v)]) - 1e-12
+      }
+      tx[bold] <- paste0("\\textbf{", tx[bold], "}")
+      if (length(kt) > 0 && isTRUE(r[["kudrin_failed"]] > 0)) {
+        j <- match(kt, tests)
+        tx[j] <- paste0(tx[j], "\\rlap{$^\\dagger$}")
+      }
+      if ("proj" %in% tests && isTRUE(r[["proj_failed"]] > 0)) {
+        j <- match("proj", tests)
+        tx[j] <- paste0(tx[j], "\\rlap{$^\\ddagger$}")
+      }
+      tx
+    }
+    
+    # Body: a block per method if the methods vary; each row is labelled from the outermost level
+    # whose value changed, with a little space where the outermost level changes
+    body <- character(0)
+    for (bi in seq_along(blocks)) {
+      b <- blocks[bi]
+      if (!is.na(b)) {
+        body <- c(body, if (bi > 1) "\\midrule",
+                  sprintf("\\multicolumn{%d}{l}{\\textit{%s}} \\\\", nl + ng * nt, method_latex(b)))
+      }
+      prev <- NULL
+      for (i in seq_len(nrow(grid))) {
+        tx <- unlist(lapply(gvals, function(gv) cells(find(b, i, gv))))
+        if (all(tx == "")) next
+        key <- vapply(labs, function(k) as.character(grid[[k]][i]), "")
+        lab <- vapply(labs, function(k) dim_latex(k, grid[[k]][i], tdig), "")
+        if (!is.null(prev)) {
+          first <- match(TRUE, key != prev)
+          if (first > 1) lab[seq_len(first - 1)] <- ""
+          if (first == 1 && nl > 1) body <- c(body, "\\addlinespace")
         }
-        body <- c(body, paste0(formatC(tau, format = "f", digits = tdig), " & ",
-                               paste(entries, collapse = " & "), " \\\\"))
+        body <- c(body, paste0(paste(c(lab, tx), collapse = " & "), " \\\\"))
+        prev <- key
       }
     }
     
-    tab <- c(sprintf("\\begin{tabular}{l%s}", strrep(strrep("c", nt), np)),
-             "\\toprule", head, "\\midrule", body, "\\bottomrule", "\\end{tabular}")
-    S_tex <- gsub(",", "{,}", format(S, big.mark = ",", scientific = FALSE), fixed = TRUE)
+    # Header: column groups, spanners over tests, then the label headers and test names
+    head <- character(0)
+    if (!is.null(g)) {
+      gfr  <- nl + (seq_len(ng) - 1) * nt + 1
+      glab <- vapply(gvals, function(v) dim_latex(g, v, tdig, head = TRUE), "")
+      head <- c(head,
+                paste0(paste(c(rep("", nl), sprintf("\\multicolumn{%d}{c}{%s}", nt, glab)), collapse = " & "), " \\\\"),
+                paste(sprintf("\\cmidrule(lr){%d-%d}", gfr, gfr + nt - 1), collapse = " "))
+    }
+    sp <- which(rtx != "")
+    if (length(sp) > 0) {
+      off  <- rep(nl + (seq_len(ng) - 1) * nt, each = length(sp))
+      cell <- ifelse(rtx == "", "", sprintf("\\multicolumn{%d}{c}{%s}", run$lengths, rtx))
+      head <- c(head,
+                paste0(paste(c(rep("", nl), rep(cell, ng)), collapse = " & "), " \\\\"),
+                paste(sprintf("\\cmidrule(lr){%d-%d}", off + rfr[sp], off + rto[sp]), collapse = " "))
+    }
+    head  <- c(head, paste0(paste(c(DIM_LATEX[labs], rep(hdr, ng)), collapse = " & "), " \\\\"))
+    align <- paste0(paste(ifelse(labs == "panel", "l", "r"), collapse = ""), strrep("c", ng * nt))
+    tab   <- c(sprintf("\\begin{tabular}{%s}", align), "\\toprule", head, "\\midrule", body,
+               "\\bottomrule", "\\end{tabular}")
+    if (isTRUE(opts$resize)) tab <- c("\\resizebox{\\linewidth}{!}{%", tab, "}")
+    
+    # Caption and notes
+    size_only <- all(lv$tau == 0)
+    reps      <- if (is.null(dd[["reps"]])) CFG$reps else sort(unique(dd[["reps"]]))
+    caption   <- if (is.null(opts$caption)) {
+      paste(c(paste0(if (!vary[["row"]] && !size_only) paste0(method_latex(lv$row), ": "),
+                     if (size_only) "Size" else "Rejection rates",
+                     sprintf(" of %s\\%%-level tests", format(100 * CFG$alpha))),
+              if (!vary[["S"]]) dim_latex("S", lv$S, tdig, head = TRUE),
+              if (!vary[["panel"]]) dim_latex("panel", lv$panel, tdig, head = TRUE),
+              if (!vary[["tau"]] && !size_only) dim_latex("tau", lv$tau, tdig, head = TRUE)),
+            collapse = ", ")
+    } else {
+      paste(c(opts$caption, if (!is.null(split)) dim_latex(split, split_value, tdig, head = TRUE)),
+            collapse = ", ")
+    }
     notes <- paste0(
-      sprintf("Rejection rates of %s\\%%-level tests over %s Monte Carlo repetitions; each meta-sample has ",
-              format(100 * CFG$alpha), paste(format(unique(rs$reps), big.mark = ","), collapse = "/")),
-      sprintf("$S = %s$ $t$-statistics. ", S_tex),
-      "Blocks of rows: p-hacking method. $\\tau$: share of results that are p-hacked, so the $\\tau = 0$ ",
-      "rows are sizes. Column groups: distribution of true effects $h$. ",
-      "Proj.: projection test; $T_\\infty$, $T_H$, $T_H^{\\mathrm{hyb}}$: Kudrin (2025)",
-      if ("EKW_max" %in% tests) "; EKW: highest rejection rate among the EKW (2022) tests" else "", ".",
-      if (dag_k) " $^\\dagger$Kudrin's tests could not be computed in some repetitions; the rate is among the others." else "",
-      if (dag_p) " $^\\ddagger$The projection test could not be computed in some repetitions; the rate is among the others." else "")
-    caption <- sprintf("Rejection rates, $S = %s$%s", S_tex,
-                       if (S == 1000) " (as in Kudrin's Fig.~2)" else if (S == 5000) " (as in Kudrin's Fig.~3)" else "")
+      sprintf("Rejection rates in %s Monte Carlo repetitions, each a meta-sample of %s $t$-statistics",
+              paste(format(reps, big.mark = ",", trim = TRUE), collapse = "/"),
+              if (vary[["S"]]) "$S$" else dim_latex("S", lv$S, tdig, head = TRUE)),
+      if (size_only) {
+        ", none of them p-hacked ($\\tau = 0$), so every entry is a size."
+      } else {
+        paste0(". $\\tau$: share of results that are p-hacked",
+               if (any(lv$tau == 0)) "; at $\\tau = 0$ the rates are sizes." else ".")
+      },
+      if (!all(is.na(blocks))) " Blocks of rows: p-hacking method.",
+      if (!is.null(g)) {
+        paste0(" Column groups: ", c(row = "p-hacking method", panel = "distribution of the true effects $h$",
+                                     S = "number of $t$-statistics $S$",
+                                     tau = "share $\\tau$ of results that are p-hacked")[[g]], ".")
+      },
+      if (length(tnote) > 0) paste0(" ", paste(tnote, collapse = "; "), "."),
+      if (isTRUE(opts$mark_size) && any(lv$tau == 0)) {
+        sprintf(" Sizes in bold are more than 1.96 Monte Carlo standard errors above %s%s.", format(CFG$alpha),
+                if (length(reps) == 1) sprintf(", i.e., above %s", formatC(size_cut(reps), format = "f", digits = 4)) else "")
+      },
+      if (isTRUE(opts$bold_best) && any(lv$tau > 0)) {
+        paste0(" At $\\tau > 0$, the highest rejection rate in each row", if (!is.null(g)) " and column group",
+               " is in bold.")
+      },
+      if (length(kt) > 0 && any(dd[["kudrin_failed"]] > 0, na.rm = TRUE)) {
+        " $^\\dagger$Kudrin's tests could not be computed in some repetitions; the rate is among the others."
+      },
+      if ("proj" %in% tests && any(dd[["proj_failed"]] > 0, na.rm = TRUE)) {
+        " $^\\ddagger$The projection test could not be computed in some repetitions; the rate is among the others."
+      },
+      if (!is.null(opts$notes)) paste0(" ", opts$notes))
+    
+    # The tabular goes in a box so that the notes can be exactly as wide as the table
+    small <- ng * nt <= 10
     out <- if (isTRUE(opts$fragment)) tab else c(
       "\\begin{table}[htbp]", "\\centering",
       sprintf("\\caption{%s}", caption),
-      sprintf("\\label{tab:%s_S%d}", CFG$name, as.integer(S)),
-      "\\footnotesize", "\\setlength{\\tabcolsep}{4pt}",
-      tab,
+      sprintf("\\label{tab:%s%s}", CFG$name, suffix),
+      if (small) "\\small" else c("\\footnotesize", "\\setlength{\\tabcolsep}{4pt}"),
+      "\\ifdefined\\simtablebox\\else\\newsavebox{\\simtablebox}\\fi",
+      "\\sbox{\\simtablebox}{%", paste0(tab, c(rep("", length(tab) - 1), "%")), "}%",
+      "\\usebox{\\simtablebox}",
       "\\par\\smallskip",
-      sprintf("\\begin{minipage}{\\linewidth}\\footnotesize\\textit{Notes:} %s\\end{minipage}", notes),
+      sprintf("\\begin{minipage}{\\wd\\simtablebox}\\footnotesize\\textit{Notes:} %s\\end{minipage}", notes),
       "\\end{table}")
-    f <- file.path(OUT_DIR, sprintf("%s_S%d.tex", CFG$name, as.integer(S)))
+    f <- file.path(OUT_DIR, paste0(CFG$name, suffix, ".tex"))
     writeLines(out, f)
-    files <- c(files, f)
+    f
   }
-  invisible(files)
+  
+  sfx <- function(v) {
+    s <- switch(split,
+                S   = paste0("S", format(v, scientific = FALSE, trim = TRUE)),
+                tau = paste0("tau", sub(".", "p", formatC(v, format = "f", digits = tdig), fixed = TRUE)),
+                v)
+    paste0("_", gsub("[^A-Za-z0-9_-]", "-", s))
+  }
+  files <- if (is.null(split)) {
+    one_table(d, "", NULL)
+  } else {
+    vapply(lev[[split]], function(v) one_table(d[d[[split]] == v, , drop = FALSE], sfx(v), v), "")
+  }
+  invisible(unname(files))
 }
 
 TABLE_FILES <- write_latex_tables(res)
