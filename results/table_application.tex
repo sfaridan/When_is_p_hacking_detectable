@@ -8,10 +8,10 @@
 \cmidrule(lr){6-7} \cmidrule(lr){8-14} \cmidrule(lr){15-18}
  & $n$ & Articles & Med.\ $\nu$ & $\Delta_\nu$ & $p$ & $\widehat{B}$ & LCM & Fisher & Disc. & Binomial & CS1 & CS2B & Min & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hybrid}}$ & Min \\
 \midrule
-RCT & 6503 & 141 & 185 & 0.0014 & .00 & .0032 & .95 & 1.00 & .85 & .16 & .48 & .69 & .16 & .01 & .00 & .00$^{\dagger}$ & .00 \\
-IV & 4901 & 277 & 262 & 0.0013 & .00 & .0034 & 1.00 & 1.00 & .14 & .11 & .66 & .24 & .11 & .38 & .05 & .05$^{\dagger}$ & .05 \\
-DID & 5142 & 236 & 293.5 & 0.0014 & .01 & .0017 & .99 & 1.00 & .03 & .21 & .13 & .02 & .02 & .07 & .02 & .02$^{\dagger}$ & .02 \\
-RDD & 2722 & 82 & $\cdot$ & $\cdot$ & .03 & .0007 & 1.00 & 1.00 & .98 & .66 & .99 & .76 & .66 & .26 & .19 & .19$^{\dagger}$ & .19 \\
+RCT & 6927 & 141 & 185 & 0.0014 & .00 & .0029 & .43 & 1.00 & .17 & .01 & .75 & .76 & .01 & .00 & .00 & .00$^{\dagger}$ & .00 \\
+IV & 5031 & 278 & 262 & 0.0013 & .00 & .0029 & 1.00 & 1.00 & .15 & .09 & .84 & .23 & .09 & .40 & .06 & .06$^{\dagger}$ & .06 \\
+DID & 5506 & 240 & 293.5 & 0.0014 & .03 & .0006 & .74 & 1.00 & .02 & .02 & .20 & .01 & .01 & .04 & .01 & .01$^{\dagger}$ & .01 \\
+RDD & 2942 & 85 & $\cdot$ & $\cdot$ & .01 & .0014 & .87 & 1.00 & .82 & .06 & .83 & .70 & .06 & .17 & .01 & .01$^{\dagger}$ & .01 \\
 \bottomrule
 \end{tabular}}
 
@@ -19,7 +19,7 @@ RDD & 2722 & 82 & $\cdot$ & $\cdot$ & .03 & .0007 & 1.00 & 1.00 & .98 & .66 & .9
 \begin{minipage}{\linewidth}
 Results for the Brodeur et al. (2020) data. Following Kudrin (2025), we drop tests whose reported coefficient is missing or zero.
 As in Appendix D.3, we divide each coefficient by the smallest standard error consistent with the reported one.
-We drop $t$-statistics whose standard error is reported as zero or whose rounding unit in $t$-units exceeds 0.3.
+We drop $t$-statistics whose standard error is reported as zero or whose rounding unit in $t$-units exceeds 1.
 Columns headed $J_0$ report $p$-values and breakdown statistics $\widehat{B}$ of the projection test with $J=40$.
 Med.\ $\nu$ is the median effective sample size as measured by the median number of clusters in a random sample of 100 articles for each causal inference method.
 In ambiguous cases, the smallest cluster count was always used.
