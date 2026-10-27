@@ -1,0 +1,59 @@
+\begin{table}[htbp]
+\centering
+\caption{Empirical Application Results under Four De-rounding Procedures}
+\label{tab:application_panels}
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{% shrinks the table only if it is wider than the text
+\begin{tabular}{lcccccccccccccc}
+\toprule
+ &  &  & \multicolumn{2}{c}{$J_0=20$} & \multicolumn{7}{c}{EKW $p$-values} & \multicolumn{3}{c}{Kudrin (2025) $p$-values} \\
+\cmidrule(lr){4-5} \cmidrule(lr){6-12} \cmidrule(lr){13-15}
+ & $n$ & Articles & $p$ & $\widehat{B}$ & LCM & Fisher & Disc. & Binomial & CS1 & CS2B & Min & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hybrid}}$ \\
+\midrule
+\multicolumn{15}{l}{\textit{Panel A. No de-rounding}} \\
+RCT & 6927 & 141 & .00 & .0034 & .28 & 1.00 & .01 & .00 & .13 & .23 & .00 & .00 & .00 & .00$^{\dagger}$ \\
+IV & 5031 & 278 & .00 & .0033 & 1.00 & 1.00 & .88 & .35 & .88 & .07 & .07 & .21 & .02 & .02$^{\dagger}$ \\
+DID & 5506 & 240 & .00 & .0018 & .13 & 1.00 & .08 & .00 & .40 & .02 & .00 & .01 & .00 & .00$^{\dagger}$ \\
+RDD & 2942 & 85 & .05 & .0000 & .78 & 1.00 & .01 & .00 & .24 & .17 & .00 & .01 & .01 & .01$^{\dagger}$ \\
+\midrule
+\multicolumn{15}{l}{\textit{Panel B. Uniform de-rounding}} \\
+RCT & 6927 & 141 & .00 & .0031 & 1.00 & 1.00 & .59 & .91 & .49 & .43 & .43 & .01 & .00 & .00$^{\dagger}$ \\
+IV & 5031 & 278 & .00 & .0031 & 1.00 & 1.00 & .57 & .71 & .66 & .38 & .38 & .29 & .02 & .02$^{\dagger}$ \\
+DID & 5506 & 240 & .02 & .0012 & 1.00 & 1.00 & .47 & .97 & .65 & .36 & .36 & .02 & .03 & .03$^{\dagger}$ \\
+RDD & 2942 & 85 & .05 & .0004 & 1.00 & 1.00 & .50 & .81 & .67 & .57 & .50 & .39 & .14 & .14$^{\dagger}$ \\
+\midrule
+\multicolumn{15}{l}{\textit{Panel C. Smallest consistent standard error}} \\
+RCT & 6927 & 141 & .00 & .0029 & .43 & 1.00 & .17 & .01 & .75 & .76 & .01 & .00 & .00 & .00$^{\dagger}$ \\
+IV & 5031 & 278 & .00 & .0029 & 1.00 & 1.00 & .15 & .09 & .84 & .23 & .09 & .40 & .06 & .06$^{\dagger}$ \\
+DID & 5506 & 240 & .03 & .0006 & .74 & 1.00 & .02 & .02 & .20 & .01 & .01 & .04 & .01 & .01$^{\dagger}$ \\
+RDD & 2942 & 85 & .01 & .0014 & .87 & 1.00 & .82 & .06 & .83 & .70 & .06 & .17 & .01 & .01$^{\dagger}$ \\
+\midrule
+\multicolumn{15}{l}{\textit{Panel D. Smallest consistent standard error with uniform noise}} \\
+RCT & 6927 & 141 & .00 & .0027 & 1.00 & 1.00 & .48 & .92 & .52 & .55 & .48 & .00 & .00 & .00$^{\dagger}$ \\
+IV & 5031 & 278 & .00 & .0029 & 1.00 & 1.00 & .44 & .58 & .75 & .71 & .44 & .34 & .04 & .04$^{\dagger}$ \\
+DID & 5506 & 240 & .03 & .0005 & 1.00 & 1.00 & .43 & .97 & .49 & .25 & .25 & .07 & .06 & .06$^{\dagger}$ \\
+RDD & 2942 & 85 & .02 & .0012 & 1.00 & 1.00 & .58 & .93 & .73 & .50 & .50 & .20 & .04 & .04$^{\dagger}$ \\
+\bottomrule
+\end{tabular}}
+
+\medskip
+\begin{minipage}{\linewidth}
+Results for the Brodeur et al. (2020) data. Following Kudrin (2025), we drop tests whose reported coefficient is missing or zero.
+The sample is the same in every panel: we also drop $t$-statistics whose standard error is reported as zero or whose coefficient's rounding unit exceeds the smallest standard error consistent with the reported one.
+Panel A uses no de-rounding: each $t$-statistic is the ratio of the reported coefficient and standard error, and reported $t$-statistics are used as printed.
+Panel B uses uniform de-rounding, following Brodeur et al. (2016): the coefficient and the standard error are each replaced by an independent uniform draw from its rounding interval, and a reported $t$-statistic gets uniform noise at its last digit.
+Panel C divides each coefficient by the smallest standard error consistent with the reported one (Appendix D.1) and uses reported $t$-statistics as printed.
+Panel D divides each coefficient, plus uniform noise at its last digit, by the smallest standard error consistent with the reported one (Appendix D.1), and adds uniform noise at the last digit of reported $t$-statistics.
+In Panels B and D, all $p$-values and breakdown statistics are averages over 100 independent de-roundings.
+Columns headed $J_0$ report $p$-values and breakdown statistics $\widehat{B}$ of the projection test with $J=40$.
+We form $\mathcal{X}$ using a grid of 3000 elements evenly spaced between $\pm 6.5$ plus the scalar 9999.
+Discretization incurs error $\mathcal{E}(L,\delta)=0.00063$, which is already accounted for in $\widehat{B}$ and the $p$-value.
+EKW $p$-values are for the tests of Elliott et al. (2022): the least concave majorant test (LCM) and Fisher's test (Fisher) on $p$-values in $(0,0.15]$, the density discontinuity test at 0.05 (Disc.), the binomial test on $[0.04,0.05]$ (Binomial), and the Cox and Shi (2023) histogram-based tests on $(0,0.15]$ with 15 bins for monotonicity (CS1) and for 2-monotonicity with bounds (CS2B).
+Kudrin (2025) $p$-values are for his KS-type test ($T_\infty$), histogram-based test ($T_H$) and hybrid histogram-based test ($T_H^{\mathrm{hybrid}}$), using the sinc kernel with $\kappa=3$ and, for $T_H$ and $T_H^{\mathrm{hybrid}}$, the points $0.01,0.02,\ldots,0.15$.
+All three cluster by article: $T_H$ and $T_H^{\mathrm{hybrid}}$ use cluster-robust covariance matrices and $T_\infty$ uses an article-level bootstrap.
+$^\dagger$The deconvolution estimate already satisfies the hybrid test's shape restrictions, so $T_H^{\mathrm{hybrid}}=T_H$.
+Min is the smallest of the six EKW $p$-values in each row (of the averaged $p$-values in Panels B and D).
+The projection test and $T_\infty$ use 1000 bootstrap repetitions.
+Computation used osqp package in R by Stellato et al. (2024). Data: Brodeur et al. (2020).
+Transparency R package available at: \url{https://github.com/sfaridan/When_is_p_hacking_detectable}
+\end{minipage}
+\end{table}
