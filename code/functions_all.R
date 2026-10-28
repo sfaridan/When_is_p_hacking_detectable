@@ -544,6 +544,7 @@ run_test <- function(data, numcoeffs, sigma_Y = 1, shift = 1.96,
     pval = pval,
     breakdown = breakdown,
     projpoint = projpoint,
+    dw = projection$residual,
     runtime = Sys.time()-start_time
   ))
 }

@@ -487,3 +487,22 @@ make_application_table <- function(J0_values = c(20),            # one (p, B-hat
 }
 
 table_application <- make_application_table(J0_values = J0_list, n_draws = n_draws)   #e.g. J0_list <- c(30, 20) mirrors the paper's two columns
+
+## effective sample size
+
+hf <- function(x, J) {                      # psi_j(x) * phi(x), j = 0..J
+  G <- matrix(0, length(x), J + 1)
+  G[, 1] <- dnorm(x); G[, 2] <- x * G[, 1]
+  for (j in 1:(J - 1)) G[, j + 2] <- (x * G[, j + 1] - sqrt(j) * G[, j]) / sqrt(j + 1)
+  G
+}
+xi <- function(t, J = 40) 0.5 * (hf(t - 1.96, J) + hf(-t - 1.96, J))
+w  <- pmin(1, 2^(20 - (0:40)))              # J0 = 20 weights
+
+deff <- function(d) {
+  X <- sweep(xi(d$t), 2, w, `*`)
+  R <- sweep(X, 2, colMeans(X))
+  S <- rowsum(R, d$title)                   # paper-level sums
+  c(trace = sum(S^2) / sum(R^2), j0 = sum(S[, 1]^2) / sum(R[, 1]^2))
+}
+sapply(split(MM_data, MM_data$method), deff) # use your design variable
