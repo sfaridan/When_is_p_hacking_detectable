@@ -46,8 +46,8 @@ MM_data       <- MM_dropped
 #     by the table's format and the standard error, not by the estimate. The width of V need not match
 #     the true unit: Proposition D.1 allows any independent noise.
 
-deround_option <- 4     #1 = none, 2 = uniform (standard), 3 = smallest SE, 4 = smallest SE + noise in the numerator
-kappa_cap      <- 1     #drop coef/SE t-statistics with kappa = a/s_min above this (the same under every option)
+deround_option <- 1     #1 = none, 2 = uniform (standard), 3 = smallest SE, 4 = smallest SE + noise in the numerator
+kappa_cap      <- 0.3     #drop coef/SE t-statistics with kappa = a/s_min above this (the same under every option)
 se_rounded_up  <- FALSE #TRUE if papers may have rounded standard errors up: then s_min = sd - b and s_max = sd
 n_draws        <- 100    #independent de-roundings for options 2 and 4; try 2 first to check the run time
 
@@ -506,3 +506,5 @@ deff <- function(d) {
   c(trace = sum(S^2) / sum(R^2), j0 = sum(S[, 1]^2) / sum(R[, 1]^2))
 }
 sapply(split(MM_data, MM_data$method), deff) # use your design variable
+
+source(paste0(root,"/code/make_MM_application_rounding_table.R"))

@@ -1,0 +1,37 @@
+\begin{table}[htbp]
+\centering
+\caption{Empirical Application Results by Pre-Registration Status: No de-rounding}
+\label{tab:application_PAP_cs_kappa0p3_none}
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{% shrinks the table only if it is wider than the text
+\begin{tabular}{lccccccccccccccccc}
+ &  &  &  &  & \multicolumn{2}{c}{$J_0=20$} & \multicolumn{7}{c}{EKW $p$-values} & \multicolumn{4}{c}{Kudrin (2025) $p$-values} \\
+\cmidrule(lr){6-7} \cmidrule(lr){8-14} \cmidrule(lr){15-18}
+ & $n$ & Articles & Med.\ $\nu$ & $\Delta_\nu$ & $p$ & $\widehat{B}$ & LCM & Fisher & Disc. & Binomial & CS1 & CS2B & Min & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hybrid}}$ & Min \\
+\midrule
+Not pre-registered & 8589 & 214 & $\cdot$ & $\cdot$ & .00 & .0034 & .26 & 1.00 & .54 & .01 & .05 & .00 & .00 & .01 & .00 & .00$^{\dagger}$ & .00 \\
+Pre-registered & 3135 & 68 & $\cdot$ & $\cdot$ & .21 & .0000 & 1.00 & 1.00 & .34 & .05 & .68 & .38 & .05 & .38 & .05 & .05$^{\dagger}$ & .05 \\
+\bottomrule
+\end{tabular}}
+
+\medskip
+\begin{minipage}{\linewidth}
+Results for the Brodeur et al. (2024) data by pre-registration status, on their sample: following their replication files, we drop articles in \textit{Experimental Economics} and studies that are not experiments, and keep every test statistic with a recorded pre-registration status and $z$-statistic.
+A study counts as pre-registered if it was registered before its trial end date.
+De-rounding: none. Each $t$-statistic is the ratio of the reported coefficient and standard error.
+We keep only tests reported with both a coefficient and a standard error. We also drop every $t$-statistic whose rounding unit in $t$-units, $\kappa$, exceeds 0.3, counting a standard error printed as zero as infinite $\kappa$. These rules depend only on how results are printed, so the sample is the same for every de-rounding choice.
+Columns headed $J_0$ report $p$-values and breakdown statistics $\widehat{B}$ of the projection test with $J=40$.
+We did not collect effective sample sizes for this sample, so Med.\ $\nu$ and $\Delta_\nu$ are not reported.
+We form $\mathcal{X}$ using a grid of 3000 elements evenly spaced between $\pm 6.5$ plus the scalar 9999.
+Discretization incurs error $\mathcal{E}(L,\delta)=0.00063$, which is already accounted for in $\widehat{B}$ and the $p$-value.
+The discretization was chosen to be made of round numbers and result in a small error.
+EKW $p$-values are for the tests of Elliott et al. (2022): the least concave majorant test (LCM) and Fisher's test (Fisher) on $p$-values in $(0,0.15]$, the density discontinuity test at 0.05 (Disc.), the binomial test on $[0.04,0.05]$ (Binomial), and the Cox and Shi (2023) histogram-based tests on $(0,0.15]$ with 15 bins for monotonicity (CS1) and for 2-monotonicity with bounds (CS2B).
+As in the input files of Brodeur et al. (2024), these $p$-values are $2(1-\Phi(|t|))$ in single precision.
+Kudrin (2025) $p$-values are for his KS-type test ($T_\infty$), histogram-based test ($T_H$) and hybrid histogram-based test ($T_H^{\mathrm{hybrid}}$), using the sinc kernel with $\kappa=3$ and, for $T_H$ and $T_H^{\mathrm{hybrid}}$, the points $0.01,0.02,\ldots,0.15$.
+All three cluster by article: $T_H$ and $T_H^{\mathrm{hybrid}}$ use cluster-robust covariance matrices and $T_\infty$ uses an article-level bootstrap.
+$^\dagger$The deconvolution estimate already satisfies the hybrid test's shape restrictions, so $T_H^{\mathrm{hybrid}}=T_H$.
+Min is the smallest $p$-value in each group of tests.
+The projection test and $T_\infty$ use 1000 bootstrap repetitions.
+Computation used osqp package in R by Stellato et al. (2024). Data: Brodeur et al. (2024).
+Transparency R package available at: \url{https://github.com/sfaridan/When_is_p_hacking_detectable}
+\end{minipage}
+\end{table}

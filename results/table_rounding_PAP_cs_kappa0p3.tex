@@ -1,0 +1,41 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{threeparttable}
+\caption{Tests for selective reporting by pre-registration status under three treatments of rounding}
+\label{tab:rounding_PAP_cs_kappa0p3}
+\begin{tabular}{@{}l*{3}{c}@{\hspace{12pt}}*{3}{c}@{}}
+\toprule
+ & \multicolumn{3}{c}{Not pre-registered} & \multicolumn{3}{c}{Pre-registered} \\
+\cmidrule(lr){2-4} \cmidrule(l){5-7}
+ & None & Unif. & $s_{\min}$ & None & Unif. & $s_{\min}$ \\
+\midrule
+\multicolumn{7}{@{}l}{Projection test} \\
+\quad $p$-value & \textbf{{\boldmath${<}$}\,.001} & \textbf{{\boldmath${<}$}\,.001} & \textbf{.001} & .212 & .230 & .245 \\
+\quad $\widehat{B}$ ($\times 10^{3}$) & 3.40 & 3.35 & 2.49 & 0 & 0 & 0 \\
+\quad Rounding allowance ($\times 10^{3}$) & $\cdot$ & $\cdot$ & 0.00299 & $\cdot$ & $\cdot$ & 0.00253 \\
+\addlinespace
+\multicolumn{7}{@{}l}{Kudrin (2025)} \\
+\quad $T_\infty$ & \textbf{.010} & \textbf{.012} & \textbf{.012} & .376 & .304 & .132 \\
+\quad $T_H$ & \textbf{{\boldmath${<}$}\,.001} & \textbf{{\boldmath${<}$}\,.001} & \textbf{{\boldmath${<}$}\,.001} & .054 & .109 & \textbf{.005} \\
+\addlinespace
+\multicolumn{7}{@{}l}{Elliott et al.\ (2022)} \\
+\quad LCM & .260 & .999 & .611 & .997 & 1.000 & 1.000 \\
+\quad Fisher & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 \\
+\quad Disc. & .543 & .351 & .590 & .342 & .330 & .110 \\
+\quad Binomial & \textbf{.012} & .953 & .315 & .055 & .565 & .069 \\
+\quad CS1 & \textbf{.048} & .714 & .999 & .682 & .735 & .608 \\
+\quad CS2B & \textbf{.001} & .520 & .750 & .379 & .379 & .064 \\
+\midrule
+Tests kept, of BCHH's & \multicolumn{3}{c}{8,589 of 11,100 (77.4\%)} & \multicolumn{3}{c}{3,135 of 4,892 (64.1\%)} \\
+Tests with $p<.15$, of BCHH's Figure 5 & $\cdot$ & $\cdot$ \\
+Articles & \multicolumn{3}{c}{214} & \multicolumn{3}{c}{68} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}[flushleft]
+\footnotesize
+\item \textit{Notes:} The table reports tests of the null hypothesis of no selective reporting in the data of \citet{brodeur2024}, separately for studies that were and were not pre-registered, meaning registered before the trial end date. Columns differ in the treatment of rounding. \emph{None}: each $t$-statistic is the ratio of the reported coefficient and standard error. \emph{Unif.}: the coefficient and the standard error are each replaced by an independent uniform draw from its rounding interval; $p$-values and $\widehat{B}$ are averages over 10 draws. \emph{$s_{\min}$}: each coefficient is divided by the smallest standard error consistent with the reported one (Section~\ref{sec:rounding}); this treatment is deterministic. The sample is the same in every column. It starts from that of \citet{brodeur2024}, as in their replication files, without articles in \textit{Experimental Economics} or studies that are not experiments; we keep only tests reported with both a coefficient and a standard error, which drops 15.1 and 31.1 percent of the tests without and with pre-registration; we then drop every $t$-statistic whose rounding unit in $t$-units, $\kappa$, exceeds 0.3, counting a standard error printed as zero as infinite $\kappa$ (Section~\ref{sec:rounding}): a further 8.9 and 7.1 percent. These rules depend only on how results are printed, so they drop the same tests under every treatment. \emph{Projection test}: $J_0=20$, $J=40$, and a grid of 3,000 points on $[-6.5,6.5]$ plus the point 9999; the discretization error $E(L,\delta)=0.00063$ is included in every $p$-value and in $\widehat{B}$. $\widehat{B}$ is its breakdown statistic (Section~\ref{sec:breakdown}), a lower 95\% confidence bound on the distance between the reported $t$-curve and the set of $t$-curves possible without selective reporting. The rounding allowance, 0.13 times the average of $\kappa^{6}$ over the $t$-statistics used (Propositions~\ref{prop:rounding} and~\ref{prop:smin}), bounds the distance that rounding can create under $s_{\min}$, where $\kappa$ is a $t$-statistic's rounding unit in $t$-units; it covers every $t$-statistic in the sample, and no such bound is available under the other treatments. \emph{Kudrin (2025)}: the KS-type ($T_\infty$) and histogram-based ($T_H$) tests of \citet{kudrin2025}, using the sinc kernel with frequency cutoff 3 and, for $T_H$, the points $0.01, 0.02, \ldots, 0.15$; his hybrid test coincides with $T_H$ in every case. \emph{Elliott et al.\ (2022)}: the tests of \citet{elliott2022}, namely the least concave majorant test (LCM) and Fisher's test on $p$-values in $(0,0.15]$, the density discontinuity test at 0.05 (Disc.), the binomial test on $[0.04,0.05]$, and histogram-based tests on $(0,0.15]$ with 15 bins for monotonicity (CS1) and for 2-monotonicity with bounds (CS2B); as in the input files of \citet{brodeur2024}, they use the $p$-values $2(1-\Phi(|t|))$ in single precision. The projection test, $T_\infty$, $T_H$, CS1 and CS2B cluster by article, and the projection test and $T_\infty$ use 1,000 article-level bootstrap repetitions. $p$-values are rounded to three decimals, and those below .001 are shown as ${<}\,.001$. Bold: $p<.05$, except that the projection test under $s_{\min}$ is bold only when $\widehat{B}$ exceeds the rounding allowance, so that its rejection cannot be attributed to rounding. Tests kept, of BCHH's: the tests in our sample, out of the 15,992 in theirs. Tests with $p<.15$, of BCHH's Figure 5: the tests in the window of the EKW tests, counted with BCHH's $z$-statistics in both samples and set against the counts in their Figure 5. Articles: the number of articles in each group.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
