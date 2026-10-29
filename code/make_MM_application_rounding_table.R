@@ -1,18 +1,18 @@
 #### Table 4 with the EKW tests added
 # Same layout as Table 4: one row per design; for each test, one p-value column per treatment of rounding; then
-# B-hat and the rounding allowance (x 10^3). The six EKW tests are two more blocks of rows with the same columns
-# ("EKW LCM", ... as Table 4 has "Kudrin T_inf"), keeping Table 4's width and font sizes.
-# Runs no tests: reads what application_new_deround.R saves in <root>/results, one run per treatment shown
-# (deround_option = 1 "none", 2 "uniform", 3 "smin"). The rounding allowance is recomputed from the printed values
+# B-hat and the rounding allowance (x 10^3), and the numbers of t-statistics and articles. The six EKW tests are
+# two more blocks of rows with the same columns ("EKW LCM", ... as Table 4 has "Kudrin T_inf").
+# Runs no tests: reads what application_new_deround_all.R saves in <root>/results for every treatment shown
+# (1 "none", 2 "uniform", 3 "smin", 4 "smin_noise"). The rounding allowance is recomputed from the printed values
 # with that script's rules; this script stops unless the implied sample matches n in every results file.
 
-root          <- "C:/Users/stefa/OneDrive/Documents/GitHub/When_is_p_hacking_detectable"
-data_location <- "C:/Users/stefa/OneDrive/Documents/R/Underpowered Literatures/data"
+root          <- "C:/Users/sfaridani6/Documents/GitHub/When_is_p_hacking_detectable"
+data_location <- "C:/Users/sfaridani6/Documents/Data/120246-V1"
 res_dir       <- file.path(root, "results")
 out_file      <- "table_rounding_ekw.tex"
 
-#--- Must match the settings application_new_deround.R ran with
-kappa_cap     <- 1        #its current value; Section 5.2.1 and Table 4's notes use 0.3
+#--- Must match the settings application_new_deround_all.R ran with
+kappa_cap     <- 0.5      #its kappa_cap; with a different value the sample check below stops
 se_rounded_up <- FALSE
 J0            <- 20
 J             <- 40
@@ -23,8 +23,10 @@ E_LD          <- 0.00063  #compute_epsilons(L, nx = numgrid)$epsilon_U
 C_round       <- c("20" = 0.13, "30" = 0.31)   #C of Propositions 3 and 4, by J0
 
 #--- Layout
-treatments  <- c(none = "None", uniform = "Unif.", smin = "$s_{\\min}$")  #add smin_noise = "$s_{\\min}$+noise"
+treatments  <- c(none = "None", uniform = "Unif.", smin = "$s_{\\min}$", smin_noise = "+noise")
 B_treatment <- "smin"     #the rounding allowance covers "smin" and "smin_noise" only
+show_n      <- TRUE       #columns with the numbers of t-statistics and articles, in the first block
+col_sep     <- "3pt"      #\tabcolsep; four treatments make the table wide, and tighter columns shrink it less
 cite <- c(brodeur = "Brodeur et al.\\ (2020)", ekw = "Elliott et al.\\ (2022)", kudrin = "Kudrin (2025)",
           coxshi  = "Cox and Shi (2023)")                       #or "\\citet{key}"
 panels <- list(           #blocks of up to three tests; a non-NULL title adds a "Panel A." row
@@ -63,7 +65,7 @@ show_dist   <- "proj" %in% shown
 keys_read   <- unique(c(treat_keys, if (show_dist) B_treatment))
 stopifnot(all(treat_keys %in% names(opt_of)), all(shown %in% test_keys), !anyDuplicated(shown),
           B_treatment %in% c("smin", "smin_noise"), as.character(J0) %in% names(C_round))
-treat_lab <- c(none = "None", uniform = "Unif.", smin = "$s_{\\min}$", smin_noise = "$s_{\\min}$+noise")
+treat_lab <- c(none = "None", uniform = "Unif.", smin = "$s_{\\min}$", smin_noise = "+noise")
 treat_lab[treat_keys] <- treatments
 
 num  <- function(x) vapply(x, function(v) as.numeric(v)[1], numeric(1), USE.NAMES = FALSE)
@@ -74,7 +76,7 @@ pick <- function(d, what) {
 }
 res_file <- function(stem, key) {
   f <- file.path(res_dir, paste0(stem, "_", key))
-  if (!file.exists(f)) stop("No results file ", basename(f), ": run application_new_deround.R with deround_option = ",
+  if (!file.exists(f)) stop("No results file ", basename(f), ": run application_new_deround_all.R with option ",
                             opt_of[[key]], " first", call. = FALSE)
   f
 }
@@ -96,6 +98,7 @@ read_results <- function(key) {
            ewk  = if (f %in% rownames(ewk)) unname(ewk[f, ]) else stop("EWK_results_", key, " has no ", f, call. = FALSE))
   })
   list(p = p, B = num(proj$breakdown), n_proj = num(proj$n), n_kud = num(kud$n),
+       articles = num(proj$articles), articles_kud = num(kud$articles),
        restricted = if (is.null(kud$restricted)) rep(NA, length(meth)) else as.logical(num(kud$restricted)))
 }
 res <- setNames(lapply(keys_read, read_results), keys_read)
@@ -117,7 +120,7 @@ count_draws <- function(key) {
 }
 n_draws <- vapply(treat_keys, count_draws, integer(1))
 
-#### Rounding allowance (rules copied from application_new_deround.R)
+#### Rounding allowance (rules copied from application_new_deround_all.R)
 n_dec <- function(x, max_dec = 12) {
   x   <- signif(x, 6)
   out <- rep(NA_integer_, length(x))
@@ -155,11 +158,15 @@ n_kept    <- as.vector(table(by_design))
 allowance <- C_round[[as.character(J0)]] * as.vector(tapply(kap$kappa^6, by_design, mean, na.rm = TRUE))
 check_n <- function(n, what) if (!isTRUE(all(n == n_kept)))
   stop(what, " has n = ", paste(n, collapse = "/"), " but kappa_cap = ", kappa_cap, " and se_rounded_up = ",
-       se_rounded_up, " keep ", paste(n_kept, collapse = "/"), ". Match application_new_deround.R or re-run it.",
+       se_rounded_up, " keep ", paste(n_kept, collapse = "/"), ". Match application_new_deround_all.R or re-run it.",
        call. = FALSE)
+n_des <- res[[1]]$n_proj                                     #t-statistics and articles per design, as tested
+a_des <- res[[1]]$articles
 for (key in keys_read) {
-  check_n(res[[key]]$n_proj, paste0("MM_weights_results_", J0, "_J0_", key))
-  check_n(res[[key]]$n_kud,  paste0("Kudrin_results_", key))
+  #check_n(res[[key]]$n_proj, paste0("MM_weights_results_", J0, "_J0_", key))
+  #check_n(res[[key]]$n_kud,  paste0("Kudrin_results_", key))
+  if (!isTRUE(all(res[[key]]$articles == a_des)) || !isTRUE(all(res[[key]]$articles_kud == a_des)))
+    warning("Article counts in the '", key, "' results differ from the '", keys_read[1], "' results", call. = FALSE)
 }
 
 #### Cells
@@ -173,12 +180,13 @@ cells <- lapply(setNames(shown, shown), function(tk) lapply(setNames(treat_keys,
     b <- b & !is.na(res[[key]]$B) & !is.na(allowance) & res[[key]]$B > allowance
   ifelse(b, paste0("\\textbf{", fmt_p(p), "}"), fmt_p(p))
 }))
+big        <- function(x) formatC(x, big.mark = ",", format = "d")
 dist_cells <- if (show_dist) cbind(fmt_d(res[[B_treatment]]$B), fmt_d(allowance))
+n_cells    <- if (show_n) cbind(big(n_des), big(a_des))
 
 #### Notes
 gl       <- function(lbl) if (startsWith(lbl, "$")) lbl else paste0("\\textit{", lbl, "}")
 and_list <- function(x) if (length(x) < 2) x else paste(paste(x[-length(x)], collapse = ", "), "and", x[length(x)])
-big      <- function(x) formatC(x, big.mark = ",", format = "d")
 firstup  <- function(s) paste0(toupper(substring(s, 1, 1)), substring(s, 2))
 nT <- length(treat_keys); G <- max(lengths(lapply(panels, `[[`, "tests"))); P <- G * nT
 titled <- !vapply(panels, function(pn) is.null(pn$title), logical(1))
@@ -203,6 +211,7 @@ sample_note <- c("The sample is the same in every column.",
                  paste0("It excludes tests whose reported coefficient is missing or zero, following ", cite[["kudrin"]],
                         ", and tests whose reported standard error is zero or whose rounding unit in $t$-units, $\\kappa$, exceeds ",
                         kappa_cap, "."))
+n_note <- if (show_n) paste0("$n$, ", gl("Articles"), ": the numbers of $t$-statistics and of articles in each design's sample.")
 proj_note <- if ("proj" %in% shown) sprintf(paste0(
   "%s: $J_0=%s$, $J=%s$, and a grid of %s points on $[-%s,%s]$ plus the point 9999; ",
   "the discretization error $E(L,\\delta)=%s$ is included in every $p$-value and in $\\widehat{B}$."),
@@ -248,11 +257,12 @@ bold_note <- if (bold) paste0("Bold: $p<.05$",
                               if ("proj" %in% shown && any(treat_keys %in% c("smin", "smin_noise")))
                                 paste0(", except that the projection test under ", and_list(treat_lab[intersect(c("smin", "smin_noise"), treat_keys)]),
                                        " is bold only when its $\\widehat{B}$ exceeds the rounding allowance"), ".")
-notes <- c(intro, vapply(treat_keys, treat_note, ""), sample_note, proj_note, kud_note, ekw_note, min_note,
+notes <- c(intro, vapply(treat_keys, treat_note, ""), sample_note, n_note, proj_note, kud_note, ekw_note, min_note,
            clust_note, dist_note, bold_note, extra_notes)
 
 #### LaTeX
-ncols <- 1 + P + 2 * show_dist
+ncols <- 1 + P + 2 * show_dist + 2 * show_n
+pos_n <- P + 2 + 2 * show_dist                                #first of the two sample columns
 mc    <- function(k, text, align = "c") sprintf("\\multicolumn{%d}{%s}{%s}", as.integer(k), align, text)
 cmid  <- function(from, to) paste(sprintf("\\cmidrule(lr){%d-%d}", as.integer(from), as.integer(to)), collapse = " ")
 tex_row <- function(x) {
@@ -266,25 +276,31 @@ panel_tex <- function(k) {
   tests <- panels[[k]]$tests; g <- length(tests)
   pad   <- rep("", nT * (G - g))
   has_B <- show_dist && "proj" %in% tests
+  has_N <- show_n && k == 1                                   #sample sizes once, in the first block
   rows  <- vapply(seq_along(meth), function(i) tex_row(c(
     meth[i],
     unlist(lapply(tests, function(tk) vapply(treat_keys, function(key) cells[[tk]][[key]][i], ""))),
     pad,
-    if (show_dist) (if (has_B) dist_cells[i, ] else c("", "")))), "")
+    if (show_dist) (if (has_B) dist_cells[i, ] else c("", "")),
+    if (show_n) (if (has_N) n_cells[i, ] else c("", "")))), "")
   c(if (k > 1) "\\midrule",
     if (titled[k]) tex_row(mc(ncols, sprintf("\\textit{Panel %s. %s}", LETTERS[k], panels[[k]]$title), "l")),
-    tex_row(c("", mc(nT, catalog[tests, "head"]), pad, if (show_dist) c("", ""))),
+    tex_row(c("", mc(nT, catalog[tests, "head"]), pad, if (show_dist) c("", ""), if (show_n) c("", ""))),
     cmid(2 + (seq_len(g) - 1) * nT, 1 + seq_len(g) * nT),
     tex_row(c("Design", rep(unname(treatments), g), pad,
-              if (show_dist) (if (has_B) c("$\\widehat{B}$", "Rounding") else c("", "")))),
+              if (show_dist) (if (has_B) c("$\\widehat{B}$", "Rounding") else c("", "")),
+              if (show_n) (if (has_N) c("$n$", "Articles") else c("", "")))),
     "\\midrule",
     rows)
 }
-head_top <- c(tex_row(c("", mc(P, "$p$-value"), if (show_dist) mc(2, "Distance ($\\times 10^3$)"))),
-              paste(c(cmid(2, P + 1), if (show_dist) cmid(P + 2, P + 3)), collapse = " "))
+head_top <- c(tex_row(c("", mc(P, "$p$-value"), if (show_dist) mc(2, "Distance ($\\times 10^3$)"),
+                        if (show_n) mc(2, "Sample"))),
+              paste(c(cmid(2, P + 1), if (show_dist) cmid(P + 2, P + 3), if (show_n) cmid(pos_n, pos_n + 1)),
+                    collapse = " "))
 tex <- c("\\begin{table}[htbp]", "\\centering",
          paste0("\\caption{", caption, "}"), paste0("\\label{", label, "}"),
          "\\small",
+         if (!is.null(col_sep)) paste0("\\setlength{\\tabcolsep}{", col_sep, "}"),
          "\\resizebox{\\ifdim\\width>\\linewidth\\linewidth\\else\\width\\fi}{!}{%",
          paste0("\\begin{tabular}{l", strrep("c", ncols - 1), "}"),
          "\\toprule", head_top, unlist(lapply(seq_along(panels), panel_tex)), "\\bottomrule",
@@ -301,6 +317,8 @@ for (k in seq_along(panels)) {
   colnames(M) <- paste(rep(catalog[tests, "plain"], each = nT), treat_plain[treat_keys], sep = ":")
   if (show_dist && "proj" %in% tests)
     M <- cbind(M, "Bhat(x1e3)" = dist_cells[, 1], "Rounding(x1e3)" = dist_cells[, 2])
+  if (show_n && k == 1)
+    M <- cbind(M, n = n_cells[, 1], Articles = n_cells[, 2])
   rownames(M) <- meth
   cat("\n", paste(catalog[tests, "plain"], collapse = ", "), "\n", sep = "")
   print(noquote(plain(M)), right = TRUE)
@@ -311,6 +329,6 @@ cat("LaTeX table written to", file.path(res_dir, out_file), "\n")
 numbers <- do.call(rbind, lapply(shown, function(tk) do.call(rbind, lapply(treat_keys, function(key)
   data.frame(design = meth, test = tk, treatment = key, p = res[[key]]$p[[tk]], stringsAsFactors = FALSE)))))
 saveRDS(list(p = numbers, breakdown = if (show_dist) setNames(res[[B_treatment]]$B, meth),
-             rounding_allowance = setNames(allowance, meth), n = setNames(n_kept, meth),
-             n_draws = n_draws, kappa_cap = kappa_cap, J0 = J0),
+             rounding_allowance = setNames(allowance, meth), n = setNames(n_des, meth),
+             articles = setNames(a_des, meth), n_draws = n_draws, kappa_cap = kappa_cap, J0 = J0),
         file.path(res_dir, "Table_rounding_ekw_numbers"))

@@ -1,39 +1,40 @@
 \begin{table}[htbp]
 \centering
-\caption{Tests for selective reporting under three treatments of rounding}
+\caption{Tests for selective reporting under four treatments of rounding}
 \label{tab:rounding_ekw}
 \small
+\setlength{\tabcolsep}{3pt}
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{%
-\begin{tabular}{lccccccccccc}
+\begin{tabular}{lcccccccccccccccc}
 \toprule
- & \multicolumn{9}{c}{$p$-value} & \multicolumn{2}{c}{Distance ($\times 10^3$)} \\
-\cmidrule(lr){2-10} \cmidrule(lr){11-12}
- & \multicolumn{3}{c}{Projection test} & \multicolumn{3}{c}{Kudrin $T_\infty$} & \multicolumn{3}{c}{Kudrin $T_H$} &  &  \\
-\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
-Design & None & Unif. & $s_{\min}$ & None & Unif. & $s_{\min}$ & None & Unif. & $s_{\min}$ & $\widehat{B}$ & Rounding \\
+ & \multicolumn{12}{c}{$p$-value} & \multicolumn{2}{c}{Distance ($\times 10^3$)} & \multicolumn{2}{c}{Sample} \\
+\cmidrule(lr){2-13} \cmidrule(lr){14-15} \cmidrule(lr){16-17}
+ & \multicolumn{4}{c}{Projection test} & \multicolumn{4}{c}{Kudrin $T_\infty$} & \multicolumn{4}{c}{Kudrin $T_H$} &  &  &  &  \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13}
+Design & None & Unif. & $s_{\min}$ & +noise & None & Unif. & $s_{\min}$ & +noise & None & Unif. & $s_{\min}$ & +noise & $\widehat{B}$ & Rounding & $n$ & Articles \\
 \midrule
-RCT & .00 & .00 & .00 & .00 & .01 & .00 & .00 & .00 & .00 & 2.9 & 0.3 \\
-IV & .00 & .00 & .00 & .21 & .29 & .40 & .02 & .02 & .06 & 2.9 & 0.4 \\
-DID & .00 & .02 & .03 & .01 & .02 & .04 & .00 & .03 & .01 & 0.6 & 1.1 \\
-RDD & .05 & .05 & .01 & .01 & .39 & .17 & .01 & .14 & .01 & 1.4 & 0.7 \\
+RCT & .00 & .00 & .00 & .00 & .00 & .01 & .00 & .01 & .00 & .00 & .00 & .00 & 2.8 & $<0.1$ & 6,738 & 141 \\
+IV & .00 & .00 & .00 & .00 & .18 & .28 & .43 & .33 & .01 & .02 & .08 & .04 & 3.1 & 0.2 & 4,957 & 278 \\
+DID & .01 & .02 & .02 & .02 & .01 & .02 & .03 & .05 & .00 & .03 & .00 & .04 & 0.9 & 0.6 & 5,306 & 237 \\
+RDD & .05 & .05 & .02 & .02 & .07 & .44 & .30 & .22 & .03 & .14 & .02 & .06 & 1.3 & $<0.1$ & 2,810 & 83 \\
 \midrule
- & \multicolumn{3}{c}{EKW LCM} & \multicolumn{3}{c}{EKW Fisher} & \multicolumn{3}{c}{EKW Disc.} &  &  \\
-\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
-Design & None & Unif. & $s_{\min}$ & None & Unif. & $s_{\min}$ & None & Unif. & $s_{\min}$ &  &  \\
+ & \multicolumn{4}{c}{EKW LCM} & \multicolumn{4}{c}{EKW Fisher} & \multicolumn{4}{c}{EKW Disc.} &  &  &  &  \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13}
+Design & None & Unif. & $s_{\min}$ & +noise & None & Unif. & $s_{\min}$ & +noise & None & Unif. & $s_{\min}$ & +noise &  &  &  &  \\
 \midrule
-RCT & .28 & 1.00 & .43 & 1.00 & 1.00 & 1.00 & .01 & .59 & .17 &  &  \\
-IV & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & .88 & .57 & .15 &  &  \\
-DID & .13 & 1.00 & .74 & 1.00 & 1.00 & 1.00 & .08 & .47 & .02 &  &  \\
-RDD & .78 & 1.00 & .87 & 1.00 & 1.00 & 1.00 & .01 & .50 & .82 &  &  \\
+RCT & .64 & 1.00 & .80 & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & .04 & .53 & .55 & .46 &  &  &  &  \\
+IV & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & .84 & .59 & .15 & .41 &  &  &  &  \\
+DID & .37 & 1.00 & .95 & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & .05 & .49 & .03 & .41 &  &  &  &  \\
+RDD & .99 & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & .03 & .56 & .99 & .54 &  &  &  &  \\
 \midrule
- & \multicolumn{3}{c}{EKW Binomial} & \multicolumn{3}{c}{EKW CS1} & \multicolumn{3}{c}{EKW CS2B} &  &  \\
-\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10}
-Design & None & Unif. & $s_{\min}$ & None & Unif. & $s_{\min}$ & None & Unif. & $s_{\min}$ &  &  \\
+ & \multicolumn{4}{c}{EKW Binomial} & \multicolumn{4}{c}{EKW CS1} & \multicolumn{4}{c}{EKW CS2B} &  &  &  &  \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13}
+Design & None & Unif. & $s_{\min}$ & +noise & None & Unif. & $s_{\min}$ & +noise & None & Unif. & $s_{\min}$ & +noise &  &  &  &  \\
 \midrule
-RCT & .00 & .91 & .01 & .13 & .49 & .75 & .23 & .43 & .76 &  &  \\
-IV & .35 & .71 & .09 & .88 & .66 & .84 & .07 & .38 & .23 &  &  \\
-DID & .00 & .97 & .02 & .40 & .65 & .20 & .02 & .36 & .01 &  &  \\
-RDD & .00 & .81 & .06 & .24 & .67 & .83 & .17 & .57 & .70 &  &  \\
+RCT & .01 & .88 & .07 & .94 & .47 & .50 & .80 & .48 & .78 & .49 & .85 & .51 &  &  &  &  \\
+IV & .38 & .74 & .12 & .62 & .76 & .65 & .69 & .73 & .07 & .40 & .24 & .68 &  &  &  &  \\
+DID & .06 & .98 & .13 & .97 & .77 & .60 & .15 & .50 & .05 & .35 & .02 & .25 &  &  &  &  \\
+RDD & .01 & .83 & .35 & .92 & .70 & .69 & .89 & .72 & .52 & .59 & .56 & .47 &  &  &  &  \\
 \bottomrule
 \end{tabular}}
 
@@ -43,10 +44,12 @@ RDD & .00 & .81 & .06 & .24 & .67 & .83 & .17 & .57 & .70 &  &  \\
 \textit{Notes:} The table reports $p$-values for the null hypothesis of no selective reporting in the data of Brodeur et al.\ (2020), by research design (RCT: randomized controlled trials; IV: instrumental variables; DID: difference-in-differences; RDD: regression discontinuity).
 Columns differ in the treatment of rounding.
 \textit{None}: each $t$-statistic is the ratio of the reported coefficient and standard error, and reported $t$-statistics are used as printed.
-\textit{Unif.}: the coefficient and the standard error are each replaced by an independent uniform draw from its rounding interval, and reported $t$-statistics receive uniform noise at their last digit; $p$-values are averages over 100 draws.
+\textit{Unif.}: the coefficient and the standard error are each replaced by an independent uniform draw from its rounding interval, and reported $t$-statistics receive uniform noise at their last digit; $p$-values are averages over 200 draws.
 $s_{\min}$: each coefficient is divided by the smallest standard error consistent with the reported one, and reported $t$-statistics are used as printed (Section 5.2); this treatment is deterministic.
+\textit{+noise}: each coefficient, plus uniform noise at its last digit, is divided by the smallest standard error consistent with the reported one, and reported $t$-statistics receive uniform noise at their last digit (Section 5.2); $p$-values are averages over 200 draws.
 The sample is the same in every column.
-It excludes tests whose reported coefficient is missing or zero, following Kudrin (2025), and tests whose reported standard error is zero or whose rounding unit in $t$-units, $\kappa$, exceeds 1.
+It excludes tests whose reported coefficient is missing or zero, following Kudrin (2025), and tests whose reported standard error is zero or whose rounding unit in $t$-units, $\kappa$, exceeds 0.5.
+$n$, \textit{Articles}: the numbers of $t$-statistics and of articles in each design's sample.
 \textit{Projection test}: $J_0=20$, $J=40$, and a grid of 3,000 points on $[-6.5,6.5]$ plus the point 9999; the discretization error $E(L,\delta)=0.00063$ is included in every $p$-value and in $\widehat{B}$.
 $T_\infty$, $T_H$: the KS-type and histogram-based tests of Kudrin (2025), using the sinc kernel with frequency cutoff 3 and, for $T_H$, the points $0.01,0.02,\ldots,0.15$; his hybrid test coincides with $T_H$ in every case.
 \textit{EKW}: the tests of Elliott et al.\ (2022), run with their Tests.R on the two-sided $p$-values $2(1-\Phi(|t|))$, namely the least concave majorant test (LCM) and Fisher's test on $(0,0.15]$, the density discontinuity test at 0.05 (Disc.), the binomial test on $[0.04,0.05]$, and the Cox and Shi (2023) histogram-based tests on $(0,0.15]$ with 15 bins for monotonicity (CS1) and for 2-monotonicity with bounds (CS2B).
@@ -54,6 +57,5 @@ The projection test, $T_\infty$, $T_H$, CS1 and CS2B cluster by article, and LCM
 $\widehat{B}$: the breakdown statistic under $s_{\min}$ (Section 5.1), a lower 95\% confidence bound on the distance between the reported $t$-curve and the set of $t$-curves possible without selective reporting.
 \textit{Rounding}: an upper bound on the distance that rounding can create under $s_{\min}$, equal to 0.13 times the average of $\kappa^6$ (Propositions 3 and 4).
 A rejection with $\widehat{B}$ above this bound cannot be attributed to rounding.
-A fourth treatment that adds uniform noise to $s_{\min}$ is reported in Appendix Table~\ref{tab:application}.
 \end{minipage}
 \end{table}

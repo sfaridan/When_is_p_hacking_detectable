@@ -5,13 +5,13 @@ rm(list = ls())
 gc(reset = TRUE)
 
 #load in functions
-root               <- "C:/Users/stefa/OneDrive/Documents/GitHub/When_is_p_hacking_detectable"  #"C:/Users/sfaridani6/Documents/Research/smoothness test for p-hacking"
+root               <-  "C:/Users/sfaridani6/Documents/GitHub/When_is_p_hacking_detectable"
 this_script        <- rstudioapi::getSourceEditorContext()$path
 
 source(paste0(root,"/code/functions_all_weighted.R"))
 
 #Load in the data
-data_location <- "C:/Users/stefa/OneDrive/Documents/R/Underpowered Literatures/data"
+data_location <- "C:/Users/sfaridani6/Documents/Data/120246-V1"
 setwd(data_location)
 MM_raw <- haven::read_dta('MM data.dta')
 #MM_raw <- haven::read_dta('MM data fromkudrin.dta')
@@ -47,9 +47,9 @@ MM_data       <- MM_dropped
 #     the true unit: Proposition D.1 allows any independent noise.
 
 options_to_run <- 1:4   #1 = none, 2 = uniform (standard), 3 = smallest SE, 4 = smallest SE + noise in the numerator
-kappa_cap      <- 0.3   #drop coef/SE t-statistics with kappa = a/s_min above this (the same under every option)
+kappa_cap      <- 0.5   #drop coef/SE t-statistics with kappa = a/s_min above this (the same under every option)
 se_rounded_up  <- FALSE #TRUE if papers may have rounded standard errors up: then s_min = sd - b and s_max = sd
-n_draws_noise  <- 100   #independent de-roundings for options 2 and 4; try 2 first to check the run time
+n_draws_noise  <- 200   #independent de-roundings for options 2 and 4; try 2 first to check the run time
 
 stopifnot(all(options_to_run %in% 1:4))
 deround_keys   <- c("none", "uniform", "smin", "smin_noise")

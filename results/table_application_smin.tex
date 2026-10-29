@@ -8,10 +8,10 @@
 \cmidrule(lr){6-7} \cmidrule(lr){8-14} \cmidrule(lr){15-18}
  & $n$ & Articles & Med.\ $\nu$ & $\Delta_\nu$ & $p$ & $\widehat{B}$ & LCM & Fisher & Disc. & Binomial & CS1 & CS2B & Min & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hybrid}}$ & Min \\
 \midrule
-RCT & 6927 & 141 & 185 & 0.0014 & .00 & .0029 & .43 & 1.00 & .17 & .01 & .75 & .76 & .01 & .00 & .00 & .00$^{\dagger}$ & .00 \\
-IV & 5031 & 278 & 262 & 0.0013 & .00 & .0029 & 1.00 & 1.00 & .15 & .09 & .84 & .23 & .09 & .40 & .06 & .06$^{\dagger}$ & .06 \\
-DID & 5506 & 240 & 293.5 & 0.0014 & .03 & .0006 & .74 & 1.00 & .02 & .02 & .20 & .01 & .01 & .04 & .01 & .01$^{\dagger}$ & .01 \\
-RDD & 2942 & 85 & $\cdot$ & $\cdot$ & .01 & .0014 & .87 & 1.00 & .82 & .06 & .83 & .70 & .06 & .17 & .01 & .01$^{\dagger}$ & .01 \\
+RCT & 6738 & 141 & 185 & 0.0014 & .00 & .0028 & .80 & 1.00 & .55 & .07 & .80 & .85 & .07 & .00 & .00 & .00$^{\dagger}$ & .00 \\
+IV & 4957 & 278 & 262 & 0.0013 & .00 & .0031 & 1.00 & 1.00 & .15 & .12 & .69 & .24 & .12 & .43 & .08 & .08$^{\dagger}$ & .08 \\
+DID & 5306 & 237 & 293.5 & 0.0014 & .02 & .0009 & .95 & 1.00 & .03 & .13 & .15 & .02 & .02 & .03 & .00 & .00$^{\dagger}$ & .00 \\
+RDD & 2810 & 83 & $\cdot$ & $\cdot$ & .02 & .0013 & 1.00 & 1.00 & .99 & .35 & .89 & .56 & .35 & .30 & .02 & .02$^{\dagger}$ & .02 \\
 \bottomrule
 \end{tabular}}
 
@@ -19,7 +19,7 @@ RDD & 2942 & 85 & $\cdot$ & $\cdot$ & .01 & .0014 & .87 & 1.00 & .82 & .06 & .83
 \begin{minipage}{\linewidth}
 Results for the Brodeur et al. (2020) data. Following Kudrin (2025), we drop tests whose reported coefficient is missing or zero.
 De-rounding: smallest consistent standard error (Appendix D.1). Each coefficient is divided by the smallest standard error consistent with the reported one, and reported $t$-statistics are used as printed.
-The sample is the same for every de-rounding choice: we also drop $t$-statistics whose standard error is reported as zero or whose coefficient's rounding unit exceeds 1 times the smallest standard error consistent with the reported one.
+The sample is the same for every de-rounding choice: we also drop $t$-statistics whose standard error is reported as zero or whose coefficient's rounding unit exceeds 0.5 times the smallest standard error consistent with the reported one.
 Columns headed $J_0$ report $p$-values and breakdown statistics $\widehat{B}$ of the projection test with $J=40$.
 Med.\ $\nu$ is the median effective sample size as measured by the median number of clusters in a random sample of 100 articles for each causal inference method.
 In ambiguous cases, the smallest cluster count was always used.
