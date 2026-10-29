@@ -1,0 +1,22 @@
+\begin{table}[htbp]
+\centering
+\caption{Projection test on meta-samples like Brodeur et al.\ (2020), all four methods pooled}
+\label{tab:brodeur_all_power_proj}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccccccc}
+\toprule
+ & \multicolumn{4}{c}{Maximum of 8 specifications} & \multicolumn{4}{c}{Threshold: second draw if $t \le 1.96$} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9}
+$\tau$ & None & Unif. & $s_{\min}$ & $+$noise & None & Unif. & $s_{\min}$ & $+$noise \\
+\midrule
+0 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.25 & 0.000 & 0.000 & 0.000 & 0.000 & 0.025 & 0.025 & 0.000 & 0.000 \\
+0.5 & 0.025 & 0.000 & 0.000 & 0.000 & 0.100 & 0.125 & 0.075 & 0.075 \\
+0.75 & 0.025 & 0.025 & 0.025 & 0.000 & 0.500 & 0.525 & 0.325 & 0.375 \\
+1 & 1.000 & 1.000 & 1.000 & 1.000 & 0.900 & 0.925 & 0.850 & 0.825 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}\footnotesize\textit{Notes:} Rejection rates of 5\%-level tests over 40 repetitions. Each meta-sample has the 19{,}811 $t$-statistics in 675 articles of Brodeur et al.\ (2020), all four methods pooled, that the application keeps ($\kappa \le 0.5$), their printed precision and their within-article dependence ($\rho = 0.80$, in the effects); effects are drawn from a Gamma with shape 1.413 and rate 0.770, Kudrin's. $\tau$: share of $p$-hacked results ($\tau = 0$: size). Columns: the $p$-hacking method, then the de-rounding: None ($m/s$), Unif.\ (uniform draws for the coefficient's last digit and the standard error), $s_{\min}$ ($m/s_{\min}$, the smallest consistent standard error), $+$noise ($s_{\min}$ with uniform noise at the coefficient's last digit). Projection test: run\_test\_weight\_fast() with $J = 40$, $J_0 = 20$ and $p = 2$, clustered by article. Under $s_{\min}$ and $+$noise the test rejects only when its breakdown statistic $\hat B$ exceeds the rounding allowance 0.13 times the mean of $\kappa^6$, 2.40e-04 (Appendix D.1, step 3), so that a rejection cannot be attributed to rounding; under None and Unif.\ it rejects when $p \le 0.05$.\end{minipage}
+\end{table}

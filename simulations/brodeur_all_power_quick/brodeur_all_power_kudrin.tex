@@ -1,0 +1,37 @@
+\begin{table}[htbp]
+\centering
+\caption{Kudrin's (2025) tests on meta-samples like Brodeur et al.\ (2020), all four methods pooled}
+\label{tab:brodeur_all_power_kudrin}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccccccc}
+\toprule
+ & \multicolumn{4}{c}{Maximum of 8 specifications} & \multicolumn{4}{c}{Threshold: second draw if $t \le 1.96$} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9}
+$\tau$ & None & Unif. & $s_{\min}$ & $+$noise & None & Unif. & $s_{\min}$ & $+$noise \\
+\midrule
+\multicolumn{9}{l}{\textit{$T_\infty$}} \\
+0 & 0.700 & 0.000 & 0.350 & 0.000 & 0.700 & 0.000 & 0.350 & 0.000 \\
+0.25 & 0.625 & 0.000 & 0.250 & 0.000 & 0.925 & 0.000 & 0.950 & 0.000 \\
+0.5 & 0.700 & 0.025 & 0.475 & 0.025 & 1.000 & 0.275 & 1.000 & 0.250 \\
+0.75 & 0.850 & 0.175 & 0.575 & 0.100 & 1.000 & 0.825 & 1.000 & 0.850 \\
+1 & 0.975 & 0.225 & 0.625 & 0.100 & 1.000 & 1.000 & 1.000 & 1.000 \\
+\midrule
+\multicolumn{9}{l}{\textit{$T_H$}} \\
+0 & 0.275 & 0.075 & 0.375 & 0.025 & 0.275 & 0.075 & 0.375 & 0.025 \\
+0.25 & 0.250 & 0.025 & 0.225 & 0.000 & 0.525 & 0.150 & 0.700 & 0.100 \\
+0.5 & 0.325 & 0.050 & 0.275 & 0.025 & 0.925 & 0.450 & 0.975 & 0.325 \\
+0.75 & 0.575 & 0.125 & 0.450 & 0.100 & 1.000 & 0.900 & 1.000 & 0.875 \\
+1 & 0.600 & 0.225 & 0.650 & 0.125 & 1.000 & 1.000 & 1.000 & 1.000 \\
+\midrule
+\multicolumn{9}{l}{\textit{$T_H^{\mathrm{hyb}}$}} \\
+0 & 0.275 & 0.075 & 0.375 & 0.025 & 0.275 & 0.075 & 0.375 & 0.025 \\
+0.25 & 0.250 & 0.025 & 0.225 & 0.000 & 0.525 & 0.150 & 0.700 & 0.100 \\
+0.5 & 0.325 & 0.050 & 0.275 & 0.025 & 0.925 & 0.450 & 0.975 & 0.325 \\
+0.75 & 0.575 & 0.125 & 0.450 & 0.100 & 1.000 & 0.900 & 1.000 & 0.875 \\
+1 & 0.600 & 0.225 & 0.650 & 0.125 & 1.000 & 1.000 & 1.000 & 1.000 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}\footnotesize\textit{Notes:} Rejection rates of 5\%-level tests over 40 repetitions. Each meta-sample has the 19{,}811 $t$-statistics in 675 articles of Brodeur et al.\ (2020), all four methods pooled, that the application keeps ($\kappa \le 0.5$), their printed precision and their within-article dependence ($\rho = 0.80$, in the effects); effects are drawn from a Gamma with shape 1.413 and rate 0.770, Kudrin's. $\tau$: share of $p$-hacked results ($\tau = 0$: size). Columns: the $p$-hacking method, then the de-rounding: None ($m/s$), Unif.\ (uniform draws for the coefficient's last digit and the standard error), $s_{\min}$ ($m/s_{\min}$, the smallest consistent standard error), $+$noise ($s_{\min}$ with uniform noise at the coefficient's last digit). Kudrin (2025) tests $T_\infty$, $T_H$ and $T_H^{\mathrm{hyb}}$, clustered by article.\end{minipage}
+\end{table}

@@ -1,0 +1,65 @@
+\begin{table}[htbp]
+\centering
+\caption{Each EKW test on meta-samples like Brodeur et al.\ (2020), all four methods pooled}
+\label{tab:brodeur_all_power_EKW}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccccccc}
+\toprule
+ & \multicolumn{4}{c}{Maximum of 8 specifications} & \multicolumn{4}{c}{Threshold: second draw if $t \le 1.96$} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9}
+$\tau$ & None & Unif. & $s_{\min}$ & $+$noise & None & Unif. & $s_{\min}$ & $+$noise \\
+\midrule
+\multicolumn{9}{l}{\textit{LCM}} \\
+0 & 0.325 & 0.000 & 0.550 & 0.000 & 0.325 & 0.000 & 0.550 & 0.000 \\
+0.25 & 0.225 & 0.000 & 0.425 & 0.000 & 0.650 & 0.000 & 0.675 & 0.000 \\
+0.5 & 0.225 & 0.000 & 0.175 & 0.000 & 0.800 & 0.000 & 0.725 & 0.000 \\
+0.75 & 0.325 & 0.000 & 0.050 & 0.000 & 1.000 & 0.000 & 0.850 & 0.000 \\
+1 & 0.350 & 0.000 & 0.050 & 0.000 & 1.000 & 0.000 & 0.875 & 0.000 \\
+\midrule
+\multicolumn{9}{l}{\textit{Fisher}} \\
+0 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.25 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.5 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.75 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+1 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+\midrule
+\multicolumn{9}{l}{\textit{Discontinuity}} \\
+0 & 0.100 & 0.075 & 0.000 & 0.025 & 0.100 & 0.075 & 0.000 & 0.025 \\
+0.25 & 0.075 & 0.050 & 0.025 & 0.050 & 0.125 & 0.025 & 0.000 & 0.000 \\
+0.5 & 0.025 & 0.025 & 0.000 & 0.025 & 0.050 & 0.000 & 0.025 & 0.050 \\
+0.75 & 0.000 & 0.075 & 0.000 & 0.075 & 0.050 & 0.050 & 0.000 & 0.025 \\
+1 & 0.050 & 0.025 & 0.025 & 0.050 & 0.075 & 0.050 & 0.050 & 0.025 \\
+\midrule
+\multicolumn{9}{l}{\textit{Binomial}} \\
+0 & 1.000 & 0.000 & 1.000 & 0.000 & 1.000 & 0.000 & 1.000 & 0.000 \\
+0.25 & 1.000 & 0.000 & 1.000 & 0.000 & 1.000 & 0.000 & 1.000 & 0.000 \\
+0.5 & 1.000 & 0.000 & 1.000 & 0.000 & 1.000 & 0.000 & 1.000 & 0.000 \\
+0.75 & 1.000 & 0.000 & 1.000 & 0.000 & 1.000 & 0.000 & 1.000 & 0.000 \\
+1 & 1.000 & 0.000 & 1.000 & 0.000 & 1.000 & 0.000 & 1.000 & 0.000 \\
+\midrule
+\multicolumn{9}{l}{\textit{CS1}} \\
+0 & 0.200 & 0.025 & 0.200 & 0.000 & 0.200 & 0.025 & 0.200 & 0.000 \\
+0.25 & 0.100 & 0.050 & 0.100 & 0.025 & 0.150 & 0.025 & 0.175 & 0.000 \\
+0.5 & 0.150 & 0.000 & 0.075 & 0.050 & 0.200 & 0.000 & 0.150 & 0.025 \\
+0.75 & 0.100 & 0.025 & 0.025 & 0.000 & 0.150 & 0.000 & 0.075 & 0.000 \\
+1 & 0.103 & 0.000 & 0.100 & 0.025 & 0.125 & 0.000 & 0.125 & 0.000 \\
+\midrule
+\multicolumn{9}{l}{\textit{CS2B}} \\
+0 & 0.475 & 0.050 & 0.575 & 0.025 & 0.475 & 0.050 & 0.575 & 0.025 \\
+0.25 & 0.625 & 0.025 & 0.400 & 0.025 & 0.700 & 0.025 & 0.725 & 0.000 \\
+0.5 & 0.550 & 0.050 & 0.500 & 0.050 & 0.825 & 0.125 & 0.825 & 0.050 \\
+0.75 & 0.525 & 0.025 & 0.425 & 0.000 & 0.975 & 0.125 & 0.925 & 0.075 \\
+1 & 0.575 & 0.000 & 0.350 & 0.050 & 1.000 & 0.300 & 0.975 & 0.225 \\
+\midrule
+\multicolumn{9}{l}{\textit{Any EKW test (smallest $p$-value)}} \\
+0 & 1.000 & 0.125 & 1.000 & 0.050 & 1.000 & 0.125 & 1.000 & 0.050 \\
+0.25 & 1.000 & 0.100 & 1.000 & 0.100 & 1.000 & 0.050 & 1.000 & 0.000 \\
+0.5 & 1.000 & 0.075 & 1.000 & 0.100 & 1.000 & 0.125 & 1.000 & 0.125 \\
+0.75 & 1.000 & 0.125 & 1.000 & 0.075 & 1.000 & 0.175 & 1.000 & 0.100 \\
+1 & 1.000 & 0.025 & 1.000 & 0.125 & 1.000 & 0.300 & 1.000 & 0.225 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}\footnotesize\textit{Notes:} Rejection rates of 5\%-level tests over 40 repetitions. Each meta-sample has the 19{,}811 $t$-statistics in 675 articles of Brodeur et al.\ (2020), all four methods pooled, that the application keeps ($\kappa \le 0.5$), their printed precision and their within-article dependence ($\rho = 0.80$, in the effects); effects are drawn from a Gamma with shape 1.413 and rate 0.770, Kudrin's. $\tau$: share of $p$-hacked results ($\tau = 0$: size). Columns: the $p$-hacking method, then the de-rounding: None ($m/s$), Unif.\ (uniform draws for the coefficient's last digit and the standard error), $s_{\min}$ ($m/s_{\min}$, the smallest consistent standard error), $+$noise ($s_{\min}$ with uniform noise at the coefficient's last digit). EKW tests as in the application, on the two-sided $p$-values below 0.15: LCM, the least concave majorant test, and Fisher, Fisher's test, both of a concave $p$-curve CDF; Discontinuity, the density discontinuity test at 0.05 (Cattaneo et al.\ 2020); Binomial, the exact binomial test of a non-increasing $p$-curve on $[0.04, 0.05]$; CS1 and CS2B, the Cox and Shi (2023) tests of a non-increasing histogram and of a 2-monotone histogram with bounds (15 bins, clustered by article). Last block: any of the six rejects at 5\% (smallest $p$-value, no multiple-testing correction).\end{minipage}
+\end{table}

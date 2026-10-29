@@ -1,0 +1,22 @@
+\begin{table}[htbp]
+\centering
+\caption{The $p$-curve test for left skew (Stouffer) on meta-samples like Brodeur et al.\ (2020), all four methods pooled}
+\label{tab:brodeur_all_power_stouffer}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccccccc}
+\toprule
+ & \multicolumn{4}{c}{Maximum of 8 specifications} & \multicolumn{4}{c}{Threshold: second draw if $t \le 1.96$} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9}
+$\tau$ & None & Unif. & $s_{\min}$ & $+$noise & None & Unif. & $s_{\min}$ & $+$noise \\
+\midrule
+0 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.25 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.5 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.75 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+1 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}\footnotesize\textit{Notes:} Rejection rates of 5\%-level tests over 40 repetitions. Each meta-sample has the 19{,}811 $t$-statistics in 675 articles of Brodeur et al.\ (2020), all four methods pooled, that the application keeps ($\kappa \le 0.5$), their printed precision and their within-article dependence ($\rho = 0.80$, in the effects); effects are drawn from a Gamma with shape 1.413 and rate 0.770, Kudrin's. $\tau$: share of $p$-hacked results ($\tau = 0$: size). Columns: the $p$-hacking method, then the de-rounding: None ($m/s$), Unif.\ (uniform draws for the coefficient's last digit and the standard error), $s_{\min}$ ($m/s_{\min}$, the smallest consistent standard error), $+$noise ($s_{\min}$ with uniform noise at the coefficient's last digit). $p$-curve test for left skew (Simonsohn, Nelson and Simmons 2014), as suggested in Simonsohn's report: each $p < .05$ is multiplied by 20, transformed by the normal quantile function and combined by Stouffer's method; it rejects for left skew and, like $p$-curve, treats the $p$-values as independent.\end{minipage}
+\end{table}
