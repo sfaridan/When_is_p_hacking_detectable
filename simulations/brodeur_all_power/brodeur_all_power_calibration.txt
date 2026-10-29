@@ -1,0 +1,5 @@
+Subsample (all four methods pooled): 19,811 t-statistics in 675 articles (29.3 per article, at most 258); 96.3% coefficient/SE, 3.7% printed t.
+By method: DID 5,306, IV 4,957, RCT 6,738, RDD 2,810.
+Rounding: kappa median 0.016, 90th percentile 0.154; se significands (units of u) below 10: 9.4%; rounding allowance 0.13 x mean(kappa^6) = 2.40e-04, which B-hat must exceed under s_min.
+Pi-hat: Gamma(shape 1.4134, rate 0.7704) = scale 1.2980; mean 1.83, sd 1.54; Kudrin's values with 1.2980 a scale, not estimated; log-likelihood of Kudrin's 1.4134, 1.2980 on these |t|: -53919.6 as a rate, -43148.3 as a scale; P(|t| > 1.96): data 0.492, implied 0.414.
+Within-article dependence (in the effects): design effect of the data 4.457; simulated 4.457 at rho = 0.810 (rho = 0: 1.006, rho = 0.99: 6.197).

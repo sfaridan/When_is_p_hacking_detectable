@@ -59,6 +59,8 @@
 #                             and T_H_hybrid (those that are run)
 #    NAME_<test>.tex          their tables; NAME_EKW.tex reports every EKW test separately
 #    NAME_rates.csv           all rejection rates by method, option and tau
+#    NAME_dw.csv / .tex       exact distortion d_w of each simulated form of p-hacking at each tau,
+#                             and the tau at which it equals each B-hat of the application
 #    NAME_calibration.txt/.rds  the data, Pi-hat, rho and design-effect fit
 #    reps/rep_NNNNN.rds       one file per repetition, so an interrupted run resumes
 #
@@ -108,7 +110,10 @@ CFG <- list(
   # "npmle", or Kudrin's published Gamma(1.4134, 1.2980)
   # read with 1.2980 a rate ("kudrin_rate", mean 1.09, as
   # his footnote 13) or a scale ("kudrin_scale", mean 1.83,
-  # as kudrin_pi_hat in the companion scripts)
+  # as kudrin_pi_hat in the companion scripts); with
+  # these two nothing is estimated
+  compare_kudrin = TRUE,                 # report the log-likelihood of Kudrin's two readings on
+  # these |t| (an evaluation for the report, not a fit)
   npmle_iters   = 3000,
   fit_cap       = 20,                    # in the effect fit, |t| above this is censored: it only
   # says "very large" (the data hold |t| in the millions)
@@ -133,6 +138,12 @@ CFG <- list(
   run_ekw       = TRUE,                  # each EKW test separately (adds a few s per test call)
   run_stouffer  = TRUE,                  # p-curve test for left skew (Simonsohn); instantaneous
   table_taus    = NULL,                  # taus in the tables (NULL: all), e.g. c(0, .1, .25, .5, 1)
+  
+  # Exact distortions d_w (no sampling), to read the application's B-hat (needs the nnls package)
+  dw_taus       = seq(0, 1, by = 0.1),   # rows of the d_w table
+  bhat          = c(RCT = 2.8e-3, IV = 3.1e-3, DID = 0.9e-3, RDD = 1.3e-3),   # B-hat by design in
+  # the application (Table 3 of the 9/20/2026 draft; update
+  # after rerunning it), or NULL
   
   # Computing
   reps          = 500,
@@ -376,27 +387,41 @@ fit_loglik <- function(fk, w) {
   sum(log(pmax(as.vector(fk$K %*% w), 1e-300))) + fk$n_cens * log(max(sum(fk$cens * w), 1e-300))
 }
 
+# Gamma(shape, rate) mass in each bin of the effect grid
+gamma_bins <- function(shape, rate, edges) {
+  cdf <- pgamma(edges, shape = shape, rate = rate)
+  c(diff(cdf), 1 - cdf[length(cdf)])
+}
+
+# A Gamma(shape, rate) used as given (Kudrin's values): nothing is estimated and the data are not
+# touched. sig_share: P(|T| > 1.96) it implies with normal noise.
+gamma_fixed <- function(shape, rate) {
+  g <- effect_grid()
+  w <- gamma_bins(shape, rate, g$edges)
+  list(type = "gamma", shape = shape, rate = rate, loglik = NA_real_, n_censored = NA_integer_,
+       sig_share = sum(w * (pnorm(-1.96 - g$mids) + pnorm(g$mids - 1.96))))
+}
+
 # Maximum likelihood Gamma(shape, rate) for the effects from |t|, under |T| = |H + Z| with Z
-# normal (or Student-t(nu)): the likelihood integrates over H on the grid of gamma-CDF bins.
-# fixed = c(shape, rate) skips the fit and only evaluates it.
-fit_gamma <- function(absT, fixed = NULL) {
+# normal (or Student-t(nu)): the likelihood integrates over H on the grid of gamma-CDF bins
+fit_gamma <- function(absT) {
   g   <- effect_grid()
   fk  <- fit_kernel(absT, g$mids)
-  wts <- function(a, b) {
-    cdf <- pgamma(g$edges, shape = a, rate = b)
-    c(diff(cdf), 1 - cdf[length(cdf)])
-  }
-  nll <- function(par) -fit_loglik(fk, wts(exp(par[1]), exp(par[2])))
-  if (is.null(fixed)) {
-    fit <- optim(log(c(1.4134, 1.2980)), nll, control = list(reltol = 1e-12, maxit = 4000))
-    fit <- optim(fit$par, nll, method = "BFGS", control = list(reltol = 1e-12))
-    par <- exp(fit$par)
-  } else {
-    par <- fixed
-  }
-  w <- wts(par[1], par[2])
-  list(type = "gamma", shape = par[1], rate = par[2], loglik = fit_loglik(fk, w), n_censored = fk$n_cens,
-       sig_share = sum(w * (pnorm(-1.96 - g$mids) + pnorm(g$mids - 1.96))))   # P(|T| > 1.96) if normal
+  nll <- function(par) -fit_loglik(fk, gamma_bins(exp(par[1]), exp(par[2]), g$edges))
+  fit <- optim(log(c(1.4134, 1.2980)), nll, control = list(reltol = 1e-12, maxit = 4000))
+  fit <- optim(fit$par, nll, method = "BFGS", control = list(reltol = 1e-12))
+  out <- gamma_fixed(exp(fit$par[1]), exp(fit$par[2]))
+  out$loglik     <- -fit$value
+  out$n_censored <- fk$n_cens
+  out
+}
+
+# Log-likelihoods of given gammas (a named list of c(shape, rate)) on |t|, with one kernel:
+# an evaluation for the calibration report, not a fit
+gamma_logliks <- function(absT, pars) {
+  g  <- effect_grid()
+  fk <- fit_kernel(absT, g$mids)
+  vapply(pars, function(p) fit_loglik(fk, gamma_bins(p[1], p[2], g$edges)), 0)
 }
 
 # NPMLE of the effect distribution from |t|: EM for the weights of the grid's atoms, with the
@@ -741,6 +766,103 @@ NOTE_STOUF <- "$p$-curve test for left skew (Simonsohn, Nelson and Simmons 2014)
 NOTE_KUD   <- "Kudrin (2025) tests $T_\\infty$, $T_H$ and $T_H^{\\mathrm{hyb}}$, clustered by article."
 
 
+## ---- 6b. Exact distortions d_w, to read B-hat in the application ---------------------------
+## For each simulated form of p-hacking and each share tau, the d_w of the t-curve it produces in
+## the calibrated DGP (effects from Pi-hat, no rounding), computed exactly by integration: the
+## weighted distance from its projection-test coefficients (symmetrized, shifted, J0 and p as in
+## CFG) to the test's own honest set, the hull of the point-mass vectors b_x on its grid of numgrid
+## points in [-L, L] plus the far point 9999 (Lemma 3, eq. (34)). B-hat is a lower 95% confidence
+## bound on the same distance for the reported t-curve, so a design whose B-hat exceeds d_w at tau
+## is at least as far from honest reporting as that p-hacking by a share tau of studies makes it.
+
+# b_x,j = 2^(-j/2) chi_j(x) phi_2(x) = 2^(-j/2) psi_j(x / sqrt(2)) phi(x / sqrt(2)) / sqrt(2), one
+# column per x
+point_mass_coeffs <- function(x) {
+  J <- CFG$num_coeffs - 1
+  t(hf(x / sqrt(2), J) / sqrt(2)) * 2^(-(0:J) / 2)
+}
+
+# Weighted distance from theta to the convex hull of the columns of B (nonnegative weights, with
+# their sum held at one by a heavy extra row)
+hull_distance <- function(theta, B, w) {
+  fit <- nnls::nnls(rbind(w * B, 1e3), c(w * theta, 1e3))
+  sqrt(sum((w * (B %*% fit$x - theta))^2))
+}
+
+# d_w at each tau for "max" and "threshold"; at tau = 0 the t-curve is honest, so that row shows
+# the numerical error (zero to many decimals with normal noise)
+dw_distortions <- function(taus) {
+  J    <- CFG$num_coeffs - 1
+  step <- 0.004
+  tg   <- seq(-15, 30, by = step)
+  XI   <- 0.5 * (hf(tg - CFG$shift, J) + hf(-tg - CFG$shift, J))   # features of a reported t
+  if (identical(PI_HAT$type, "gamma")) {
+    g  <- effect_grid()
+    hs <- g$mids
+    ws <- gamma_bins(PI_HAT$shape, PI_HAT$rate, g$edges)
+  } else {
+    hs <- PI_HAT$h
+    ws <- PI_HAT$w
+  }
+  dn <- function(z) if (is.finite(CFG$nu)) dt(z, CFG$nu) else dnorm(z)
+  pn <- function(z) if (is.finite(CFG$nu)) pt(z, CFG$nu) else pnorm(z)
+  K  <- CFG$max_draws
+  fh <- fm <- ft <- numeric(length(tg))                  # t-curves: honest, max of K, threshold
+  for (k in seq_along(hs)) {
+    if (ws[k] < 1e-14) next
+    d  <- dn(tg - hs[k])
+    P  <- pn(tg - hs[k])
+    fh <- fh + ws[k] * d
+    fm <- fm + ws[k] * K * d * P^(K - 1)
+    ft <- ft + ws[k] * ifelse(tg <= CFG$cv, 2 * P * d, d * (1 + pn(CFG$cv - hs[k])))
+  }
+  th <- lapply(list(honest = fh, max = fm, threshold = ft), function(f) drop(crossprod(XI, f)) * step)
+  B  <- cbind(point_mass_coeffs(seq(-CFG$L, CFG$L, length.out = CFG$numgrid)), 0)   # 0: the point 9999
+  data.frame(tau = taus,
+             max       = vapply(taus, function(a) hull_distance((1 - a) * th$honest + a * th$max, B, DEFF_W), 0),
+             threshold = vapply(taus, function(a) hull_distance((1 - a) * th$honest + a * th$threshold, B, DEFF_W), 0))
+}
+
+# The share tau at which d (increasing in tau) first reaches b, by linear interpolation; NA when
+# even tau = 1 falls short
+equivalent_tau <- function(d, taus, b) {
+  i <- which(d >= b)[1]
+  if (is.na(i)) return(NA_real_)
+  if (i == 1) return(taus[1])
+  taus[i - 1] + (b - d[i - 1]) / (d[i] - d[i - 1]) * (taus[i] - taus[i - 1])
+}
+
+write_dw_tex <- function(DW, EQ, file) {
+  num  <- function(v) ifelse(is.finite(v), sprintf("%.3f", v), "--")
+  body <- paste0(format(DW$tau), " & ", num(1e3 * DW$max), " & ", num(1e3 * DW$threshold), " \\\\")
+  if (!is.null(EQ)) {
+    shr  <- function(v) ifelse(is.finite(v), sprintf("%.2f", v), "$>1$")
+    body <- c(body, "\\midrule",
+              "\\multicolumn{3}{l}{\\textit{Share $\\tau$ at which $d_w$ equals the application's $\\hat B$}} \\\\",
+              paste0(EQ$design, " ($\\hat B = ", sprintf("%.1f", 1e3 * EQ$bhat), "$) & ", shr(EQ$tau_max),
+                     " & ", shr(EQ$tau_threshold), " \\\\"))
+  }
+  pit <- if (identical(PI_HAT$type, "gamma")) {
+    sprintf("a Gamma with shape %.3f and rate %.3f", PI_HAT$shape, PI_HAT$rate)
+  } else "the NPMLE of the effect distribution"
+  notes <- paste0(
+    "Entries: $d_w \\times 10^3$, the weighted distance between the $t$-curve produced when a share $\\tau$ of studies $p$-hack and the set of $t$-curves possible without selective reporting, computed exactly rather than simulated, with the projection test's coefficients ($J = ",
+    CFG$num_coeffs - 1, "$, $J_0 = ", CFG$J0, "$, symmetrized and shifted by ", format(CFG$shift),
+    ") and its grid of ", format(CFG$numgrid, big.mark = "{,}"), " points on $[-", format(CFG$L), ", ", format(CFG$L),
+    "]$ plus 9999. Effects are drawn from ", pit, ", as in the simulations, with no rounding. Maximum of ",
+    CFG$max_draws, ": the largest of ", CFG$max_draws, " $t$-statistics; Threshold: a second draw if $t \\le ",
+    format(CFG$cv), "$. The breakdown statistic $\\hat B$ is a lower 95\\% confidence bound on the same distance for the reported $t$-curve, so a design whose $\\hat B$ exceeds $d_w$ at $\\tau$ is at least as far from honest reporting as that form of $p$-hacking by a share $\\tau$ of its studies would make it. The shares depend on the distribution of effects and the form of $p$-hacking; they convey magnitudes, not estimates of the extent of $p$-hacking.")
+  writeLines(c("\\begin{table}[htbp]", "\\centering",
+               "\\caption{How far simulated $p$-hacking moves the $t$-curve from the honest set}",
+               sprintf("\\label{tab:%s_dw}", CFG$name), "\\footnotesize",
+               "\\begin{tabular}{lcc}", "\\toprule",
+               sprintf("$\\tau$ & Maximum of %d & Threshold \\\\", as.integer(CFG$max_draws)), "\\midrule",
+               body, "\\bottomrule", "\\end{tabular}", "\\par\\smallskip",
+               sprintf("\\begin{minipage}{\\linewidth}\\footnotesize\\textit{Notes:} %s\\end{minipage}", notes),
+               "\\end{table}"), file)
+}
+
+
 ## ---- 7. Run --------------------------------------------------------------------------------
 
 DESIGN <- build_design()
@@ -758,22 +880,28 @@ ALLOWANCE <- ALLOW_C * mean(DESIGN$kappa^6)
 DATA_KEY <- paste(normalizePath(DATA_FILE), file.info(DATA_FILE)$size, format(file.info(DATA_FILE)$mtime))
 CAL_KEY  <- paste(DATA_KEY, paste(SUBSAMPLE, collapse = "+"), CFG$kappa_cap, CFG$se_rounded_up, CFG$nu,
                   CFG$fit_option, CFG$deff_option, CFG$corr_in, CFG$n_cal, CFG$rho_max, CFG$se_cell, CFG$npmle_iters,
-                  CFG$pi_fit, CFG$fit_cap,
+                  CFG$pi_fit, CFG$fit_cap, CFG$compare_kudrin,
                   CFG$seed, CFG$J0, CFG$p_weight, CFG$num_coeffs, CFG$shift)
 cal_file <- file.path(OUT_DIR, paste0(CFG$name, "_calibration.rds"))
 CAL <- if (file.exists(cal_file)) readRDS(cal_file) else NULL
 if (is.null(CAL) || !identical(CAL$key, CAL_KEY)) {
-  message("Fitting Pi-hat (", CFG$pi_fit, ") to the |t| of the subsample ...")
   set.seed(CFG$seed + 11)
   t_fit  <- data_t(CFG$fit_option, runif(nrow(DESIGN), -0.5, 0.5), runif(nrow(DESIGN), -0.5, 0.5))
+  if (CFG$pi_fit %in% c("kudrin_rate", "kudrin_scale")) {
+    message("Effects: Kudrin's Gamma(shape 1.4134, ", if (CFG$pi_fit == "kudrin_rate") "rate" else "scale",
+            " 1.2980), used as given; nothing is estimated.")
+  } else {
+    message("Fitting Pi-hat (", CFG$pi_fit, ") to the |t| of the subsample ...")
+  }
   PI_HAT <- switch(CFG$pi_fit,
                    gamma        = fit_gamma(abs(t_fit)),
                    npmle        = fit_pi_hat(abs(t_fit)),
-                   kudrin_rate  = fit_gamma(abs(t_fit), fixed = c(1.4134, 1.2980)),
-                   kudrin_scale = fit_gamma(abs(t_fit), fixed = c(1.4134, 1 / 1.2980)))
-  if (CFG$pi_fit != "kudrin_rate") {                    # Kudrin's values on these data, for the report
-    PI_HAT$kudrin_loglik <- c(rate  = fit_gamma(abs(t_fit), fixed = c(1.4134, 1.2980))$loglik,
-                              scale = fit_gamma(abs(t_fit), fixed = c(1.4134, 1 / 1.2980))$loglik)
+                   kudrin_rate  = gamma_fixed(1.4134, 1.2980),
+                   kudrin_scale = gamma_fixed(1.4134, 1 / 1.2980))
+  if (isTRUE(CFG$compare_kudrin)) {
+    message("For the report only: log-likelihood of Kudrin's two readings on these |t| (no fitting) ...")
+    PI_HAT$kudrin_loglik <- gamma_logliks(abs(t_fit), list(rate  = c(1.4134, 1.2980),
+                                                           scale = c(1.4134, 1 / 1.2980)))
   }
   set.seed(CFG$seed + 12)
   t_deff <- data_t(CFG$deff_option, runif(nrow(DESIGN), -0.5, 0.5), runif(nrow(DESIGN), -0.5, 0.5))
@@ -820,12 +948,20 @@ report <- c(
           median(DESIGN$kappa), quantile(DESIGN$kappa, 0.9), 100 * mean(DESIGN$S[DESIGN$ratio] < 10),
           format(ALLOW_C), ALLOWANCE),
   if (identical(PI_HAT$type, "gamma")) {
-    sprintf("Pi-hat (%s; %d |t| above %s censored): Gamma(shape %.4f, rate %.4f) = scale %.4f; mean %.2f, sd %.2f; log-likelihood %.1f%s; P(|t| > 1.96): data %.3f, fitted %.3f.",
-            CFG$pi_fit, as.integer(PI_HAT$n_censored), format(CFG$fit_cap), PI_HAT$shape, PI_HAT$rate, 1 / PI_HAT$rate, PI_HAT$shape / PI_HAT$rate,
-            sqrt(PI_HAT$shape) / PI_HAT$rate, PI_HAT$loglik,
-            if (is.null(PI_HAT$kudrin_loglik)) "" else sprintf(" (Kudrin's 1.4134, 1.2980: %.1f as a rate, %.1f as a scale)",
-                                                               PI_HAT$kudrin_loglik[["rate"]], PI_HAT$kudrin_loglik[["scale"]]),
-            CAL$data_sig, PI_HAT$sig_share)
+    paste0(sprintf("Pi-hat: Gamma(shape %.4f, rate %.4f) = scale %.4f; mean %.2f, sd %.2f; ",
+                   PI_HAT$shape, PI_HAT$rate, 1 / PI_HAT$rate, PI_HAT$shape / PI_HAT$rate,
+                   sqrt(PI_HAT$shape) / PI_HAT$rate),
+           if (CFG$pi_fit == "gamma") {
+             sprintf("fitted by maximum likelihood (log-likelihood %.1f; %d |t| above %s censored); ",
+                     PI_HAT$loglik, as.integer(PI_HAT$n_censored), format(CFG$fit_cap))
+           } else {
+             sprintf("Kudrin's values with 1.2980 a %s, not estimated; ", if (CFG$pi_fit == "kudrin_rate") "rate" else "scale")
+           },
+           if (is.null(PI_HAT$kudrin_loglik)) "" else {
+             sprintf("log-likelihood of Kudrin's 1.4134, 1.2980 on these |t|: %.1f as a rate, %.1f as a scale; ",
+                     PI_HAT$kudrin_loglik[["rate"]], PI_HAT$kudrin_loglik[["scale"]])
+           },
+           sprintf("P(|t| > 1.96): data %.3f, implied %.3f.", CAL$data_sig, PI_HAT$sig_share))
   } else {
     sprintf("Pi-hat (npmle; %d |t| above %s censored): %d atoms, mean %.2f, sd %.2f (%d EM iterations); log-likelihood %.1f; P(|t| > 1.96): data %.3f, fitted %.3f.",
             as.integer(PI_HAT$n_censored), format(CFG$fit_cap), length(PI_HAT$h), sum(PI_HAT$w * PI_HAT$h), sqrt(sum(PI_HAT$w * PI_HAT$h^2) - sum(PI_HAT$w * PI_HAT$h)^2),
@@ -835,6 +971,30 @@ report <- c(
           CFG$corr_in, CAL$rho$target, CAL$rho$deff, RHO, CAL$rho$deff_0, format(CFG$rho_max), CAL$rho$deff_max))
 message(paste(report, collapse = "\n"))
 writeLines(report, file.path(OUT_DIR, paste0(CFG$name, "_calibration.txt")))
+
+# Exact distortions d_w of the simulated p-hacking, and the share tau each B-hat corresponds to
+if (requireNamespace("nnls", quietly = TRUE)) {
+  DW <- dw_distortions(sort(unique(c(0, CFG$dw_taus))))
+  EQ <- if (length(CFG$bhat) > 0) {
+    data.frame(design = names(CFG$bhat), bhat = as.numeric(CFG$bhat),
+               tau_max       = vapply(as.numeric(CFG$bhat), function(b) equivalent_tau(DW$max, DW$tau, b), 0),
+               tau_threshold = vapply(as.numeric(CFG$bhat), function(b) equivalent_tau(DW$threshold, DW$tau, b), 0),
+               stringsAsFactors = FALSE)
+  } else NULL
+  message("Exact distortion d_w (x 1000) of the simulated p-hacking (effects from Pi-hat, no rounding):")
+  print(data.frame(tau = DW$tau, max_of_K = round(1e3 * DW$max, 3), threshold = round(1e3 * DW$threshold, 3)),
+        row.names = FALSE)
+  if (!is.null(EQ)) {
+    message("Share tau at which d_w equals each B-hat (NA: beyond tau = 1):")
+    print(data.frame(design = EQ$design, bhat_x1000 = 1e3 * EQ$bhat, tau_max = round(EQ$tau_max, 2),
+                     tau_threshold = round(EQ$tau_threshold, 2)), row.names = FALSE)
+  }
+  write.csv(DW, file.path(OUT_DIR, paste0(CFG$name, "_dw.csv")), row.names = FALSE)
+  if (!is.null(EQ)) write.csv(EQ, file.path(OUT_DIR, paste0(CFG$name, "_dw_bhat.csv")), row.names = FALSE)
+  write_dw_tex(DW, EQ, file.path(OUT_DIR, paste0(CFG$name, "_dw.tex")))
+} else {
+  message("Skipping the d_w table: it needs the nnls package (install.packages(\"nnls\")).")
+}
 
 proj_key <- paste(CFG$num_coeffs, CFG$L, CFG$numgrid, if (is.null(CFG$epsilon_U_pre)) "computed" else CFG$epsilon_U_pre)
 proj_file <- file.path(OUT_DIR, "proj_constants.rds")
