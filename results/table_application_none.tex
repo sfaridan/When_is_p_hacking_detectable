@@ -3,15 +3,15 @@
 \caption{Empirical Application Results: No de-rounding}
 \label{tab:application_none}
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{% shrinks the table only if it is wider than the text
-\begin{tabular}{lccccccccccccccccc}
- &  &  &  &  & \multicolumn{2}{c}{$J_0=20$} & \multicolumn{7}{c}{EKW $p$-values} & \multicolumn{4}{c}{Kudrin (2025) $p$-values} \\
-\cmidrule(lr){6-7} \cmidrule(lr){8-14} \cmidrule(lr){15-18}
- & $n$ & Articles & Med.\ $\nu$ & $\Delta_\nu$ & $p$ & $\widehat{B}$ & LCM & Fisher & Disc. & Binomial & CS1 & CS2B & Min & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hybrid}}$ & Min \\
+\begin{tabular}{lccccccccccccccccccc}
+ &  &  &  &  & \multicolumn{2}{c}{$J_0=20$} & \multicolumn{2}{c}{$J_0=30$} & \multicolumn{7}{c}{EKW $p$-values} & \multicolumn{4}{c}{Kudrin (2025) $p$-values} \\
+\cmidrule(lr){6-7} \cmidrule(lr){8-9} \cmidrule(lr){10-16} \cmidrule(lr){17-20}
+ & $n$ & Articles & Med.\ $\nu$ & $\Delta_\nu$ & $p$ & $\widehat{B}$ & $p$ & $\widehat{B}$ & LCM & Fisher & Disc. & Binomial & CS1 & CS2B & Min & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hybrid}}$ & Min \\
 \midrule
-RCT & 6738 & 141 & 185 & 0.0014 & .00 & .0033 & .64 & 1.00 & .04 & .01 & .47 & .78 & .01 & .00 & .00 & .00$^{\dagger}$ & .00 \\
-IV & 4957 & 278 & 262 & 0.0013 & .00 & .0034 & 1.00 & 1.00 & .84 & .38 & .76 & .07 & .07 & .18 & .01 & .01$^{\dagger}$ & .01 \\
-DID & 5306 & 237 & 293.5 & 0.0014 & .01 & .0014 & .37 & 1.00 & .05 & .06 & .77 & .05 & .05 & .01 & .00 & .00$^{\dagger}$ & .00 \\
-RDD & 2810 & 83 & $\cdot$ & $\cdot$ & .05 & .0000 & .99 & 1.00 & .03 & .01 & .70 & .52 & .01 & .07 & .03 & .03$^{\dagger}$ & .03 \\
+RCT & 6738 & 141 & 185 & 0.0014 & .00 & .0033 & .00 & .0045 & .64 & 1.00 & .04 & .01 & .47 & .78 & .01 & .00 & .00 & .00$^{\dagger}$ & .00 \\
+IV & 4957 & 278 & 262 & 0.0013 & .00 & .0034 & .00 & .0038 & 1.00 & 1.00 & .84 & .38 & .76 & .07 & .07 & .18 & .01 & .01$^{\dagger}$ & .01 \\
+DID & 5306 & 237 & 293.5 & 0.0014 & .01 & .0014 & .01 & .0013 & .37 & 1.00 & .05 & .06 & .77 & .05 & .05 & .01 & .00 & .00$^{\dagger}$ & .00 \\
+RDD & 2810 & 83 & $\cdot$ & $\cdot$ & .05 & .0000 & .04 & .0003 & .99 & 1.00 & .03 & .01 & .70 & .52 & .01 & .07 & .03 & .03$^{\dagger}$ & .03 \\
 \bottomrule
 \end{tabular}}
 
@@ -20,7 +20,7 @@ RDD & 2810 & 83 & $\cdot$ & $\cdot$ & .05 & .0000 & .99 & 1.00 & .03 & .01 & .70
 Results for the Brodeur et al. (2020) data. Following Kudrin (2025), we drop tests whose reported coefficient is missing or zero.
 De-rounding: none. Each $t$-statistic is the ratio of the reported coefficient and standard error, and reported $t$-statistics are used as printed.
 The sample is the same for every de-rounding choice: we also drop $t$-statistics whose standard error is reported as zero or whose coefficient's rounding unit exceeds 0.5 times the smallest standard error consistent with the reported one.
-Columns headed $J_0$ report $p$-values and breakdown statistics $\widehat{B}$ of the projection test with $J=40$.
+Columns headed $J_0$ report $p$-values and breakdown statistics $\widehat{B}$ of the projection test with $J=40$; several values of $J_0$ are included to show low sensitivity to the smoothing parameter.
 Med.\ $\nu$ is the median effective sample size as measured by the median number of clusters in a random sample of 100 articles for each causal inference method.
 In ambiguous cases, the smallest cluster count was always used.
 $\Delta_\nu=\frac{1}{100}\sum_{k=1}^{100}\sup_h\|\varphi(t-h)-t_{\nu_k,h}(t)\|_T$ is the average difference between the PDFs of the standard normal and Student-$t$ over the sample of 100 effective sample sizes collected (computed numerically).
