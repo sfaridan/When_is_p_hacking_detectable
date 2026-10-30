@@ -17,8 +17,16 @@ MM_raw <- haven::read_dta('MM data.dta')
 #MM_raw <- haven::read_dta('MM data fromkudrin.dta')
 MM_data <- MM_raw
 
-#Kudrin's (2025) drop
-drop          <- is.na(MM_raw$mu) | MM_raw$mu == 0
+#Kudrin's (2025) drop of coefficients printed as zero, and a switch for it.
+#  TRUE:  as before; every saved file keeps its name.
+#  FALSE: keep them (a coefficient printed as zero gives t = 0 under smin, and s_min-scaled noise under smin + noise),
+#         and every file this script and make_MM_application_rounding_table_withstouffer.R save gets the tag
+#         "_keepmu0", so no earlier result is overwritten. Coefficients that are missing are dropped either way.
+drop_zero_mu  <- FALSE
+run_tag       <- if (drop_zero_mu) "" else "_keepmu0"
+drop          <- is.na(MM_raw$mu) | (drop_zero_mu & MM_raw$mu %in% 0)
+cat(sprintf("Coefficients printed as zero: %d, %s.\n", sum(MM_raw$mu %in% 0),
+            if (drop_zero_mu) "dropped, following Kudrin (2025)" else "kept; saved files are tagged _keepmu0"))
 MM_dropped    <- MM_raw[!drop, ]
 MM_data       <- MM_dropped
 
@@ -145,7 +153,7 @@ cat(sprintf("Our procedure drops %.1f to %.1f percent of the t-statistics by met
             min(drop_comparison[methods_kp, "kp_pct"]),   max(drop_comparison[methods_kp, "kp_pct"]),   drop_comparison["Pooled", "kp_pct"]))
 cat(sprintf("Of the %d t-statistics at exactly z = 2, our procedure drops %.1f percent and theirs %.1f percent. (KP report 37.9 percent of all observations and 87.3 percent of those at z = 2, on their version of the data.)\n",
             drop_comparison["Pooled", "z_eq_2"], drop_comparison["Pooled", "ours_z2_pct"], drop_comparison["Pooled", "kp_z2_pct"]))
-saveRDS(drop_comparison, file = file.path(root, "results", "Drop_comparison_KP"))
+saveRDS(drop_comparison, file = file.path(root, "results", paste0("Drop_comparison_KP", run_tag)))
 
 #Keep the printed values each option needs, then drop (the drops above do not depend on the option)
 MM_data$t_source   <- ifelse(use_ratio, "coef/SE", ifelse(direct, "reported t", NA))
@@ -266,7 +274,7 @@ stouffer_p <- function(t) {
 make_application_table <- function(J0_values = c(20),            # one (p, B-hat) group per J0, in this order; each must be in J0_list above
                                    n_draws   = 1,                # number of de-roundings the results files average over
                                    spec      = deround_spec,     # the de-rounding option the results files were run with
-                                   suffix    = paste0("_", spec$key),
+                                   suffix    = paste0("_", spec$key, run_tag),
                                    res_dir   = paste0(root, "/results"),
                                    out_file  = paste0("table_application", suffix, ".tex")) {
   meth <- c("RCT", "IV", "DID", "RDD")
@@ -345,7 +353,9 @@ make_application_table <- function(J0_values = c(20),            # one (p, B-hat
   rdd_insig <- isTRUE(all(unlist(tab["RDD", paste0("p_J0_", J0_values)]) > 0.05))
   if (!rdd_insig) warning("RDD projection-test p-value is now <= .05, so the notes' reason for omitting its Delta_nu no longer holds")
   notes <- c(
-    paste0("Results for the ", cite[["brodeur"]], " data. Following ", cite[["kudrin"]], ", we drop tests whose reported coefficient is missing or zero."),
+    paste0("Results for the ", cite[["brodeur"]], " data. ",
+           if (drop_zero_mu) paste0("Following ", cite[["kudrin"]], ", we drop tests whose reported coefficient is missing or zero.") else
+             paste0("We drop tests whose reported coefficient is missing; unlike ", cite[["kudrin"]], ", we keep those reported as zero.")),
     deround_notes[[spec$key]],
     sprintf("The sample is the same for every de-rounding choice: we also drop $t$-statistics whose standard error is reported as zero or whose coefficient's rounding unit exceeds %s times the smallest standard error consistent with the reported one.", kappa_cap),
     if (n_draws > 1) sprintf("All $p$-values and breakdown statistics are averages over %d independent de-roundings.", n_draws),
@@ -383,7 +393,8 @@ make_application_table <- function(J0_values = c(20),            # one (p, B-hat
   
   tex <- c("\\begin{table}[htbp]",
            "\\centering",
-           paste0("\\caption{Empirical Application Results: ", spec$label, "}"),
+           paste0("\\caption{Empirical Application Results: ", spec$label,
+                  if (drop_zero_mu) "" else ", keeping coefficients reported as zero", "}"),
            paste0("\\label{tab:application", suffix, "}"),
            "\\resizebox{\\ifdim\\width>\\linewidth\\linewidth\\else\\width\\fi}{!}{% shrinks the table only if it is wider than the text",
            paste0("\\begin{tabular}{l", strrep("c", ncol(cells) - 1), "}"),
@@ -421,7 +432,7 @@ for (deround_option in options_to_run) {
                        label = deround_labels[deround_option],
                        noise = deround_noise[deround_option])
   add_noise <- deround_spec$noise
-  suffix    <- paste0("_", deround_spec$key)                 #labels every results file and the table
+  suffix    <- paste0("_", deround_spec$key, run_tag)        #labels every results file and the table (run_tag: see drop_zero_mu)
   n_draws   <- if (add_noise) n_draws_noise else 1           #without noise every draw would be the same
   cat("\n========== De-rounding option ", deround_option, ": ", deround_spec$label, " ==========\n", sep = "")
   
@@ -608,7 +619,7 @@ fig_res <- lapply(setNames(meth, meth), function(m) {
   list(R = fit$R, d = fit$d, band = band, n = sum(s), articles = length(unique(MM_data$title[s])))
 })
 B_fig <- tryCatch({                                                 #B-hat from the main run, if it exists
-  d <- readRDS(file.path(root, "results", paste0("MM_weights_results_20_J0_", fig_key)))
+  d <- readRDS(file.path(root, "results", paste0("MM_weights_results_20_J0_", fig_key, run_tag)))
   setNames(vapply(d$breakdown, as_num1, numeric(1)), d$methods)
 }, error = function(e) NULL)
 fig_summary <- do.call(rbind, lapply(meth, function(m) {
@@ -621,7 +632,7 @@ fig_summary <- do.call(rbind, lapply(meth, function(m) {
 cat("\nWhere each design's distortion lies (", deround_labels[fig_option], "); excess_where and deficit_where: ",
     "stretches of |t| whose 90% band excludes zero:\n", sep = "")
 print(fig_summary, row.names = FALSE)
-fig_file <- file.path(root, "results", paste0("Figure_residual_tcurve_", fig_key))
+fig_file <- file.path(root, "results", paste0("Figure_residual_tcurve_", fig_key, run_tag))
 ylim_fig <- 1e3 * range(0, unlist(lapply(fig_res, function(z) c(z$R, z$band))), na.rm = TRUE)
 for (ext in c("pdf", "png")) {
   if (ext == "pdf") {
@@ -666,7 +677,7 @@ if (time_tests) {
       stouffer   = tsec(function() stouffer_p(d$t)))
   }, numeric(5)))
   print(round(run_times, 2))
-  saveRDS(run_times, file.path(root, "results", "Run_times"))
+  saveRDS(run_times, file.path(root, "results", paste0("Run_times", run_tag)))
   sec_range <- function(x) if (diff(range(x)) < 1) sprintf("%.1f", max(x)) else sprintf("%.0f to %.0f", min(x), max(x))
   cat(sprintf(paste0("\nRun-time sentence: On one core, one run of the projection test with %s bootstrap repetitions ",
                      "takes %s seconds per design (n = %s to %s), compared with %s seconds for the three tests of ",
@@ -676,3 +687,222 @@ if (time_tests) {
 }
 
 source(paste0(root,"/code/make_MM_application_rounding_table_withstouffer.R"))
+#### =================================================================================================
+#### Figure for R1 17(b): the reported t-curve, shaded where its shape rules out honest reporting, by design
+#### Paste this block at the end of application_MM_all_four_rounding_withstouffer.R and run it on its own:
+#### it runs no tests (the curvature check below is a kernel estimate and a bootstrap, a few minutes). It
+#### reads the projection test's p-value and B-hat from the full run's results files.
+#### If this R session does not hold the script's de-rounded data (MM_data, deround_draw), it first runs
+#### the script's data preparation, which stops before the tests (about a minute) and keeps the other
+#### objects in your session. The optional closest honest t-curve needs the nnls package.
+####
+#### The closest honest t-curve is the mixture of normal t-curves, centered on the projection test's grid,
+#### whose coefficients are closest to the data's in the test's metric (J = 40, J0 = 20, shift 1.96). Which
+#### distribution of effects produces it is not identified, but the t-curve is: honest t-curves are smooth
+#### and their coefficients decay like 2^(-j/2), so the 41 matched coefficients pin it down. The test weights
+#### |t| near 1.96 most, so the curve need not follow the bars far from it.
+#### =================================================================================================
+
+# 1. The script's data preparation, if this session does not have it
+fig_prepare_data <- function(app_file = NULL) {
+  GE <- globalenv()
+  ready <- exists("deround_draw", envir = GE, inherits = FALSE) && exists("MM_data", envir = GE, inherits = FALSE) &&
+    all(c("dr_mu", "dr_smin", "dr_a", "t_source") %in% names(get("MM_data", envir = GE)))
+  if (ready) return(invisible(FALSE))
+  if (is.null(app_file)) {
+    app_file <- if (exists("this_script", envir = GE)) get("this_script", envir = GE) else
+      tryCatch(rstudioapi::getSourceEditorContext()$path, error = function(e) "")
+  }
+  if (!nzchar(app_file) || !file.exists(app_file))
+    stop("Cannot find the application script: run fig_prepare_data(app_file = \"<its path>\")", call. = FALSE)
+  message("Running the data preparation of ", basename(app_file), " (it stops before the tests) ...")
+  for (e in parse(app_file, keep.source = FALSE)) {
+    code <- paste(deparse(e), collapse = " ")
+    if (grepl("^rm\\(list = ls\\(\\)\\)", code)) next             #keep the rest of this session
+    tryCatch(eval(e, envir = GE), error = function(err) {
+      if (grepl("rstudioapi", code)) return(NULL)                 #the script's own path, not needed here
+      stop("While preparing the data: ", conditionMessage(err), call. = FALSE)
+    })
+    if (exists("deround_draw", envir = GE, inherits = FALSE)) return(invisible(TRUE))
+  }
+  stop(basename(app_file), " never defines deround_draw", call. = FALSE)
+}
+fig_prepare_data()
+
+# 2. The figure: reported |t|, shaded where its shape rules out honest reporting
+# Every honest t-curve is a mixture of unit-variance normals, so its density f satisfies f'' + f >= 0: it cannot
+# bend down faster than its own height (phi''(z) = (z^2 - 1) phi(z)). A Gaussian kernel estimate with bandwidth
+# h estimates an honest curve with noise variance 1 + h^2, which satisfies the tighter f'' + f / (1 + h^2) >= 0,
+# so smoothing cannot create violations. Shaded: stretches of |t| where an article-level bootstrap upper bound
+# on f'' + f / (1 + h^2) is below zero, i.e. where the reported t-curve is more sharply peaked than any
+# distribution of true effects allows. Dark: 95% simultaneously over the window (prespecified around 1.96);
+# light: 95% pointwise. In simulations clustered like these data (200 articles of 25, within-article correlation
+# 0.8, h = 0.25), the dark shading flagged threshold p-hacking by every study 35% of the time and honest
+# reporting never; the light shading flagged them 70% and 8% of the time. So no shading is not evidence of
+# honest reporting: the projection test, which uses the whole t-curve, is the test.
+#   option:     de-rounding option, as in the script (1 none, 2 uniform, 3 smin, 4 smin + noise); 4, its first
+#               draw, because its noise smooths the rounding lattice of smin t-statistics
+#   bandwidth:  of the Gaussian kernel (0.35 is a robustness check); window: the dark shading's range of |t|
+#   boots:      article-level bootstrap draws; show_pointwise: light shading; show_honest: also draw the closest
+#               honest t-curve (needs nnls), which invites reading its gaps as results added or removed
+fig_tcurve_vs_honest <- function(option = 4, binwidth = 0.1, max_t = 5, bandwidth = 0.25, window = c(1.6, 2.6),
+                                 boots = 500, level = 0.95, show_pointwise = FALSE, show_honest = TRUE,
+                                 results_dir = file.path(root, "results"), seed = 20261102) {
+  if (show_honest && !requireNamespace("nnls", quietly = TRUE)) stop("show_honest needs the nnls package: install.packages(\"nnls\")")
+  GE    <- globalenv()
+  tag   <- if (exists("run_tag", envir = GE)) get("run_tag", envir = GE) else ""   #"_keepmu0" without the zero drop
+  keys  <- c("none", "uniform", "smin", "smin_noise")
+  labs  <- c("No de-rounding", "Uniform de-rounding", "Smallest consistent standard error",
+             "Smallest consistent standard error with uniform noise")
+  key   <- keys[option]
+  noisy <- option %in% c(2, 4)
+  meth  <- c("RCT", "IV", "DID", "RDD")
+  
+  # t-statistics under this option (its first draw), from the script's deround_draw(); the two globals it
+  # reads are put back on exit
+  old <- mget(c("deround_spec", "add_noise"), envir = GE, ifnotfound = list(NULL))
+  on.exit(for (nm in names(old)) {
+    if (is.null(old[[nm]])) {
+      if (exists(nm, envir = GE, inherits = FALSE)) rm(list = nm, envir = GE)
+    } else assign(nm, old[[nm]], envir = GE)
+  }, add = TRUE)
+  assign("deround_spec", list(key = key, label = labs[option], noise = noisy), envir = GE)
+  assign("add_noise", noisy, envir = GE)
+  dat <- get("MM_data", envir = GE)
+  tt  <- get("deround_draw", envir = GE)(1)
+  
+  # The curvature check: per t-statistic, its contribution to f'' + f / (1 + h^2) of the density of |t|
+  # (Gaussian kernel, reflected at 0), summed by article for the bootstrap
+  u_c <- seq(0, max_t, by = 0.02)
+  win <- u_c >= window[1] & u_c <= window[2]
+  contrib <- function(a) {
+    z1 <- outer(a, u_c, function(a, u) (u - a) / bandwidth)
+    z2 <- outer(a, u_c, function(a, u) (u + a) / bandwidth)
+    ((z1^2 - 1) * dnorm(z1) + (z2^2 - 1) * dnorm(z2)) / bandwidth^3 +
+      (dnorm(z1) + dnorm(z2)) / (bandwidth * (1 + bandwidth^2))
+  }
+  stretches <- function(mask) {                                      #runs of TRUE as c(from, to) rows
+    if (!any(mask)) return(matrix(numeric(0), 0, 2))
+    k <- which(mask); brk <- c(0, which(diff(k) > 1), length(k))
+    t(vapply(seq_len(length(brk) - 1), function(i) c(u_c[k[brk[i] + 1]], u_c[k[brk[i + 1]]]), numeric(2)))
+  }
+  as_text <- function(m) if (nrow(m) == 0) "none" else paste(sprintf("%.2f-%.2f", m[, 1], m[, 2]), collapse = ", ")
+  
+  # The closest honest t-curve, only if asked for (Lemma 3, eq. 34; J = 40, J0 = 20, shift 1.96)
+  if (show_honest) {
+    Lg <- if (exists("L", envir = GE)) get("L", envir = GE) else 6.5
+    ng <- if (exists("numgrid", envir = GE)) get("numgrid", envir = GE) else 3000
+    hf <- function(x, J) {
+      M <- matrix(0, length(x), J + 1)
+      M[, 1] <- dnorm(x)
+      M[, 2] <- x * M[, 1]
+      for (j in 1:(J - 1)) M[, j + 2] <- (x * M[, j + 1] - sqrt(j) * M[, j]) / sqrt(j + 1)
+      M
+    }
+    w      <- pmin(1, 2^(20 - (0:40)))
+    x_grid <- seq(-Lg, Lg, length.out = ng)
+    B_grid <- cbind(t(hf(x_grid / sqrt(2), 40) / sqrt(2)) * 2^(-(0:40) / 2), 0)
+    u_h    <- seq(0, max_t, by = 0.01)
+    honest_density <- function(td) {
+      theta <- colMeans(0.5 * (hf(td - 1.96, 40) + hf(-td - 1.96, 40)))
+      a     <- nnls::nnls(rbind(w * B_grid, 1e3), c(w * theta, 1e3))$x[seq_along(x_grid)]
+      drop((dnorm(outer(u_h - 1.96, x_grid, "-")) + dnorm(outer(-u_h - 1.96, x_grid, "-"))) %*% a)
+    }
+  }
+  
+  # By design: histogram, curvature check with its bootstrap bounds, and the closest honest t-curve if asked for
+  set.seed(seed)
+  breaks <- seq(0, max_t, by = binwidth)
+  res <- lapply(setNames(meth, meth), function(m) {
+    s      <- dat$method == m
+    td     <- tt[s]
+    counts <- tabulate(findInterval(abs(td), breaks), nbins = length(breaks))[seq_len(length(breaks) - 1)]
+    S  <- rowsum(contrib(abs(td)), dat$title[s])                     #articles x grid
+    N  <- drop(rowsum(rep(1, length(td)), dat$title[s]))
+    D  <- colSums(S) / sum(N)
+    G  <- nrow(S)
+    C  <- t(vapply(seq_len(boots), function(b) tabulate(sample.int(G, G, replace = TRUE), nbins = G), numeric(G)))
+    Ds <- (C %*% S) / drop(C %*% N)                                  #boots x grid
+    sdv <- pmax(apply(Ds, 2, sd), 1e-12)
+    dev <- sweep(-sweep(Ds, 2, D), 2, sdv, "/")                       #(D - D*) / sd
+    c_w <- quantile(apply(dev[, win, drop = FALSE], 1, max), level, names = FALSE)
+    U_sim <- D + c_w * sdv
+    U_pw  <- apply(Ds, 2, quantile, probs = level, names = FALSE)
+    list(density = counts / (length(td) * binwidth), D = D,
+         sim = stretches(win & U_sim < 0), pw = stretches(U_pw < 0),
+         honest = if (show_honest) honest_density(td) else NULL,
+         n = sum(s), articles = length(unique(dat$title[s])))
+  })
+  
+  # The projection test's p-value and B-hat under this option, from the full run
+  tests <- tryCatch({
+    r   <- readRDS(file.path(results_dir, paste0("MM_weights_results_20_J0_", key, tag)))
+    num <- function(v) vapply(v, function(z) as.numeric(z)[1], numeric(1))
+    data.frame(p = num(r$pval), B = num(r$breakdown), row.names = as.character(r$methods))
+  }, error = function(e) NULL)
+  if (is.null(tests)) message("No results file MM_weights_results_20_J0_", key, tag, ": the panels go without p-values")
+  
+  # The figure
+  dark  <- grDevices::adjustcolor("#D55E00", alpha.f = 0.45)
+  light <- grDevices::adjustcolor("#E69F00", alpha.f = 0.25)
+  file  <- file.path(results_dir, paste0("Figure_tcurve_shape_", key, tag))
+  ymax  <- 1.08 * max(unlist(lapply(res, function(z) c(z$density, z$honest))))
+  for (ext in c("pdf", "png")) {
+    if (ext == "pdf") {
+      grDevices::pdf(paste0(file, ".pdf"), width = 6.5, height = 5.2, pointsize = 9)
+    } else {
+      grDevices::png(paste0(file, ".png"), width = 6.5, height = 5.2, units = "in", res = 300, pointsize = 9)
+    }
+    op <- par(mfrow = c(2, 2), mar = c(3.4, 3.6, 2.8, 0.8), mgp = c(2.1, 0.6, 0), las = 1)
+    for (m in meth) {
+      z <- res[[m]]
+      plot(NA, xlim = c(0, max_t), ylim = c(0, ymax), xaxs = "i", yaxs = "i", xlab = "|t|", ylab = "Density")
+      if (show_pointwise && nrow(z$pw)) rect(z$pw[, 1] - 0.01, 0, z$pw[, 2] + 0.01, ymax, col = light, border = NA)
+      if (nrow(z$sim)) rect(z$sim[, 1] - 0.01, 0, z$sim[, 2] + 0.01, ymax, col = dark, border = NA)
+      rect(head(breaks, -1), 0, breaks[-1], z$density, col = "grey75", border = "white", lwd = 0.4)
+      if (show_honest) lines(u_h, z$honest, lwd = 1.8)
+      abline(v = 1.96, lty = 3, col = "grey30")
+      title(main = sprintf("%s (n = %s, %d articles)", m, format(z$n, big.mark = ","), as.integer(z$articles)),
+            line = 1.3, cex.main = 1)
+      if (!is.null(tests) && m %in% rownames(tests)) {
+        mtext(sprintf("projection test p = %s; B-hat %.1f x 10^-3", sub("^0\\.", ".", sprintf("%.2f", tests[m, "p"])),
+                      1e3 * tests[m, "B"]), side = 3, line = 0.3, cex = 0.75)
+      }
+      if (m == meth[1]) {
+        keep <- c(TRUE, TRUE, show_pointwise, show_honest)
+        
+        if(show_pointwise){
+          legend("topright", bty = "n", cex = 0.8,
+                 legend = c("Reported |t|", sprintf("Too peaked for honest reporting (%g%%, %g-%g)", 100 * level, window[1], window[2]),
+                            sprintf("Too peaked for honest reporting (%g%% pointwise)", 100 * level), "Closest honest t-curve")[keep],
+                 fill = c("grey75", dark, light, NA)[keep], border = c("white", NA, NA, NA)[keep],
+                 lty = c(NA, NA, NA, 1)[keep], lwd = c(NA, NA, NA, 1.8)[keep], col = c(NA, NA, NA, "black")[keep])
+          
+        }
+        else{
+          legend("topright", bty = "n", cex = 0.8,
+                 legend = c("Reported |t|", "Closest honest t-curve")[keep],
+                 fill = c("grey75", NA)[keep], border = c("white",  NA)[keep],
+                 lty = c(NA,  1)[keep], lwd = c(NA, 1.8)[keep], col = c(NA,  "black")[keep])
+          
+        }
+        }
+    }
+    par(op)
+    grDevices::dev.off()
+  }
+  summary <- data.frame(design = meth, n = vapply(res, `[[`, 0, "n"),
+                        too_peaked_simultaneous = vapply(res, function(z) as_text(z$sim), ""),
+                        too_peaked_pointwise = vapply(res, function(z) as_text(z$pw), ""),
+                        min_curvature = round(vapply(res, function(z) min(z$D), 0), 3),
+                        at_t = vapply(res, function(z) u_c[which.min(z$D)], 0), row.names = NULL)
+  cat("\nStretches of |t| where the reported t-curve is too peaked for honest reporting (", labs[option], ", h = ",
+      bandwidth, "; simultaneous over ", window[1], "-", window[2], "):\n", sep = "")
+  print(summary, row.names = FALSE)
+  write.csv(summary, paste0(file, "_check.csv"), row.names = FALSE)
+  saveRDS(list(breaks = breaks, u = u_c, results = res, summary = summary, option = key, bandwidth = bandwidth,
+               window = window), paste0(file, "_data"))
+  cat("Figure written to ", file, ".pdf/.png\n", sep = "")
+  invisible(list(results = res, summary = summary, file = file))
+}
+fig_out <- fig_tcurve_vs_honest(option = 4)

@@ -1,0 +1,51 @@
+\begin{table}[htbp]
+\centering
+\caption{Further tests for selective reporting under four treatments of rounding, keeping coefficients reported as zero}
+\label{tab:rounding_appendix_keepmu0_check}
+\small
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+ & \multicolumn{2}{c}{Projection, $J_0=30$} & \multicolumn{1}{c}{Projection, no shift} & \multicolumn{1}{c}{$p$-curve} & \multicolumn{2}{c}{EKW} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-4} \cmidrule(lr){5-5} \cmidrule(lr){6-7}
+Treatment & $p$ & $10^3\widehat{B}$ & $p$ & Stouffer & LCM & Fisher \\
+\midrule
+\multicolumn{7}{l}{\textit{RCT}: 6,795 $t$-statistics in 141 articles; rounding allowance $<0.1$} \\
+None & \textbf{.00} &  & \textbf{.03} & 1.00 & .64 & 1.00 \\
+Unif. & \textbf{.00} &  & \textbf{.04} & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$ & \textbf{.00} & 2.4 & \textbf{.02} & 1.00 & .80 & 1.00 \\
+$s_{\min}$+noise & \textbf{.00} & 2.6 & \textbf{.03} & 1.00 & 1.00 & 1.00 \\
+\addlinespace
+\multicolumn{7}{l}{\textit{IV}: 4,962 $t$-statistics in 279 articles; rounding allowance 0.5} \\
+None & \textbf{.00} &  & .07 & 1.00 & 1.00 & 1.00 \\
+Unif. & \textbf{.00} &  & .08 & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$ & \textbf{.00} & 3.4 & .07 & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$+noise & \textbf{.00} & 3.4 & .08 & 1.00 & 1.00 & 1.00 \\
+\addlinespace
+\multicolumn{7}{l}{\textit{DID}: 5,316 $t$-statistics in 237 articles; rounding allowance 1.5} \\
+None & \textbf{.02} &  & .06 & 1.00 & .37 & 1.00 \\
+Unif. & \textbf{.02} &  & .06 & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$ & .03 & 0.7 & .08 & 1.00 & .95 & 1.00 \\
+$s_{\min}$+noise & .03 & 0.6 & .07 & 1.00 & 1.00 & 1.00 \\
+\addlinespace
+\multicolumn{7}{l}{\textit{RDD}: 2,820 $t$-statistics in 83 articles; rounding allowance 0.2} \\
+None & .06 &  & .39 & 1.00 & .99 & 1.00 \\
+Unif. & .07 &  & .44 & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$ & \textbf{.01} & 1.3 & .29 & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$+noise & \textbf{.02} & 1.0 & .33 & 1.00 & 1.00 & 1.00 \\
+\bottomrule
+\end{tabular}}
+
+\medskip
+\begin{minipage}{\linewidth}
+\footnotesize
+\textit{Notes:} $p$-values for the null hypothesis of no selective reporting, by research design and treatment of rounding, for the sample and the treatments of Table~\ref{tab:rounding_ekw_keepmu0_check}, which defines them.
+Projection, $J_0=30$: the projection test with weights $w_j=\min\{1,2^{30-j}\}$; its $10^3\widehat{B}$ and the rounding allowance in the first line of each block are for $J_0=30$, with 0.31 in place of 0.13.
+Projection, no shift: the projection test on $t$-statistics that are not shifted by 1.96 (Remark 13); no rounding allowance is computed for it, so its rejections under $s_{\min}$ are not certified against rounding.
+$p$-curve: the test for left skew of Simonsohn et al.\ (2014), which multiplies each $p<.05$ by 20, transforms the results by the normal quantile function and combines them by Stouffer's method; like $p$-curve, it treats the $p$-values as independent.
+\textit{EKW}: the least concave majorant test (LCM) and Fisher's test of Elliott et al.\ (2022) on $p$-values in $(0,0.15]$, both of a concave $p$-curve CDF.
+The projection test with $J_0=30$ and the unshifted projection test cluster by article, and the $p$-curve test, LCM and Fisher do not; the projection test with $J_0=30$ and the unshifted projection test use 1,000 article-level bootstrap repetitions.
+Bold: $p<.05$, except that under $s_{\min}$ and $s_{\min}$+noise a projection test is bold only when its $\widehat{B}$ exceeds the rounding allowance.
+Run times on one core, per design: 7.8 seconds for the projection test with 1,000 bootstrap repetitions, 0.8 seconds for the three tests of Kudrin (2025) and 2.6 seconds for the six EKW tests.
+\end{minipage}
+\end{table}

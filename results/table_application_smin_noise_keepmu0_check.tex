@@ -1,0 +1,37 @@
+\begin{table}[htbp]
+\centering
+\caption{Empirical Application Results: Smallest consistent standard error with uniform noise, keeping coefficients reported as zero}
+\label{tab:application_smin_noise_keepmu0_check}
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{% shrinks the table only if it is wider than the text
+\begin{tabular}{lccccccccccccccccc}
+ &  &  & \multicolumn{2}{c}{$J_0=20$} & \multicolumn{2}{c}{$J_0=30$} & \multicolumn{7}{c}{EKW $p$-values} & \multicolumn{4}{c}{Kudrin (2025) $p$-values} \\
+\cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-14} \cmidrule(lr){15-18}
+ & $n$ & Articles & $p$ & $\widehat{B}$ & $p$ & $\widehat{B}$ & LCM & Fisher & Disc. & Binomial & CS1 & CS2B & Min & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hybrid}}$ & Min \\
+\midrule
+RCT & 6795 & 141 & .00 & .0019 & .00 & .0026 & 1.00 & 1.00 & .42 & .91 & .34 & .51 & .34 & .03 & .01 & .01$^{\dagger}$ & .01 \\
+IV & 4962 & 279 & .00 & .0031 & .00 & .0034 & 1.00 & 1.00 & .67 & .70 & .46 & .55 & .46 & .31 & .04 & .04$^{\dagger}$ & .04 \\
+DID & 5316 & 237 & .02 & .0009 & .03 & .0006 & 1.00 & 1.00 & .08 & 1.00 & .67 & .59 & .08 & .03 & .12 & .12$^{\dagger}$ & .03 \\
+RDD & 2820 & 83 & .02 & .0009 & .02 & .0010 & 1.00 & 1.00 & .59 & .91 & .47 & .18 & .18 & .28 & .03 & .03$^{\dagger}$ & .03 \\
+\bottomrule
+\end{tabular}}
+
+\medskip
+\begin{minipage}{\linewidth}
+Results for the Brodeur et al. (2020) data. We drop tests whose reported coefficient is missing; unlike Kudrin (2025), we keep those reported as zero.
+De-rounding: smallest consistent standard error with uniform noise (Section 5.2). Each coefficient, plus uniform noise at its last digit, is divided by the smallest standard error consistent with the reported one, and a reported $t$-statistic gets uniform noise at its last digit.
+The sample is the same for every de-rounding choice: we also drop $t$-statistics whose standard error is reported as zero or whose coefficient's rounding unit exceeds 0.5 times the smallest standard error consistent with the reported one.
+All $p$-values and breakdown statistics are averages over 2 independent de-roundings.
+Columns headed $J_0$ report $p$-values and breakdown statistics $\widehat{B}$ of the projection test with $J=40$; several values of $J_0$ are included to show low sensitivity to the smoothing parameter.
+We form $\mathcal{X}$ using a grid of 3000 elements evenly spaced between $\pm 6.5$ plus the scalar 9999.
+Discretization incurs error $\mathcal{E}(L,\delta)=0.00063$, which is already accounted for in $\widehat{B}$ and the $p$-value.
+The discretization was chosen to be made of round numbers and to give an error that is small relative to the critical values and test statistics.
+EKW $p$-values are for the tests of Elliott et al. (2022): the least concave majorant test (LCM) and Fisher's test (Fisher) on $p$-values in $(0,0.15]$, the density discontinuity test at 0.05 (Disc.), the binomial test on $[0.04,0.05]$ (Binomial), and the Cox and Shi (2023) histogram-based tests on $(0,0.15]$ with 15 bins for monotonicity (CS1) and for 2-monotonicity with bounds (CS2B).
+Kudrin (2025) $p$-values are for his KS-type test ($T_\infty$), histogram-based test ($T_H$) and hybrid histogram-based test ($T_H^{\mathrm{hybrid}}$), using the sinc kernel with frequency cutoff 3 and, for $T_H$ and $T_H^{\mathrm{hybrid}}$, the points $0.01,0.02,\ldots,0.15$.
+All three cluster by article: $T_H$ and $T_H^{\mathrm{hybrid}}$ use cluster-robust covariance matrices and $T_\infty$ uses an article-level bootstrap.
+$^\dagger$The deconvolution estimate already satisfies the hybrid test's shape restrictions, so $T_H^{\mathrm{hybrid}}=T_H$.
+Min is the smallest of the averaged $p$-values in each group of tests.
+The projection test and $T_\infty$ use 1000 bootstrap repetitions.
+Computation used osqp package in R by Stellato et al. (2024). Data: Brodeur et al. (2020).
+Transparency R package available at: \url{https://github.com/sfaridan/When_is_p_hacking_detectable}
+\end{minipage}
+\end{table}

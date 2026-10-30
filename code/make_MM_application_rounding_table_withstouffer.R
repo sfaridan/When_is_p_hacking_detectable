@@ -14,6 +14,14 @@ root          <- "C:/Users/sfaridani6/Documents/GitHub/When_is_p_hacking_detecta
 data_location <- "C:/Users/sfaridani6/Documents/Data/120246-V1"
 res_dir       <- file.path(root, "results")
 
+#--- Kudrin's (2025) drop of coefficients printed as zero: must match application_MM_all_four_rounding_withstouffer.R.
+#    When that script sources this one, its value is used; run on its own, set it here. FALSE reads and writes the
+#    files tagged "_keepmu0", so the tables of the run without the drop never overwrite the others.
+if (!exists("drop_zero_mu")) drop_zero_mu <- TRUE
+run_tag <- if (drop_zero_mu) "" else "_keepmu0"
+cat("Tables for the sample that", if (drop_zero_mu) "drops" else "keeps", "coefficients reported as zero",
+    if (nzchar(run_tag)) paste0("(files tagged ", run_tag, ")") else "(untagged files)", "\n")
+
 #--- Must match the settings application_new_deround_all.R ran with
 kappa_cap     <- 0.5      #its kappa_cap
 se_rounded_up <- FALSE
@@ -30,11 +38,13 @@ treatments   <- c(none = "None", uniform = "Unif.", smin = "$s_{\\min}$", smin_n
 B_rows       <- c("smin", "smin_noise")   #rows that show B-hat: the treatments the rounding allowance covers
 tables_spec  <- list(
   main     = list(tests   = c("proj", "T_inf", "T_H", "Disc", "Binomial", "CS1", "CS2B"),
-                  file    = "table_rounding_ekw.tex", label = "tab:rounding_ekw",
-                  caption = "Tests for selective reporting under four treatments of rounding"),
+                  file    = paste0("table_rounding_ekw", run_tag, ".tex"), label = paste0("tab:rounding_ekw", run_tag),
+                  caption = paste0("Tests for selective reporting under four treatments of rounding",
+                                   if (drop_zero_mu) "" else ", keeping coefficients reported as zero")),
   appendix = list(tests   = c("proj30", "proj_noshift", "Stouffer", "LCM", "Fisher"),
-                  file    = "table_rounding_appendix.tex", label = "tab:rounding_appendix",
-                  caption = "Further tests for selective reporting under four treatments of rounding"))
+                  file    = paste0("table_rounding_appendix", run_tag, ".tex"), label = paste0("tab:rounding_appendix", run_tag),
+                  caption = paste0("Further tests for selective reporting under four treatments of rounding",
+                                   if (drop_zero_mu) "" else ", keeping coefficients reported as zero")))
 bold         <- TRUE      #bold p < .05; under B_rows a projection test only when its B-hat exceeds the allowance
 p_digits     <- 2
 show_runtime <- TRUE      #run-time sentence in the appendix notes, when application_new_deround_all.R saved run times
@@ -77,7 +87,7 @@ pick <- function(d, what) {
   d[i, ]
 }
 res_file <- function(stem, key) {
-  f <- file.path(res_dir, paste0(stem, "_", key))
+  f <- file.path(res_dir, paste0(stem, "_", key, run_tag))
   if (!file.exists(f)) stop("No results file ", basename(f), ": run application_new_deround_all.R with option ",
                             opt_of[[key]], " first", call. = FALSE)
   f
@@ -90,7 +100,7 @@ read_results <- function(key) {
   kud  <- pick(readRDS(res_file("Kudrin_results", key)), paste0("Kudrin_results_", key))
   ewk  <- readRDS(res_file("EWK_results", key))
   ewk  <- matrix(num(ewk), nrow(ewk), dimnames = dimnames(ewk))[, paste0("ewk_", tolower(meth)), drop = FALSE]
-  extra  <- function(stem) pick(readRDS(res_file(stem, key)), paste0(stem, "_", key))
+  extra  <- function(stem) pick(readRDS(res_file(stem, key)), paste0(stem, "_", key, run_tag))
   proj30 <- if ("proj30" %in% shown) extra("MM_weights_results_30_J0") else NULL
   projns <- if ("proj_noshift" %in% shown) extra(paste0("MM_weights_results_", J0, "_J0_noshift")) else NULL
   stou   <- if ("Stouffer" %in% shown) extra("Stouffer_results") else NULL
@@ -115,7 +125,7 @@ res <- setNames(lapply(treat_keys, read_results), treat_keys)
 
 count_draws <- function(key) {
   from_file <- function(stem, f) {
-    path <- file.path(res_dir, paste0(stem, "_", key))
+    path <- file.path(res_dir, paste0(stem, "_", key, run_tag))
     if (file.exists(path)) as.integer(f(readRDS(path))) else NA_integer_
   }
   n <- c(projection = from_file("MM_weights_results_draws", function(d) {
@@ -161,7 +171,7 @@ rounding_units <- function(d) {
   data.frame(method = as.character(d$method)[keep], kappa = kappa[keep], stringsAsFactors = FALSE)
 }
 MM_raw      <- haven::read_dta(file.path(data_location, "MM data.dta"))
-MM          <- MM_raw[!(is.na(MM_raw$mu) | MM_raw$mu == 0), ]
+MM          <- MM_raw[!(is.na(MM_raw$mu) | (drop_zero_mu & MM_raw$mu %in% 0)), ]
 kap         <- rounding_units(MM)
 by_design   <- factor(kap$method, levels = meth)
 n_kept      <- as.vector(table(by_design))
@@ -235,7 +245,7 @@ bold_note_for <- function(tests) if (bold) paste0("Bold: $p<.05$",
                                                            "$\\widehat{B}$ exceeds the rounding allowance"), ".")
 any_hyb_differs <- any(vapply(treat_keys, function(key) any(!vapply(seq_along(meth), function(i) hyb_same(key, i), TRUE)), TRUE))
 ns_draws <- vapply(intersect(averaged, treat_keys), function(key) {   #draws behind the unshifted test's averages
-  path <- file.path(res_dir, paste0("MM_weights_results_draws_", key))
+  path <- file.path(res_dir, paste0("MM_weights_results_draws_", key, run_tag))
   if (!file.exists(path)) return(NA_integer_)
   d <- readRDS(path)
   if (is.null(d$shift)) return(NA_integer_)
@@ -248,8 +258,10 @@ notes_main <- c(
          ", by research design (RCT: randomized controlled trials; IV: instrumental variables; DID: difference-in-differences; ",
          "RDD: regression discontinuity), with one row for each treatment of rounding."),
   vapply(treat_keys, treat_note, ""),
-  paste0("The sample is the same in every row: it excludes tests whose reported coefficient is missing or zero, following ",
-         cite[["kudrin"]], ", and tests whose reported standard error is zero or whose rounding unit in $t$-units, $\\kappa$, exceeds ",
+  paste0("The sample is the same in every row: it excludes tests whose reported coefficient is missing",
+         if (drop_zero_mu) paste0(" or zero, following ", cite[["kudrin"]]) else
+           paste0(" (unlike ", cite[["kudrin"]], ", it keeps those reported as zero)"),
+         ", and tests whose reported standard error is zero or whose rounding unit in $t$-units, $\\kappa$, exceeds ",
          kappa_cap, ". The first line of each block gives the design's numbers of $t$-statistics and articles."),
   sprintf(paste0("%s: $J_0=%s$, $J=%s$, and a grid of %s points on $[-%s,%s]$ plus the point 9999; the discretization error ",
                  "$E(L,\\delta)=%s$ is included in every $p$-value and in $\\widehat{B}$."),
@@ -271,8 +283,8 @@ notes_main <- c(
   paste0("Appendix Table~\\ref{", tables_spec$appendix$label, "} reports the projection test with $J_0=30$ and without the shift, ",
          "the $p$-curve test of ", cite[["simonsohn"]], ", and the EKW tests LCM and Fisher."))
 
-runtime_note <- if (isTRUE(show_runtime) && file.exists(file.path(res_dir, "Run_times"))) {
-  rt <- readRDS(file.path(res_dir, "Run_times"))
+runtime_note <- if (isTRUE(show_runtime) && file.exists(file.path(res_dir, paste0("Run_times", run_tag)))) {
+  rt <- readRDS(file.path(res_dir, paste0("Run_times", run_tag)))
   rr <- function(x) if (diff(range(x)) < 1) sprintf("%.1f", max(x)) else sprintf("%.0f--%.0f", min(x), max(x))
   sprintf("Run times on one core, per design: %s seconds for the projection test with %s bootstrap repetitions, %s seconds for the three tests of %s and %s seconds for the six EKW tests.",
           rr(rt[, "projection"]), big(boots), rr(rt[, "kudrin"]), cite[["kudrin"]], rr(rt[, "ekw"]))
@@ -353,4 +365,4 @@ saveRDS(list(p = numbers,
              rounding_allowance = setNames(allowance, meth), rounding_allowance_J0_30 = setNames(allowance30, meth),
              hybrid_equals_T_H = sapply(treat_keys, function(key) vapply(seq_along(meth), function(i) hyb_same(key, i), TRUE)),
              n = setNames(n_des, meth), articles = setNames(a_des, meth), n_draws = n_draws, kappa_cap = kappa_cap, J0 = J0),
-        file.path(res_dir, "Table_rounding_ekw_numbers"))
+        file.path(res_dir, paste0("Table_rounding_ekw_numbers", run_tag)))
