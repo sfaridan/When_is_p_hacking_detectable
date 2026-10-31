@@ -73,12 +73,12 @@ treatments <- c("none", "uniform", "smin", "smin_noise")
 #Under "smin" and "smin_noise" a projection-test rejection is certified when B-hat
 #exceeds the rounding allowance C mean(kappa^6). Dichotomous outcomes come from exact
 #counts and are never de-rounded
-n_draws    <- 20
+n_draws    <- 200
 
 # Tests: as in application_MM_analysis.R
 cv <- 1.96; shift <- cv; L <- 6.5; numgrid <- 3000; boots <- 1000; J <- 40; p <- 2
-J0_list      <- c(20)
-run_noshift  <- FALSE      #the projection test without the 1.96 shift (J0 = 20)
+J0_list      <- c(20,30)
+run_noshift  <- TRUE      #the projection test without the 1.96 shift (J0 = 20)
 run_kudrin   <- TRUE
 run_ekw      <- TRUE
 run_stouffer <- TRUE
