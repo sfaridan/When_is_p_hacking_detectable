@@ -1,0 +1,90 @@
+SAMPLE REPORT: tests for selective reporting in the Cochrane Database of Systematic Reviews
+Written 2026-10-31 14:31 by cochrane_application.R. Data: CDSR.RData (411,984 rows), Schwab's data set at osf.io/xjv9g.
+A row of the file is one trial's outcome in one analysis (comparison, outcome, subgroup) of one review.
+
+1. SETTINGS THAT DEFINE THE SAMPLE
+  rct_only = TRUE; outcome_groups = efficacy; continuous_only = FALSE; outcomes_per_trial = all
+  n_min = 100 participants; events_min = 10 events and non-events (dichotomous); kappa_cap = none; drop_zero_z = FALSE
+  z_from = file (the file's own z column); cluster_by = trial; year_split = 2005
+  De-rounding treatments: none
+  Honest binary replicas: 20, with effects shrunk by 1 and 0.86; events rules 10 and 20 and 30 and 40 and 50
+
+2. EVERY STEP, IN ORDER (counts after the step; 'dropped' is outcomes removed by the step)
+                       step dropped outcomes trials reviews dichotomous continuous estimate_and_SE no_z
+    1                  file       -   411984  67927    6330      265201     138892            7891    0
+    2            randomized  225162   186822  34814    4536      110943      71651            4228    0
+    3         outcome group   21699   165123  33968    4477       90551      70614            3958    0
+    4           z available       0   165123  33968    4477       90551      70614            3958    0
+    5 distinct outcome data    2520   162603  33968    4475       89739      68925            3939    0
+    6          participants   87583    75020  15392    3320       51321      22136            1563    0
+    7                events   11613    63407  14600    3260       39708      22136            1563    0
+  (trials: distinct trial labels; reviews: distinct reviews)
+  Rules:
+    file                   every row of the file: one trial's outcome in one analysis of one review
+    randomized             the file's RCT column is "yes"
+    outcome group          outcome.group is efficacy
+    z available            the file's z column is a number
+    distinct outcome data  the first copy of each trial's outcome data (same trial label, arm sizes, events or means and SDs, and z): a review's subgroup and sensitivity analyses repeat outcome data, and so does a trial met again in another review
+    participants           at least 100 participants in the two arms together
+    events                 dichotomous outcomes: at least 10 events and 10 non-events in the two arms together
+
+3. THE FINAL SAMPLE
+  63,407 outcomes from 14,600 trials in 3,260 reviews; 14,600 clusters (trial); outcomes per cluster: mean 4.3, median 3, max 263.
+  Participants per outcome: median 227 (quartiles 143-459). Share with |z| > 1.96: 0.325. Exact zeros: 1,200.
+  How z is computed:
+         continuous     dichotomous estimate and SE 
+              22136           39708            1563 
+  Cochrane data type (outcome.flag):
+     CONT  DICH   IPD    IV 
+    22136 39176   532  1563 
+  Period:
+      after 2005      by 2005 year unknown 
+           30865        31986          556 
+  Comparator:
+      other placebo 
+      53907    9500 
+  Phase:
+    phase 1 phase 2 phase 3 phase 4 unknown 
+         58     504    1716      31   61098 
+  Specialty (10 most common):
+                      specialty outcomes
+         Pregnancy & Childbirth    10754
+     Psychiatry & Mental Health     7546
+          Gynaecology & Urology     4796
+           Heart & Hypertension     4301
+                       Oncology     3428
+            Infectious Diseases     3008
+                Spine & Muscles     2964
+            Kidney & Transplant     2963
+           Public Health & Work     2903
+                          Lungs     2836
+
+4. SUBSAMPLES IN THE RESULTS TABLE
+  all          every outcome in the final sample                                             63,407 outcomes  14,600 clusters  3,260 reviews
+  early        trials published by 2005 (study.year, else the trial label's year)            31,986 outcomes   7,683 clusters  2,260 reviews
+  late         trials published after 2005                                                   30,865 outcomes   6,837 clusters  2,217 reviews
+  dichotomous  dichotomous outcomes: z from event counts                                     39,708 outcomes  11,666 clusters  2,745 reviews
+  continuous   continuous outcomes: z from the arms' means and SDs                           22,136 outcomes   6,010 clusters  1,894 reviews
+
+5. HOW THIS SAMPLE DIFFERS FROM VAN ZWET, SCHWAB AND SENN (2021)
+  Their sample: one (b, s) pair per trial, from the trial's first or primary efficacy outcome, randomized trials of any
+  size; their paper reports 23,551 trials (23,747 in its arXiv version).
+  Three readings of that selection, applied to this file (randomized trials, efficacy outcomes, one per trial label):
+    A. each trial's first comparison and outcome in its review:          33,968 trials (14,446 with at least 100 participants)
+    B. only each review's first comparison and outcome (its primary meta-analysis): 15,476 trials (7,330 with at least 100)
+    C. each comparison's first outcome (a comparison usually lists its primary outcome first): 25,340 trials (11,294 with at least 100)
+  Differences in our final sample:
+    - every efficacy outcome of a trial, not only the first; outcomes are clustered by trial
+    - only outcomes with at least 100 participants, and dichotomous outcomes with at least 10 events and 10 non-events
+    - z: the file's own z column, as theirs
+    - repeated copies of the same outcome data are dropped (same trial label, arm data and z)
+
+6. ROUNDING OF CONTINUOUS OUTCOMES
+  kappa = 2a / SE_min. a: the finer of the two means' rounding units; SE_min: the standard error from the smallest SDs
+  consistent with the printed ones (s - b/2). A difference of two means each rounded to a can be off by up to a, so its
+  rounding interval is 2a wide (the paper's kappa = a / s_min, for a coefficient printed to a).
+  Before the cap: 22,136 continuous outcomes, 926 of them with z exactly 0 (equal rounded means). kappa, quantiles 50, 75, 90, 99%:
+      50%   75%   90%   99% 
+    0.120 0.382 1.016 5.916 
+  No cap.
+  Final sample: 22,136 continuous outcomes, 926 of them with z exactly 0; kappa median 0.120, maximum 238.233; rounding allowance 0.13 x mean(kappa^6) = 1.90e+09 (J0 = 20; Propositions 3 and 4).
