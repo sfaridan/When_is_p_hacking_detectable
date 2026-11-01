@@ -81,6 +81,9 @@ J0_list      <- c(20,30)
 run_noshift  <- TRUE      #the projection test without the 1.96 shift (J0 = 20)
 run_kudrin   <- TRUE
 run_ekw      <- TRUE
+ekw_failed_p <- NA_real_  #p-value an EKW test gets in a draw where it fails (an error, or Cox-Shi's codes 888/999;
+#see ekw_safe.R): NA leaves that draw out of the test's averages, and the results count the
+#failures in <test>_failed; 1 counts it as a non-rejection, as kudrin_figures_engine.R does
 run_stouffer <- TRUE
 seed         <- 20261031
 
@@ -492,6 +495,7 @@ if (inspect_only) {
 source(file.path(root, "code", "functions_all_weighted.R"))   #run_test_weight_fast(), compute_epsilons()
 epsilon_U_pre <- compute_epsilons(L, nx = numgrid)$epsilon_U
 if (run_ekw)    source(file.path(root, "code", "Tests.R"))
+source(file.path(root, "code", "ekw_safe.R"))                   #ekw_six(), mean_finite(): a failed EKW test is never averaged in
 if (run_kudrin) source(file.path(root, "code", "kudrin_tests.R"))
 first <- function(v) as.numeric(v)[1]
 getv  <- function(x, nm) if (nm %in% names(x)) x[[nm]] else NA_real_
@@ -503,11 +507,8 @@ proj <- function(z, unit, J0, shift) {                        #p-value and B-hat
   c(p = first(r$pval), B = first(r$breakdown))
 }
 run_ewk <- function(ps, ids = seq_along(ps), pmax = 0.15) {    #as in application_MM_analysis.R
-  pmin <- min(ps[ps > 0])
-  out <- c(LCM = LCM(ps, pmin, pmax), Fisher = Fisher(ps, pmin, pmax), Disc = Discontinuity_test(ps, .05),
-           Binomial = Binomial(ps, .04, .05, "c"), CS1 = CoxShi(ps, ids, pmin, pmax, 15, 1, 0),
-           CS2B = CoxShi(ps, ids, pmin, pmax, 15, 2, 1))
-  vapply(out, first, 0)
+  e <- ekw_six(ps, ids, pmax, failed_p = ekw_failed_p)         #a test that fails gets ekw_failed_p (ekw_safe.R)
+  c(e$p, setNames(as.numeric(e$status != 0L), paste0(names(e$p), "_failed")))   #and a 1 in <test>_failed
 }
 stouffer_p <- function(t) {                                    #p-curve test for left skew (as in the analysis script)
   a   <- abs(t)
@@ -691,13 +692,21 @@ num_cols  <- setdiff(names(draws_tab), c("treatment", "draw", "group"))
 p_cols    <- intersect(c(grep("^proj_p_", num_cols, value = TRUE), "T_inf", "T_H", "T_H_hybrid", "LCM", "Fisher", "Disc",
                          "Binomial", "CS1", "CS2B", "Stouffer"), num_cols)
 b_cols    <- grep("^proj_B_", num_cols, value = TRUE)
-sd_or_na  <- function(v) if (length(v) > 1) stats::sd(v) else NA_real_
+sd_or_na  <- function(v) { v <- v[is.finite(v)]; if (length(v) > 1) stats::sd(v) else NA_real_ }   #over draws with a p-value
+ekw_cols  <- intersect(c("LCM", "Fisher", "Disc", "Binomial", "CS1", "CS2B"), num_cols)   #NA in draws where they failed
+fail_cols <- grep("_failed$", num_cols, value = TRUE)                                    #1 in draws where they failed
+cell_means <- function(x) {                                   #means over draws, as colMeans(), except that an EKW
+  m <- colMeans(x[, num_cols, drop = FALSE])                  #test's mean leaves out the draws in which it failed,
+  for (cn in ekw_cols)  m[[cn]] <- mean_finite(x[[cn]])       #and <test>_failed counts those draws
+  for (cn in fail_cols) m[[cn]] <- sum(x[[cn]])
+  m
+}
 by_cell   <- split(draws_tab, paste(draws_tab$treatment, draws_tab$group))
 results <- do.call(rbind, lapply(by_cell, function(x) {
   s <- groups[[x$group[1]]]
   data.frame(treatment = x$treatment[1], group = x$group[1], label = group_label[[x$group[1]]], draws = nrow(x),
              n = sum(s), clusters = length(unique(d$unit[s])), share_sig = mean(abs(d$z[s]) > 1.96),
-             as.list(colMeans(x[, num_cols, drop = FALSE])),
+             as.list(cell_means(x)),
              as.list(setNames(vapply(p_cols, function(cn) sd_or_na(x[[cn]]), 0), paste0("sd_", p_cols))),
              as.list(setNames(vapply(J0_list, function(J0) allow_of(s, J0), 0), paste0("allowance_J0_", J0_list))),
              as.list(setNames(vapply(J0_list, function(J0) {
@@ -708,18 +717,26 @@ results <- do.call(rbind, lapply(by_cell, function(x) {
 }))
 results <- results[order(match(results$treatment, treatments), match(results$group, names(groups))), ]
 rownames(results) <- NULL
+if (length(fail_cols) && any(as.matrix(results[, fail_cols, drop = FALSE]) > 0)) {   #EKW tests that failed (ekw_safe.R)
+  cat("\nEKW tests that failed, in how many draws (their p-value is ", format(ekw_failed_p), " there):\n", sep = "")
+  print(results[rowSums(as.matrix(results[, fail_cols, drop = FALSE])) > 0, c("treatment", "group", "draws", fail_cols)],
+        row.names = FALSE)
+}
 
 # Stability across draws: for each test, its p-value's mean, standard deviation and range, and the share of draws that
 # reject at 5%. For B-hat: the share of draws with B-hat > 0 (the projection test rejecting) or, under "smin" and
 # "smin_noise", with B-hat above the rounding allowance (a certified rejection)
 stability <- do.call(rbind, lapply(by_cell, function(x) do.call(rbind, lapply(c(p_cols, b_cols), function(cn) {
-  v     <- x[[cn]]
+  v     <- x[[cn]][is.finite(x[[cn]])]                          #the draws with a p-value (a failed EKW test is NA)
   allow <- if (x$treatment[1] %in% c("smin", "smin_noise") && grepl("^proj_B_J0_", cn)) {
     allow_of(groups[[x$group[1]]], as.numeric(sub("^proj_B_J0_", "", cn)))
   } else 0
-  data.frame(treatment = x$treatment[1], group = x$group[1], statistic = cn, draws = length(v), mean = mean(v),
-             sd = sd_or_na(v), min = min(v), max = max(v),
-             share_rejecting_5pct = if (cn %in% p_cols) mean(v < 0.05) else mean(v > allow), stringsAsFactors = FALSE)
+  data.frame(treatment = x$treatment[1], group = x$group[1], statistic = cn, draws = nrow(x),
+             failed = if (paste0(cn, "_failed") %in% names(x)) sum(x[[paste0(cn, "_failed")]]) else nrow(x) - length(v),
+             mean = if (length(v)) mean(v) else NA_real_, sd = sd_or_na(v),
+             min = if (length(v)) min(v) else NA_real_, max = if (length(v)) max(v) else NA_real_,
+             share_rejecting_5pct = if (!length(v)) NA_real_ else if (cn %in% p_cols) mean(v < 0.05) else mean(v > allow),
+             stringsAsFactors = FALSE)
 }))))
 stability <- stability[order(match(stability$treatment, treatments), match(stability$group, names(groups)),
                              match(stability$statistic, c(p_cols, b_cols))), ]
@@ -732,7 +749,7 @@ settings <- list(saved = format(Sys.time()), data_file = data_file, columns = co
                  generic_used = generic_ok, est_se_gap = gap, cluster_by = cluster_by, year_split = year_split,
                  drop_zero_z = drop_zero_z, kappa_cap = kappa_cap, treatments = treatments, n_draws = n_draws, shift = shift, L = L,
                  numgrid = numgrid, boots = boots, J = J, p = p, J0_list = J0_list, epsilon_U_pre = epsilon_U_pre,
-                 seed = seed, steps = steps, flow = flow)
+                 seed = seed, ekw_failed_p = ekw_failed_p, steps = steps, flow = flow)
 saveRDS(list(results = results, draws = draws_tab, stability = stability, settings = settings,
              sample = d[, c("review", "study", "year", "source", "n", "z", "unit")]),
         file.path(res_dir, paste0("Cochrane_results", tag, ".rds")))

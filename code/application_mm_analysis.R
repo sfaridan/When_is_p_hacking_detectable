@@ -49,6 +49,9 @@ p              <- 2
 J0_list        <- c(20, 30) #J0 = 20 is the main specification; J0 = 30 is the robustness check (R5 3iii)
 C_round        <- c("20" = 0.13, "30" = 0.31)   #C of Propositions 3 and 4, by J0 (for p = 2)
 run_stouffer   <- TRUE   #p-curve test for left skew by Stouffer's method (Simonsohn, point 5)
+ekw_failed_p   <- NA_real_ #p-value an EKW test gets in a draw where it fails (an error, or Cox-Shi's codes 888/999;
+#see ekw_safe.R): NA leaves that draw out of the test's averages, and EWK_failures<suffix>
+#counts the failures; 1 counts it as a non-rejection, as kudrin_figures_engine.R does
 run_noshift    <- TRUE   #projection test without the 1.96 shift, J0 = 20 (R1 17a)
 noshift_draws  <- 200    #de-roundings for the unshifted test under options 2 and 4 (at most n_draws_noise)
 time_tests     <- TRUE   #time one call of each test per design, for a run-time sentence (R5 3iv)
@@ -355,7 +358,7 @@ cat("\n", paste(report_mm, collapse = "\n"), "\n\nSample report written to ",
 
 #Averaging over draws
 as_num1         <- function(v) as.numeric(v)[1]              #test results may come back as lists or list-columns
-draw_range      <- function(x) diff(range(x))                #max - min across draws
+draw_range      <- function(x) { x <- x[is.finite(x)]; if (length(x)) diff(range(x)) else NA_real_ }   #max - min across draws
 summarize_draws <- function(d, cols, f = mean) {             #one row per method, in the order of meth;
   out <- d[match(meth, d$methods), setdiff(names(d), "draw")] #cols summarized over draws by f
   for (k in cols) out[[k]] <- as.numeric(tapply(d[[k]], d$methods, f)[meth])
@@ -383,6 +386,7 @@ settings_now <- function(status) list(
   cv = cv, sigma_Y = sigma_Y, shift = shift, L = L, numgrid = numgrid, boots = boots, boot_seed_by_draw = boot_seed_by_draw,
   J = J, coeffs = coeffs, p = p,
   J0_list = J0_list, epsilon_U_pre = epsilon_U_pre, run_stouffer = run_stouffer, run_noshift = run_noshift,
+  ekw_failed_p = ekw_failed_p,
   noshift_draws = noshift_draws, time_tests = time_tests,
   fig_resid_option = fig_resid_option, fig_resid_boots = fig_resid_boots, fig_shape_option = fig_shape_option,
   fig_binwidth = fig_binwidth, fig_max_t = fig_max_t, fig_bandwidth = fig_bandwidth, fig_window = fig_window,
@@ -426,21 +430,15 @@ if (!run_tests) {                       #reuse saved test results only if they w
 ### EKW and Kudrin (2025) test wrappers
 
 source(paste0(root,"/code/Tests.R"))
+source(paste0(root,"/code/ekw_safe.R"))   #ekw_six(), mean_finite(), min_finite(): a failed EKW test is never averaged in
 
-run_ewk <- function(ps,ids=1:length(ps),pmax=0.15){
-  pmin <- min(ps[ps>0])
-  out <- list()
-  
-  out$lcms_EWK     <- LCM(ps,pmin,pmax)
-  out$Fisher_EWK   <- Fisher(ps,pmin,pmax)
-  out$disconts_EWK <- Discontinuity_test(ps,.05)
-  out$binomial_EWK <- Binomial(ps,.04, .05, "c")
-  out$CS1_EWK_s    <- CoxShi(ps, ids, pmin, pmax, 15, 1, 0)
-  out$CS2_EWK_s    <- CoxShi(ps, ids, pmin, pmax, 15, 2, 1)
-  
-  out$min <- min(out$lcms_EWK,out$Fisher_EWK,out$disconts_EWK, out$binomial_EWK,  out$CS1_EWK_s, out$CS2_EWK_s)
-  
-  return(out)
+run_ewk <- function(ps, ids = 1:length(ps), pmax = 0.15) {   #a test that fails gets ekw_failed_p (ekw_safe.R)
+  e   <- ekw_six(ps, ids, pmax, failed_p = ekw_failed_p)
+  out <- list(lcms_EWK = e$p[["LCM"]], Fisher_EWK = e$p[["Fisher"]], disconts_EWK = e$p[["Disc"]],
+              binomial_EWK = e$p[["Binomial"]], CS1_EWK_s = e$p[["CS1"]], CS2_EWK_s = e$p[["CS2B"]])
+  out$min <- min_finite(e$p)                                  #smallest p-value among the tests that ran
+  attr(out, "status") <- setNames(e$status, names(out)[1:6])  #0 if the test ran; else why not (ekw_safe.R)
+  out
 }
 
 source(paste0(root,"/code/kudrin_tests.R"))
@@ -523,23 +521,36 @@ for (deround_option in if (run_tests) options_to_run else integer(0)) {
     print(readRDS(name))
   }
   
-  #EKW tests, on each de-rounding
+  #EKW tests, on each de-rounding. A test that fails in a draw (an error, or Cox-Shi's codes 888/999) gets
+  #ekw_failed_p there: with NA, its averages leave that draw out. EWK_failures<suffix> counts the failures
   ewk_draws <- vector("list", n_draws)
+  ewk_codes <- vector("list", n_draws)
   for (r in seq_len(n_draws)) {
     MM_data$t <- deround_draw(r)
     set.seed(if (boot_seed_by_draw) 1000 * r + 2 else 2)
-    ewk_draws[[r]] <- sapply(setNames(meth, paste0("ewk_", tolower(meth))), function(m) {   #tests x methods
+    ewk_r <- lapply(setNames(meth, paste0("ewk_", tolower(meth))), function(m) {
       s <- MM_data$method == m
-      vapply(run_ewk(2 * pnorm(-abs(MM_data$t[s])), ids = as.integer(factor(MM_data$title[s]))), as_num1, numeric(1))
+      run_ewk(2 * pnorm(-abs(MM_data$t[s])), ids = as.integer(factor(MM_data$title[s])))
     })
+    ewk_draws[[r]] <- sapply(ewk_r, function(x) vapply(x, as_num1, numeric(1)))   #tests x methods
+    ewk_codes[[r]] <- sapply(ewk_r, function(x) attr(x, "status"))               #the six tests x methods; 0 = ran
   }
   ewk_all       <- simplify2array(ewk_draws)                 #tests x methods x draws
-  empirical_ewk <- apply(ewk_all, c(1, 2), mean)
+  ewk_code_all  <- simplify2array(ewk_codes)                 #the six tests x methods x draws
+  empirical_ewk <- apply(ewk_all, c(1, 2), mean_finite)      #each test's mean over the draws in which it ran
   ewk_tests     <- setdiff(rownames(empirical_ewk), "min")
-  empirical_ewk["min", ] <- apply(empirical_ewk[ewk_tests, , drop = FALSE], 2, min)   #smallest averaged p-value
+  empirical_ewk["min", ] <- apply(empirical_ewk[ewk_tests, , drop = FALSE], 2, min_finite)   #smallest averaged p-value
+  ewk_failed    <- apply(ewk_code_all != 0L, c(1, 2), sum)   #draws in which each test failed, tests x methods
   saveRDS(ewk_all, file = file.path(res_dir, paste0("EWK_results_draws", suffix)))
   saveRDS(empirical_ewk, file = file.path(res_dir, paste0("EWK_results", suffix)))
+  saveRDS(list(failed = ewk_failed, codes = ewk_code_all, failed_p = ekw_failed_p, draws = n_draws),
+          file = file.path(res_dir, paste0("EWK_failures", suffix)))
   print(round(empirical_ewk, 3))
+  if (any(ewk_failed > 0)) {
+    cat("EKW tests that failed, in how many of the ", n_draws, " draws (their p-value is ", format(ekw_failed_p),
+        " there):\n", sep = "")
+    print(ewk_failed)
+  }
   
   #Stouffer's p-curve test for left skew, on each de-rounding (Simonsohn's report, point 5)
   if (run_stouffer) {
