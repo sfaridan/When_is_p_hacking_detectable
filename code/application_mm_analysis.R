@@ -6,7 +6,12 @@
 #### in <root>/results. It writes no table or figure: application_MM_output.R reads these files, the settings
 #### included, and makes all of them, so their notes always describe the run that produced the numbers.
 #### Every file is tagged with run_tag (see drop_zero_mu and run_label): runs on different samples never
-#### overwrite each other. Settings_application<run_tag> records the run.
+#### overwrite each other. Settings_application<run_tag> records the run. Also written, as application_cochrane.R does:
+####   Sample_report_application<run_tag>.txt  every step from the file to the final sample, by design, reconciled with
+####                                           Kudrin's (2025) Table 2 and Kranz and Putz's (2022) rule
+####   Sample_rows_application<run_tag>.csv    every row of the file: kept or not, and why (merge on row)
+####   Stability_application<run_tag>.csv      each test's p-value (and B-hat) across de-rounding draws: mean, standard
+####                                           deviation, range, and the share of draws that reject
 #### =====================================================================================================
 rm(list = ls())
 gc(reset = TRUE)
@@ -36,6 +41,9 @@ shift          <- cv
 L              <- 6.5    #grid support [-L, L] plus 9999
 numgrid        <- 3000   #number of grid points
 boots          <- 1000   #bootstrap repetitions (projection test and Kudrin's T_inf)
+boot_seed_by_draw <- FALSE #FALSE: the same bootstrap seeds in every de-rounding draw, as application_cochrane.R, so a
+#test's p-value moves across draws only through the de-rounding; TRUE: new seeds in every
+#draw (the earlier runs)
 J              <- 40
 p              <- 2
 J0_list        <- c(20, 30) #J0 = 20 is the main specification; J0 = 30 is the robustness check (R5 3iii)
@@ -189,6 +197,24 @@ cat(sprintf("Of the %d t-statistics at exactly z = 2, our procedure drops %.1f p
             drop_comparison["Pooled", "z_eq_2"], drop_comparison["Pooled", "ours_z2_pct"], drop_comparison["Pooled", "kp_z2_pct"]))
 saveRDS(drop_comparison, file = file.path(res_dir, paste0("Drop_comparison_KP", run_tag)))
 
+#The row-level record of the sample: every row of the file, kept or not, and why (for the sample report)
+strip       <- function(x) as.vector(haven::zap_labels(x))
+kept_rows   <- which(!drop)                                     #rows of MM_raw that are rows of MM_data here
+sample_rows <- data.frame(row = seq_len(nrow(MM_raw)), article = strip(MM_raw$title), table = strip(MM_raw$table),
+                          design = strip(MM_raw$method), coefficient = strip(MM_raw$mu), se = strip(MM_raw$sd),
+                          t = strip(MM_raw$t), stringsAsFactors = FALSE)
+reason <- rep("", nrow(MM_raw))
+reason[is.na(MM_raw$mu)] <- "coefficient missing"
+if (drop_zero_mu) reason[!is.na(MM_raw$mu) & MM_raw$mu %in% 0] <- "coefficient printed as zero"
+reason[kept_rows[drop_se0]]   <- "standard error printed as zero"
+reason[kept_rows[drop_kappa]] <- "kappa above cap"
+sample_rows$kept     <- reason == ""
+sample_rows$reason   <- reason
+sample_rows$t_source <- NA_character_
+sample_rows$t_source[kept_rows] <- ifelse(use_ratio, "coef/SE", ifelse(direct, "reported t", NA))
+sample_rows$kappa    <- NA_real_
+sample_rows$kappa[kept_rows]    <- ifelse(has_ratio & !drop_se0, a_mu / s_min, ifelse(direct, a_t, NA))
+
 #Keep the printed values each option needs, then drop (the drops above do not depend on the option)
 MM_data$t_source   <- ifelse(use_ratio, "coef/SE", ifelse(direct, "reported t", NA))
 MM_data$dr_mu      <- mu_p                                                       #printed coefficient
@@ -229,8 +255,105 @@ kappa6 <- tapply(MM_data$kappa^6, MM_data$method, mean, na.rm = TRUE)
 cat("\nRounding allowance under options 3 and 4 (Section 5.2.1, step 3), to compare with B-hat:\n")
 print(signif(rbind(mean_kappa6 = kappa6, bound_J0_20 = C_round[["20"]] * kappa6, bound_J0_30 = C_round[["30"]] * kappa6), 3))
 
+#### Sample report: every step from the file to the final sample, by design, reconciled with Kudrin (2025) ----
+meth    <- c("RCT","IV","DID","RDD")
+designs <- c(meth, setdiff(sort(unique(sample_rows$design[!is.na(sample_rows$design)])), meth))
+count_by <- function(v) {                                     #rows, by design and in total
+  x <- table(factor(sample_rows$design[v], levels = designs))
+  c(setNames(as.vector(x), designs), Total = sum(v))
+}
+papers_by <- function(v) c(vapply(designs, function(m) length(unique(sample_rows$article[v & sample_rows$design %in% m])), 0),
+                           Total = length(unique(sample_rows$article[v])))
+is_zero  <- !is.na(sample_rows$coefficient) & sample_rows$coefficient %in% 0
+steps_mm <- rbind("In the file"                         = count_by(rep(TRUE, nrow(sample_rows))),
+                  "Dropped: coefficient missing"        = count_by(reason == "coefficient missing"),
+                  "Dropped: coefficient printed as 0"   = count_by(reason == "coefficient printed as zero"),
+                  "Dropped: standard error printed as 0" = count_by(reason == "standard error printed as zero"),
+                  "Dropped: kappa above the cap"        = count_by(reason == "kappa above cap"),
+                  "Final sample"                        = count_by(sample_rows$kept),
+                  "Articles in the final sample"        = papers_by(sample_rows$kept))
+if (!drop_zero_mu) steps_mm <- steps_mm[rownames(steps_mm) != "Dropped: coefficient printed as 0", ]
+
+# Kudrin (2025), Table 2: tests (papers) after excluding observations with missing information. Our reading of his
+# rule: a coefficient is present and not printed as zero. Our sample differs from it by exactly
+# (zero coefficients we keep) - (standard errors printed as zero) - (kappa above the cap)
+kud_n      <- c(RCT = 7101, IV = 5158, DID = 5780, RDD = 3117)
+kud_papers <- c(RCT = 141, IV = 281, DID = 241, RDD = 85)
+kud_rule   <- !is.na(sample_rows$coefficient) & !is_zero
+recon <- rbind("Kudrin (2025), Table 2: tests"              = c(kud_n[meth], Total = sum(kud_n)),
+               "Kudrin (2025), Table 2: papers"             = c(kud_papers[meth], Total = sum(kud_papers)),
+               "His rule on this file: tests"               = count_by(kud_rule)[c(meth, "Total")],
+               "His rule on this file: papers"              = papers_by(kud_rule)[c(meth, "Total")],
+               "+ zero coefficients we keep"                = if (drop_zero_mu) 0 * count_by(is_zero)[c(meth, "Total")] else count_by(is_zero)[c(meth, "Total")],
+               "- standard errors printed as zero"          = count_by(reason == "standard error printed as zero")[c(meth, "Total")],
+               "- kappa above the cap"                      = count_by(reason == "kappa above cap")[c(meth, "Total")],
+               "= our final sample"                         = count_by(sample_rows$kept)[c(meth, "Total")])
+
+t_print <- ifelse(MM_data$t_source %in% "coef/SE", MM_data$dr_mu / MM_data$dr_sd, MM_data$dr_t)
+dup_key <- paste(MM_data$method, MM_data$title, MM_data$dr_mu, MM_data$dr_sd, MM_data$dr_t, sep = "|")
+final_mm <- t(vapply(meth, function(m) {
+  s <- MM_data$method %in% m
+  k <- MM_data$kappa[s]
+  c(tests = sum(s), articles = length(unique(MM_data$title[s])),
+    coef_over_SE = sum(MM_data$t_source[s] %in% "coef/SE"), reported_t = sum(MM_data$t_source[s] %in% "reported t"),
+    share_sig = mean(abs(t_print[s]) > cv, na.rm = TRUE), zero_coef_kept = sum(MM_data$dr_mu[s] %in% 0),
+    exact_duplicates = sum(duplicated(dup_key[s])),
+    kappa_median = median(k, na.rm = TRUE), kappa_p90 = unname(quantile(k, 0.9, na.rm = TRUE)), kappa_max = max(k, na.rm = TRUE),
+    allowance_J0_20_x1000 = 1e3 * C_round[["20"]] * kappa6[[m]], allowance_J0_30_x1000 = 1e3 * C_round[["30"]] * kappa6[[m]])
+}, numeric(12)))
+
+show_lines <- function(x, digits = NULL) {                     #a printed table as report lines
+  op <- options(width = 250); on.exit(options(op))
+  out <- capture.output(print(if (is.null(digits)) x else round(x, digits)))
+  paste0("    ", out[nzchar(trimws(out))])
+}
+report_mm <- c(
+  "SAMPLE REPORT: the application to Brodeur, Cook and Heyes (2020)",
+  sprintf("Written %s by application_MM_analysis.R; run tag '%s'. Data: %s (%s rows, %s articles).",
+          format(Sys.time(), "%Y-%m-%d %H:%M"), run_tag, file.path(data_location, "MM data.dta"),
+          format(nrow(MM_raw), big.mark = ","), format(length(unique(sample_rows$article)), big.mark = ",")),
+  "One row of the file is one test: a coefficient and its standard error, or a reported t-statistic.",
+  "",
+  "1. SETTINGS THAT DEFINE THE SAMPLE",
+  sprintf("  drop_zero_mu = %s (coefficients printed as zero %s); kappa_cap = %s; se_rounded_up = %s",
+          drop_zero_mu, if (drop_zero_mu) "dropped, as Kudrin (2025)" else "kept", format(kappa_cap), se_rounded_up),
+  "  kappa = a / s_min: the coefficient's rounding unit a (the finest place value among its table's coefficients, but no",
+  "  finer than its standard error's) over the smallest standard error consistent with the printed one, s - b/2.",
+  "  The cap applies to t-statistics computed as coefficient / standard error; reported t-statistics have kappa equal",
+  "  to their own rounding unit and are never capped. Which rows are dropped never depends on the de-rounding option.",
+  "",
+  "2. EVERY STEP, IN ORDER, BY DESIGN (rows dropped by each step; the first and last rows count rows kept)",
+  show_lines(steps_mm),
+  sprintf("  Rows of the final sample with no usable t-statistic: %d (must be 0).", sum(sample_rows$kept & is.na(sample_rows$t_source))),
+  "",
+  "3. THE FINAL SAMPLE, BY DESIGN",
+  show_lines(final_mm, 4),
+  "  share_sig: share with printed |t| > 1.96. exact_duplicates: rows repeating an earlier row's article, coefficient,",
+  "  standard error and t (kept, as Kudrin keeps them). Allowances: C mean(kappa^6) x 1000, C = 0.13 (J0 = 20), 0.31 (J0 = 30).",
+  "",
+  "4. RECONCILIATION WITH KUDRIN (2025)",
+  "  His Table 2 reports the tests left 'after excluding observations with missing information'. We read his rule as:",
+  "  the coefficient is present and not printed as zero. Our final sample differs from that rule's sample by exactly the",
+  "  three rows below it:",
+  show_lines(recon),
+  if (any(recon["His rule on this file: tests", meth] != kud_n[meth]))
+    "  NOTE: our reading of his rule does not reproduce his counts for every design; the gap is in the rows above." else
+      "  Our reading of his rule reproduces his counts for every design.",
+  "  Other differences in the analysis, not the sample: every test here clusters by article (Kudrin's T_inf resamples",
+  "  p-values independently), and every test is run under four de-rounding options (Section 5.2).",
+  "",
+  "5. COMPARISON WITH KRANZ AND PUTZ'S (2022) OMISSION RULE (standard-error significand below 37)",
+  show_lines(drop_comparison, 1),
+  "",
+  sprintf("6. ROW-LEVEL FILE: Sample_rows_application%s.csv lists every row of the file (row = its position in MM data.dta)", run_tag),
+  "  with its article, table, design, coefficient, standard error and t as stored, whether it is kept, the reason if not,",
+  "  how its t-statistic is formed, and its kappa.")
+writeLines(report_mm, file.path(res_dir, paste0("Sample_report_application", run_tag, ".txt")))
+write.csv(sample_rows, file.path(res_dir, paste0("Sample_rows_application", run_tag, ".csv")), row.names = FALSE)
+cat("\n", paste(report_mm, collapse = "\n"), "\n\nSample report written to ",
+    file.path(res_dir, paste0("Sample_report_application", run_tag, ".txt")), "\n", sep = "")
+
 #Averaging over draws
-meth            <- c("RCT","IV","DID","RDD")
 as_num1         <- function(v) as.numeric(v)[1]              #test results may come back as lists or list-columns
 draw_range      <- function(x) diff(range(x))                #max - min across draws
 summarize_draws <- function(d, cols, f = mean) {             #one row per method, in the order of meth;
@@ -257,7 +380,8 @@ settings_now <- function(status) list(
   n_draws = setNames(ifelse(deround_noise[options_to_run], n_draws_noise, 1), deround_keys[options_to_run]),
   noshift_n_draws = setNames(ifelse(deround_noise[options_to_run], min(noshift_draws, n_draws_noise), 1),
                              deround_keys[options_to_run]),
-  cv = cv, sigma_Y = sigma_Y, shift = shift, L = L, numgrid = numgrid, boots = boots, J = J, coeffs = coeffs, p = p,
+  cv = cv, sigma_Y = sigma_Y, shift = shift, L = L, numgrid = numgrid, boots = boots, boot_seed_by_draw = boot_seed_by_draw,
+  J = J, coeffs = coeffs, p = p,
   J0_list = J0_list, epsilon_U_pre = epsilon_U_pre, run_stouffer = run_stouffer, run_noshift = run_noshift,
   noshift_draws = noshift_draws, time_tests = time_tests,
   fig_resid_option = fig_resid_option, fig_resid_boots = fig_resid_boots, fig_shape_option = fig_shape_option,
@@ -273,7 +397,8 @@ if (!run_tests) {                       #reuse saved test results only if they w
   if (file.exists(settings_file)) {
     old  <- readRDS(settings_file)
     same <- c("drop_zero_mu", "kappa_cap", "se_rounded_up", "options_run", "n_draws_noise", "cv", "shift", "L",
-              "numgrid", "boots", "J", "p", "J0_list", "run_stouffer", "run_noshift", "noshift_draws", "n_by_design")
+              "numgrid", "boots", "boot_seed_by_draw", "J", "p", "J0_list", "run_stouffer", "run_noshift", "noshift_draws",
+              "n_by_design")
     diff <- same[!vapply(same, function(k) isTRUE(all.equal(old[[k]], now[[k]])), TRUE)]
     if (length(diff)) stop("run_tests = FALSE, but these settings differ from the saved run's: ", paste(diff, collapse = ", "))
     if (!identical(old$status, "complete")) stop("The saved run with run_tag '", run_tag, "' did not finish")
@@ -364,7 +489,7 @@ for (deround_option in if (run_tests) options_to_run else integer(0)) {
   for (r in seq_len(n_draws)) {
     t_start   <- Sys.time()
     MM_data$t <- deround_draw(r)
-    set.seed(1000 * r + 1) #bootstrap seeds differ across draws, so bootstrap noise averages out too
+    set.seed(if (boot_seed_by_draw) 1000 * r + 1 else 1)   #see boot_seed_by_draw
     for (J0 in J0_list) {
       for (m in meth) {
         res <- run_test_weight_fast(MM_data[MM_data$method==m,],numcoeffs=coeffs,epsilon_U_pre=epsilon_U_pre,sigma_Y=1,shift=shift,L=L,numgrid=numgrid,boots=boots,J0=J0,p=p)
@@ -402,7 +527,7 @@ for (deround_option in if (run_tests) options_to_run else integer(0)) {
   ewk_draws <- vector("list", n_draws)
   for (r in seq_len(n_draws)) {
     MM_data$t <- deround_draw(r)
-    set.seed(1000 * r + 2)
+    set.seed(if (boot_seed_by_draw) 1000 * r + 2 else 2)
     ewk_draws[[r]] <- sapply(setNames(meth, paste0("ewk_", tolower(meth))), function(m) {   #tests x methods
       s <- MM_data$method == m
       vapply(run_ewk(2 * pnorm(-abs(MM_data$t[s])), ids = as.integer(factor(MM_data$title[s]))), as_num1, numeric(1))
@@ -433,7 +558,7 @@ for (deround_option in if (run_tests) options_to_run else integer(0)) {
   for (r in seq_len(n_draws)) {
     t_start   <- Sys.time()
     MM_data$t <- deround_draw(r)
-    set.seed(1000 * r + 3) #T_inf is bootstrapped
+    set.seed(if (boot_seed_by_draw) 1000 * r + 3 else 3)   #T_inf is bootstrapped
     kud_all <- rbind(kud_all, cbind(draw = r, methods = meth,
                                     do.call(rbind, lapply(meth, function(m) run_kudrin(MM_data[MM_data$method == m, ])))))
     cat(sprintf("Kudrin tests (%s): de-rounding %d of %d done in %.1f minutes\n", deround_spec$key, r, n_draws,
@@ -458,6 +583,64 @@ for (deround_option in if (run_tests) options_to_run else integer(0)) {
     print(round(apply(ewk_all, c(1, 2), draw_range), 3))
     cat("Kudrin (2025) tests\n")
     print(summarize_draws(kud_all, kud_tests, draw_range)[, c("methods", kud_tests)])
+  }
+}
+
+#### Stability across de-rounding draws, as application_cochrane.R records it --------------------------------
+# For each option, design and test: the p-value's mean, standard deviation and range across draws, and the share of
+# draws that reject at 5%. For B-hat: the share of draws with B-hat > 0 (the projection test rejecting) or, under
+# smin and smin_noise, with B-hat above the design's rounding allowance (a certified rejection). Read from the saved
+# draws, so it also works when run_tests = FALSE.
+stab <- list()
+add_stab <- function(option, design, statistic, v, allow = NULL) {
+  v <- as.numeric(v); v <- v[is.finite(v)]
+  stab[[length(stab) + 1]] <<- data.frame(option = option, design = design, statistic = statistic, draws = length(v),
+                                          mean = if (length(v)) mean(v) else NA_real_, sd = if (length(v) > 1) stats::sd(v) else NA_real_,
+                                          min = if (length(v)) min(v) else NA_real_, max = if (length(v)) max(v) else NA_real_,
+                                          share_rejecting_5pct = if (!length(v)) NA_real_ else if (is.null(allow)) mean(v < 0.05) else mean(v > allow),
+                                          stringsAsFactors = FALSE)
+}
+for (o in options_to_run) {
+  key  <- deround_keys[o]
+  sfx  <- paste0("_", key, run_tag)
+  smin <- key %in% c("smin", "smin_noise")
+  f <- file.path(res_dir, paste0("MM_weights_results_draws", sfx))
+  if (file.exists(f)) {
+    pa <- readRDS(f)
+    for (m in meth) {
+      for (J0 in J0_list) {
+        x <- pa[pa$methods == m & pa$J0 == J0 & pa$shift == shift, ]
+        add_stab(key, m, paste0("proj_p_J0_", J0), x$pval)
+        add_stab(key, m, paste0("proj_B_J0_", J0), x$breakdown, allow = if (smin) C_round[[as.character(J0)]] * kappa6[[m]] else 0)
+      }
+      x <- pa[pa$methods == m & pa$J0 == 20 & pa$shift == 0, ]
+      if (nrow(x)) { add_stab(key, m, "proj_p_noshift", x$pval); add_stab(key, m, "proj_B_noshift", x$breakdown, allow = 0) }
+    }
+  }
+  f <- file.path(res_dir, paste0("EWK_results_draws", sfx))
+  if (file.exists(f)) {
+    ea <- readRDS(f)                                           #tests x methods x draws
+    if (length(dim(ea)) == 2) ea <- array(ea, c(dim(ea), 1), dimnames = c(dimnames(ea), list(NULL)))
+    for (m in meth) for (tn in setdiff(dimnames(ea)[[1]], "min")) add_stab(key, m, tn, ea[tn, paste0("ewk_", tolower(m)), ])
+  }
+  f <- file.path(res_dir, paste0("Stouffer_results_draws", sfx))
+  if (file.exists(f)) {
+    sa <- readRDS(f)                                           #draws x methods
+    for (m in meth) add_stab(key, m, "Stouffer", sa[, m])
+  }
+  f <- file.path(res_dir, paste0("Kudrin_results_draws", sfx))
+  if (file.exists(f)) {
+    ka <- readRDS(f)
+    for (m in meth) for (tn in intersect(c("T_inf", "T_H", "T_H_hybrid"), names(ka))) add_stab(key, m, tn, ka[[tn]][ka$methods == m])
+  }
+}
+stability_mm <- do.call(rbind, stab)
+if (!is.null(stability_mm)) {
+  write.csv(stability_mm, file.path(res_dir, paste0("Stability_application", run_tag, ".csv")), row.names = FALSE)
+  u <- stability_mm[stability_mm$draws > 1 & !grepl("^proj_B", stability_mm$statistic), ]
+  if (nrow(u)) {
+    cat("\nStandard deviation of each test's p-value across the de-rounding draws (options with noise):\n")
+    print(round(tapply(u$sd, list(paste(u$option, u$design), u$statistic), identity), 3))
   }
 }
 

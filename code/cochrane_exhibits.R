@@ -13,7 +13,7 @@ rm(list = ls())
 #### 0. Settings -------------------------------------------------------------------------------------------
 root    <- "C:/Users/sfaridani6/Documents/GitHub/When_is_p_hacking_detectable"
 res_dir <- file.path(root, "results", "cochrane")
-tag     <- "_n100_all_trial_kappa0.5_zcounts_cont"   #the tag on application_cochrane.R's files (end of its sample report)   #the tag on application_cochrane.R's files (end of its sample report)
+tag     <- "_n100_all_trial_kappa0.5_zcounts_cont"   #the tag on application_cochrane.R's files (end of its sample report)
 table_groups <- c("all", "early", "late")    #the table's panels, in order
 show_sd      <- TRUE                         #standard deviations across draws, in parentheses, under the noisy treatments
 show_J0_30   <- FALSE                        #a column for the projection test with J0 = 30, if it was run
@@ -50,6 +50,15 @@ cell_of <- function(tr, g, cn, f) {
 mean_of <- function(tr, g, cn) cell_of(tr, g, cn, mean)
 sd_of   <- function(tr, g, cn) cell_of(tr, g, cn, function(v) if (length(v) > 1) stats::sd(v) else NA_real_)
 draws_n <- function(tr, g) sum(dr$treatment == tr & dr$group == g)
+# EKW: the smallest of the six tests' averaged p-values, as in the Brodeur table (application_MM_analysis.R), with
+# the standard deviation across draws of the test that attains it
+ekw_min_of <- function(tr, g) {
+  means <- vapply(ekw, function(cn) mean_of(tr, g, cn), 0)
+  if (!length(ekw) || all(!is.finite(means))) return(c(p = NA_real_, sd = NA_real_))
+  c(p = min(means, na.rm = TRUE), sd = sd_of(tr, g, ekw[which.min(means)]))
+}
+val_of <- function(tr, g, cn) if (cn == "EKW_min") ekw_min_of(tr, g)[["p"]] else mean_of(tr, g, cn)
+dev_of <- function(tr, g, cn) if (cn == "EKW_min") ekw_min_of(tr, g)[["sd"]] else sd_of(tr, g, cn)
 res_row <- function(tr, g) RES$results[RES$results$treatment == tr & RES$results$group == g, , drop = FALSE]
 
 #### 2. The table ------------------------------------------------------------------------------------------
@@ -97,7 +106,7 @@ row_main <- function(tr, g) {
              vapply(pcols, function(cn) fp(mean_of(tr, g, cn)), ""),
              fB(mean_of(tr, g, "proj_B_J0_20"), bold = cert),
              if (smin) fB(rr$allowance_J0_20[1]) else "",
-             vapply(c(kcols, ocols), function(cn) fp(mean_of(tr, g, cn)), ""))
+             vapply(c(kcols, ocols), function(cn) fp(val_of(tr, g, cn)), ""))
   paste0(paste(cells, collapse = " & "), " \\\\")
 }
 row_sd <- function(tr, g) {
@@ -106,7 +115,7 @@ row_sd <- function(tr, g) {
              vapply(pcols, function(cn) fsd(sd_of(tr, g, cn)), ""),
              if (is.finite(sdB)) sprintf("(%.2f)", 1e3 * sdB) else "",
              "",
-             vapply(c(kcols, ocols), function(cn) fsd(sd_of(tr, g, cn)), ""))
+             vapply(c(kcols, ocols), function(cn) fsd(dev_of(tr, g, cn)), ""))
   paste0(paste(cells, collapse = " & "), " \\\\")
 }
 panel_head <- function(g, k) {
@@ -131,7 +140,7 @@ notes <- paste0(
   sprintf("Under Uniform and $s_{\\min}$ + noise, entries are averages over %d draws%s. ", as.integer(st$n_draws),
           if (show_sd) ", with standard deviations across draws in parentheses" else ""),
   "Projection test: $J = 40$, $J_0 = 20$, $p = 2$, centered at 1.96. Allowance: the rounding allowance $0.13\\,\\overline{\\kappa^6}$, times $10^3$ (Propositions 3 and 4); under $s_{\\min}$ and $s_{\\min}$ + noise, the projection test rejects only when $\\hat B$ exceeds it. ",
-  "Every test clusters by trial. EKW: the smallest $p$-value of the six tests of Elliott, Kudrin and W\\\"uthrich (2022), not itself a valid $p$-value. $p$-curve: Stouffer's test for left skew (Simonsohn, Nelson and Simmons 2014). Bold: $p$-values of at most .05, and $10^3 \\hat B$ above the allowance.")
+  "Every test clusters by trial. EKW: the smallest of the six tests' $p$-values of Elliott, Kudrin and W\\\"uthrich (2022), each averaged over draws as above; not itself a valid $p$-value. $p$-curve: Stouffer's test for left skew (Simonsohn, Nelson and Simmons 2014). Bold: $p$-values of at most .05, and $10^3 \\hat B$ above the allowance.")
 
 tex <- c(sprintf("%% Written by cochrane_exhibits.R from Cochrane_results%s.rds (saved %s)", tag, st$saved),
          "% Needs \\usepackage{booktabs, threeparttable}",
