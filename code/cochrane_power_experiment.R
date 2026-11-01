@@ -61,7 +61,7 @@ QUICK    <- TRUE
 
 CFG <- list(
   name          = "cochrane_switching_power",
-  sample_file   = file.path(ROOT, "results", "cochrane", "Cochrane_sample_n100_all_trial_kappa0.5_cont.rds"),
+  sample_file   = file.path(ROOT, "results", "cochrane", "Cochrane_sample_n100_all_trial_kappa0.5_zcounts_cont.rds"),
   
   # Meta-samples
   n_trials      = 1500,                  # trials per meta-sample (one reported outcome each)

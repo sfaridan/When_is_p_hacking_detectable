@@ -1,21 +1,20 @@
 SAMPLE REPORT: tests for selective reporting in the Cochrane Database of Systematic Reviews
-Written 2026-10-31 15:14 by cochrane_application.R. Data: CDSR.RData (411,984 rows), Schwab's data set at osf.io/xjv9g.
+Written 2026-11-01 09:33 by cochrane_application.R. Data: CDSR.RData (411,984 rows), Schwab's data set at osf.io/xjv9g.
 A row of the file is one trial's outcome in one analysis (comparison, outcome, subgroup) of one review.
 
 1. SETTINGS THAT DEFINE THE SAMPLE
   rct_only = TRUE; outcome_groups = efficacy; continuous_only = TRUE; outcomes_per_trial = all
   n_min = 100 participants; events_min = 10 events and non-events (dichotomous); kappa_cap = 0.5; drop_zero_z = FALSE
-  z_from = file (the file's own z column); cluster_by = trial; year_split = 2005
-  De-rounding treatments: none
-  Honest binary replicas: 1, with effects shrunk by 1 and 0.86; events rules 10 and 20 and 30 and 40 and 50
+  z_from = counts (z recomputed from the arm-level data); cluster_by = trial; year_split = 2005
+  De-rounding treatments: none, uniform, smin, smin_noise (200 draws for uniform and smin_noise)
 
 2. EVERY STEP, IN ORDER (counts after the step; 'dropped' is outcomes removed by the step)
                        step dropped outcomes trials reviews dichotomous continuous estimate_and_SE no_z
-    1                  file       -   411984  67927    6330      265201     138892            7891    0
-    2            randomized  225162   186822  34814    4536      110943      71651            4228    0
-    3         outcome group   21699   165123  33968    4477       90551      70614            3958    0
-    4           z available       0   165123  33968    4477       90551      70614            3958    0
-    5       continuous only   94509    70614  17430    2913           0      70614               0    0
+    1                  file       -   411984  67927    6330      265201     138892               0 7891
+    2            randomized  225162   186822  34814    4536      110943      71651               0 4228
+    3         outcome group   21699   165123  33968    4477       90551      70614               0 3958
+    4           z available    3958   161165  33172    4437       90551      70614               0    0
+    5       continuous only   90551    70614  17430    2913           0      70614               0    0
     6 distinct outcome data    1689    68925  17430    2913           0      68925               0    0
     7          participants   46789    22136   6010    1894           0      22136               0    0
     8                events       0    22136   6010    1894           0      22136               0    0
@@ -25,7 +24,7 @@ A row of the file is one trial's outcome in one analysis (comparison, outcome, s
     file                   every row of the file: one trial's outcome in one analysis of one review
     randomized             the file's RCT column is "yes"
     outcome group          outcome.group is efficacy
-    z available            the file's z column is a number
+    z available            z can be computed from the arm-level data (or est/se)
     continuous only        continuous outcomes, with z from the arms' means and SDs
     distinct outcome data  the first copy of each trial's outcome data (same trial label, arm sizes, events or means and SDs, and z): a review's subgroup and sensitivity analyses repeat outcome data, and so does a trial met again in another review
     participants           at least 100 participants in the two arms together
@@ -34,7 +33,7 @@ A row of the file is one trial's outcome in one analysis (comparison, outcome, s
 
 3. THE FINAL SAMPLE
   17,680 outcomes from 5,310 trials in 1,774 reviews; 5,310 clusters (trial); outcomes per cluster: mean 3.3, median 2, max 134.
-  Participants per outcome: median 177 (quartiles 124-298). Share with |z| > 1.96: 0.352. Exact zeros: 300.
+  Participants per outcome: median 177 (quartiles 124-298). Share with |z| > 1.96: 0.356. Exact zeros: 300.
   How z is computed:
     continuous 
          17680 
@@ -69,20 +68,21 @@ A row of the file is one trial's outcome in one analysis (comparison, outcome, s
   late         trials published after 2005                                                   10,149 outcomes   2,960 clusters  1,229 reviews
   Not run: dichotomous (fewer than 200 outcomes).
   Not run: continuous (identical to all outcomes).
+  De-rounding changes only continuous outcomes; under a noisy treatment, a subsample without them is run once instead of n_draws times.
 
 5. HOW THIS SAMPLE DIFFERS FROM VAN ZWET, SCHWAB AND SENN (2021)
   Their sample: one (b, s) pair per trial, from the trial's first or primary efficacy outcome, randomized trials of any
   size; their paper reports 23,551 trials (23,747 in its arXiv version).
   Three readings of that selection, applied to this file (randomized trials, efficacy outcomes, one per trial label):
-    A. each trial's first comparison and outcome in its review:          33,968 trials (14,446 with at least 100 participants)
-    B. only each review's first comparison and outcome (its primary meta-analysis): 15,476 trials (7,330 with at least 100)
-    C. each comparison's first outcome (a comparison usually lists its primary outcome first): 25,340 trials (11,294 with at least 100)
+    A. each trial's first comparison and outcome in its review:          33,172 trials (14,072 with at least 100 participants)
+    B. only each review's first comparison and outcome (its primary meta-analysis): 15,108 trials (7,175 with at least 100)
+    C. each comparison's first outcome (a comparison usually lists its primary outcome first): 24,786 trials (11,068 with at least 100)
   Differences in our final sample:
     - every efficacy outcome of a trial, not only the first; outcomes are clustered by trial
     - only outcomes with at least 100 participants
     - continuous outcomes only
     - continuous outcomes whose rounding unit in z-units, kappa = 2a / SE_min, exceeds 0.5 are dropped
-    - z: the file's own z column, as theirs
+    - z: recomputed from the arm-level data
     - repeated copies of the same outcome data are dropped (same trial label, arm data and z)
 
 6. ROUNDING OF CONTINUOUS OUTCOMES
@@ -94,3 +94,9 @@ A row of the file is one trial's outcome in one analysis (comparison, outcome, s
     0.120 0.382 1.016 5.916 
   Dropped by the cap of 0.5 (kappa above it, or not finite): 4,456 outcomes (20.1%), 626 of them with z exactly 0.
   Final sample: 17,680 continuous outcomes, 300 of them with z exactly 0; kappa median 0.080, maximum 0.500; rounding allowance 0.13 x mean(kappa^6) = 7.82e-05 (J0 = 20; Propositions 3 and 4).
+  Uniform de-rounding draws each mean within +-1/2 of its unit and each SD from its rounding interval; the change in z is added to the outcome's z.
+  Under smin each continuous outcome's z is rescaled from its printed SE to SE_min; under smin + noise, uniform noise at
+  each mean's last digit is added to the numerator (the same draws as uniform). Under both, a projection-test rejection
+  is certified when B-hat exceeds the subsample's rounding allowance C mean(kappa^6), C = 0.13 for J0 = 20 and 0.31 for
+  J0 = 30; the mean counts dichotomous outcomes as exact (kappa = 0) and does not cover outcomes reported as an estimate
+  and SE, whose rounding unit is unknown (they stay as printed under every treatment).

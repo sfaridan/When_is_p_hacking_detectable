@@ -24,7 +24,7 @@ root      <- "C:/Users/sfaridani6/Documents/GitHub/When_is_p_hacking_detectable"
 data_file <- "C:/Users/sfaridani6/Documents/Data/xjv9g-osfstorage-archive/CDSR.RData"   #from osf.io/xjv9g
 res_dir   <- file.path(root, "results", "cochrane")
 run_label <- ""                     #added to every output file name
-inspect_only <- TRUE               #TRUE: write the sample report, print the sample, then stop
+inspect_only <- FALSE               #TRUE: write the sample report, print the sample, then stop
 
 # The file's column names, by role. NULL: detect from common names (printed in step 1)
 COL <- list(review = NULL,          #review identifier (CD number or DOI)
@@ -47,7 +47,7 @@ outcomes_per_trial <- "all"       #"all": every outcome of a trial, repeated cop
 #"first": only each trial's first comparison and outcome (the earlier specification)
 n_min              <- 100         #minimum participants per outcome (both arms): small trials have Student-t tails or discrete z
 events_min         <- 10          #dichotomous outcomes: minimum events and minimum non-events, summed over both arms
-z_from             <- "file"      #"file": the file's own z (van Zwet et al.'s; for dichotomous outcomes, the log-odds-ratio
+z_from             <- "counts"      #"file": the file's own z (van Zwet et al.'s; for dichotomous outcomes, the log-odds-ratio
 #z from the counts); "counts": z from the arm-level data here (log OR; mean difference)
 use_generic        <- "auto"      #with z_from = "counts": outcomes with only an estimate and SE are used if est/se
 #reproduces z from the counts
@@ -93,7 +93,7 @@ binary_replicas <- 0          #replicas (e.g. 20; 0: none). Each keeps every bin
 replica_shrink  <- c(1, 0.86)  #effects in the replicas: 1 = the observed rates; 0.5 = each log odds ratio shrunk halfway
 #toward no effect, which concentrates the effects and makes the check harder to pass
 replica_events  <- c(10,20,30,40, 50)  #events rules compared: the sample's (events_min) and one where non-normality is negligible
-run_main_tests  <- FALSE       #FALSE: stop after the replicas (with continuous_only <- FALSE, a run of the check alone)
+run_main_tests  <- TRUE       #FALSE: stop after the replicas (with continuous_only <- FALSE, a run of the check alone)
 stopifnot(outcomes_per_trial %in% c("all", "first"), cluster_by %in% c("trial", "trial_in_review", "review"),
           all(treatments %in% c("none", "uniform", "smin", "smin_noise")), 20 %in% J0_list,
           binary_replicas >= 0, all(replica_shrink >= 0 & replica_shrink <= 1), all(replica_events >= 1))
@@ -347,7 +347,7 @@ groups      <- groups[!(too_small | same_as_all)]
 #### Sample report, written before any test runs ------------------------------------------------------------
 dir.create(res_dir, showWarnings = FALSE, recursive = TRUE)
 tag <- paste0("_n", n_min, "_", outcomes_per_trial, "_", cluster_by, if (!is.null(kappa_cap)) paste0("_kappa", kappa_cap) else "",
-              if (drop_zero_z) "_nozero" else "",
+              if (z_from == "counts") "_zcounts" else "", if (drop_zero_z) "_nozero" else "",
               if (continuous_only) "_cont" else "", run_label)
 show  <- function(x, ...) {                                  #a printed object as report lines: full width, no blank lines
   op <- options(width = 250); on.exit(options(op))
