@@ -1,5 +1,5 @@
 SAMPLE REPORT: the application to Brodeur, Cook and Heyes (2020)
-Written 2026-11-01 12:45 by application_MM_analysis.R; run tag '_keepmu0'. Data: C:/Users/sfaridani6/Documents/Data/120246-V1/MM data.dta (21,740 rows, 684 articles).
+Written 2026-11-02 00:04 by application_MM_analysis.R; run tag '_keepmu0'. Data: C:/Users/sfaridani6/Documents/Data/120246-V1/MM data.dta (21,740 rows, 684 articles).
 One row of the file is one test: a coefficient and its standard error, or a reported t-statistic.
 
 1. SETTINGS THAT DEFINE THE SAMPLE

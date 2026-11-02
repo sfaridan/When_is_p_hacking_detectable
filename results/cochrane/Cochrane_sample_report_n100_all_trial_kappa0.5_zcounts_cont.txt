@@ -1,5 +1,5 @@
 SAMPLE REPORT: tests for selective reporting in the Cochrane Database of Systematic Reviews
-Written 2026-11-01 10:27 by cochrane_application.R. Data: CDSR.RData (411,984 rows), Schwab's data set at osf.io/xjv9g.
+Written 2026-11-01 12:59 by cochrane_application.R. Data: CDSR.RData (411,984 rows), Schwab's data set at osf.io/xjv9g.
 A row of the file is one trial's outcome in one analysis (comparison, outcome, subgroup) of one review.
 
 1. SETTINGS THAT DEFINE THE SAMPLE
