@@ -1,0 +1,4 @@
+Subsample: 6,738 RCT t-statistics in 141 articles (47.8 per article, at most 258); 100.0% coefficient/SE, 0.0% printed t.
+Rounding: kappa median 0.018, 90th percentile 0.182; se significands (units of u) below 10: 8.0%; allowance 0.13 E[kappa^6] = 2.16e-05.
+Pi-hat (kudrin_scale): Gamma(shape 1.4134, rate 0.7704) = scale 1.2980; mean 1.83, sd 1.54; log-likelihood -21671.3 (Kudrin's 1.4134, 1.2980: -30190.7 as a rate, -21671.3 as a scale); P(|t| > 1.96): data 0.389, fitted 0.414.
+Within-article dependence (in the effects): design effect of the data 3.662; simulated 3.662 at rho = 0.548 (rho = 0: 0.966, rho = 0.99: 7.851).
