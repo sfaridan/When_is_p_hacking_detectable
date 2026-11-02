@@ -57,10 +57,10 @@ rm(list = ls())
 
 ROOT     <- "C:/Users/sfaridani6/Documents/GitHub/When_is_p_hacking_detectable"
 CODE_DIR <- file.path(ROOT, "code")
-QUICK    <- TRUE
+QUICK    <- FALSE
 
 CFG <- list(
-  name          = "cochrane_switching_power",
+  name          = "cochrane_switching_power_desktop",
   sample_file   = file.path(ROOT, "results", "cochrane", "Cochrane_sample_n100_all_trial_kappa0.5_zcounts_cont.rds"),
   
   # Meta-samples
