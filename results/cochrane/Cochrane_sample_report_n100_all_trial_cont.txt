@@ -1,0 +1,90 @@
+SAMPLE REPORT: tests for selective reporting in the Cochrane Database of Systematic Reviews
+Written 2026-10-31 12:15 by cochrane_application.R. Data: CDSR.RData (411,984 rows), Schwab's data set at osf.io/xjv9g.
+A row of the file is one trial's outcome in one analysis (comparison, outcome, subgroup) of one review.
+
+1. SETTINGS THAT DEFINE THE SAMPLE
+  rct_only = TRUE; outcome_groups = efficacy; continuous_only = TRUE; outcomes_per_trial = all
+  n_min = 100 participants; events_min = 10 events and non-events (dichotomous); drop_zero_z = FALSE
+  z_from = file (the file's own z column); cluster_by = trial; year_split = 2005
+  De-rounding treatments: none, uniform (20 draws)
+
+2. EVERY STEP, IN ORDER (counts after the step; 'dropped' is outcomes removed by the step)
+                       step dropped outcomes trials reviews dichotomous continuous estimate_and_SE no_z
+    1                  file       -   411984  67927    6330      265201     138892            7891    0
+    2            randomized  225162   186822  34814    4536      110943      71651            4228    0
+    3         outcome group   21699   165123  33968    4477       90551      70614            3958    0
+    4           z available       0   165123  33968    4477       90551      70614            3958    0
+    5       continuous only   94509    70614  17430    2913           0      70614               0    0
+    6 distinct outcome data    1689    68925  17430    2913           0      68925               0    0
+    7          participants   46789    22136   6010    1894           0      22136               0    0
+    8                events       0    22136   6010    1894           0      22136               0    0
+  (trials: distinct trial labels; reviews: distinct reviews)
+  Rules:
+    file                   every row of the file: one trial's outcome in one analysis of one review
+    randomized             the file's RCT column is "yes"
+    outcome group          outcome.group is efficacy
+    z available            the file's z column is a number
+    continuous only        continuous outcomes, with z from the arms' means and SDs
+    distinct outcome data  the first copy of each trial's outcome data (same trial label, arm sizes, events or means and SDs, and z): a review's subgroup and sensitivity analyses repeat outcome data, and so does a trial met again in another review
+    participants           at least 100 participants in the two arms together
+    events                 dichotomous outcomes: at least 10 events and 10 non-events in the two arms together
+
+3. THE FINAL SAMPLE
+  22,136 outcomes from 6,010 trials in 1,894 reviews; 6,010 clusters (trial); outcomes per cluster: mean 3.7, median 2, max 144.
+  Participants per outcome: median 183 (quartiles 126-308.25). Share with |z| > 1.96: 0.362. Exact zeros: 926.
+  How z is computed:
+    continuous 
+         22136 
+  Cochrane data type (outcome.flag):
+     CONT 
+    22136 
+  Period:
+      after 2005      by 2005 year unknown 
+           12566         9435          135 
+  Comparator:
+      other placebo 
+      19259    2877 
+  Phase:
+    phase 1 phase 2 phase 3 phase 4 unknown 
+         16     136     435       7   21542 
+  Specialty (10 most common):
+                      specialty outcomes
+     Psychiatry & Mental Health     3571
+         Pregnancy & Childbirth     2289
+                Spine & Muscles     2134
+           Public Health & Work     1524
+           Heart & Hypertension     1350
+                          Lungs     1309
+          Gynaecology & Urology     1305
+       Genetics & Endocrinology     1055
+                       Oncology      954
+                      Neurology      848
+
+4. SUBSAMPLES IN THE RESULTS TABLE
+  all          every outcome in the final sample                                             22,136 outcomes   6,010 clusters  1,894 reviews
+  early        trials published by 2005 (study.year, else the trial label's year)             9,435 outcomes   2,660 clusters  1,139 reviews
+  late         trials published after 2005                                                   12,566 outcomes   3,329 clusters  1,325 reviews
+  Not run: dichotomous (fewer than 200 outcomes).
+  Not run: continuous (identical to all outcomes).
+  Under uniform de-rounding only continuous outcomes change; a subsample without them is run once and reported for both treatments.
+
+5. HOW THIS SAMPLE DIFFERS FROM VAN ZWET, SCHWAB AND SENN (2021)
+  Their sample: one (b, s) pair per trial, from the trial's first or primary efficacy outcome, randomized trials of any
+  size; their paper reports 23,551 trials (23,747 in its arXiv version).
+  Three readings of that selection, applied to this file (randomized trials, efficacy outcomes, one per trial label):
+    A. each trial's first comparison and outcome in its review:          33,968 trials (14,446 with at least 100 participants)
+    B. only each review's first comparison and outcome (its primary meta-analysis): 15,476 trials (7,330 with at least 100)
+    C. each comparison's first outcome (a comparison usually lists its primary outcome first): 25,340 trials (11,294 with at least 100)
+  Differences in our final sample:
+    - every efficacy outcome of a trial, not only the first; outcomes are clustered by trial
+    - only outcomes with at least 100 participants
+    - continuous outcomes only
+    - z: the file's own z column, as theirs
+    - repeated copies of the same outcome data are dropped (same trial label, arm data and z)
+
+6. ROUNDING OF CONTINUOUS OUTCOMES
+  22,136 continuous outcomes; 926 of them have z exactly 0 (equal rounded means).
+  Rounding unit of the mean difference in z-units (kappa: the finer arm's unit of the means over the SE):
+      50%   75%   90%   99% 
+    0.060 0.189 0.494 2.726 
+  Uniform de-rounding draws each mean within +-1/2 of that unit and each SD from its rounding interval; the change in z is added to the outcome's z.

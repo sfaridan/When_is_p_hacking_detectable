@@ -1,0 +1,102 @@
+SAMPLE REPORT: tests for selective reporting in the Cochrane Database of Systematic Reviews
+Written 2026-11-01 09:25 by cochrane_application.R. Data: CDSR.RData (411,984 rows), Schwab's data set at osf.io/xjv9g.
+A row of the file is one trial's outcome in one analysis (comparison, outcome, subgroup) of one review.
+
+1. SETTINGS THAT DEFINE THE SAMPLE
+  rct_only = TRUE; outcome_groups = efficacy; continuous_only = TRUE; outcomes_per_trial = all
+  n_min = 100 participants; events_min = 10 events and non-events (dichotomous); kappa_cap = 0.2; drop_zero_z = FALSE
+  z_from = counts (z recomputed from the arm-level data); cluster_by = trial; year_split = 2005
+  De-rounding treatments: none, uniform, smin, smin_noise (200 draws for uniform and smin_noise)
+
+2. EVERY STEP, IN ORDER (counts after the step; 'dropped' is outcomes removed by the step)
+                       step dropped outcomes trials reviews dichotomous continuous estimate_and_SE no_z
+    1                  file       -   411984  67927    6330      265201     138892               0 7891
+    2            randomized  225162   186822  34814    4536      110943      71651               0 4228
+    3         outcome group   21699   165123  33968    4477       90551      70614               0 3958
+    4           z available    3958   161165  33172    4437       90551      70614               0    0
+    5       continuous only   90551    70614  17430    2913           0      70614               0    0
+    6 distinct outcome data    1689    68925  17430    2913           0      68925               0    0
+    7          participants   46789    22136   6010    1894           0      22136               0    0
+    8                events       0    22136   6010    1894           0      22136               0    0
+    9                 kappa    8318    13818   4521    1609           0      13818               0    0
+  (trials: distinct trial labels; reviews: distinct reviews)
+  Rules:
+    file                   every row of the file: one trial's outcome in one analysis of one review
+    randomized             the file's RCT column is "yes"
+    outcome group          outcome.group is efficacy
+    z available            z can be computed from the arm-level data (or est/se)
+    continuous only        continuous outcomes, with z from the arms' means and SDs
+    distinct outcome data  the first copy of each trial's outcome data (same trial label, arm sizes, events or means and SDs, and z): a review's subgroup and sensitivity analyses repeat outcome data, and so does a trial met again in another review
+    participants           at least 100 participants in the two arms together
+    events                 dichotomous outcomes: at least 10 events and 10 non-events in the two arms together
+    kappa                  continuous outcomes: kappa = 2a / SE_min, the rounding unit of the mean difference in z-units, at most 0.2
+
+3. THE FINAL SAMPLE
+  13,818 outcomes from 4,521 trials in 1,609 reviews; 4,521 clusters (trial); outcomes per cluster: mean 3.1, median 2, max 126.
+  Participants per outcome: median 173 (quartiles 122-281). Share with |z| > 1.96: 0.351. Exact zeros: 138.
+  How z is computed:
+    continuous 
+         13818 
+  Cochrane data type (outcome.flag):
+     CONT 
+    13818 
+  Period:
+      after 2005      by 2005 year unknown 
+            8056         5670           92 
+  Comparator:
+      other placebo 
+      12014    1804 
+  Phase:
+    phase 1 phase 2 phase 3 phase 4 unknown 
+         10      92     316       6   13394 
+  Specialty (10 most common):
+                      specialty outcomes
+     Psychiatry & Mental Health     2456
+                Spine & Muscles     1399
+         Pregnancy & Childbirth     1260
+           Public Health & Work     1023
+                          Lungs      807
+           Heart & Hypertension      748
+          Gynaecology & Urology      716
+       Genetics & Endocrinology      705
+                       Oncology      698
+                      Neurology      616
+
+4. SUBSAMPLES IN THE RESULTS TABLE
+  all          every outcome in the final sample                                             13,818 outcomes   4,521 clusters  1,609 reviews
+  early        trials published by 2005 (study.year, else the trial label's year)             5,670 outcomes   1,925 clusters    926 reviews
+  late         trials published after 2005                                                    8,056 outcomes   2,573 clusters  1,105 reviews
+  Not run: dichotomous (fewer than 200 outcomes).
+  Not run: continuous (identical to all outcomes).
+  De-rounding changes only continuous outcomes; under a noisy treatment, a subsample without them is run once instead of n_draws times.
+
+5. HOW THIS SAMPLE DIFFERS FROM VAN ZWET, SCHWAB AND SENN (2021)
+  Their sample: one (b, s) pair per trial, from the trial's first or primary efficacy outcome, randomized trials of any
+  size; their paper reports 23,551 trials (23,747 in its arXiv version).
+  Three readings of that selection, applied to this file (randomized trials, efficacy outcomes, one per trial label):
+    A. each trial's first comparison and outcome in its review:          33,172 trials (14,072 with at least 100 participants)
+    B. only each review's first comparison and outcome (its primary meta-analysis): 15,108 trials (7,175 with at least 100)
+    C. each comparison's first outcome (a comparison usually lists its primary outcome first): 24,786 trials (11,068 with at least 100)
+  Differences in our final sample:
+    - every efficacy outcome of a trial, not only the first; outcomes are clustered by trial
+    - only outcomes with at least 100 participants
+    - continuous outcomes only
+    - continuous outcomes whose rounding unit in z-units, kappa = 2a / SE_min, exceeds 0.2 are dropped
+    - z: recomputed from the arm-level data
+    - repeated copies of the same outcome data are dropped (same trial label, arm data and z)
+
+6. ROUNDING OF CONTINUOUS OUTCOMES
+  kappa = 2a / SE_min. a: the finer of the two means' rounding units; SE_min: the standard error from the smallest SDs
+  consistent with the printed ones (s - b/2). A difference of two means each rounded to a can be off by up to a, so its
+  rounding interval is 2a wide (the paper's kappa = a / s_min, for a coefficient printed to a).
+  Before the cap: 22,136 continuous outcomes, 926 of them with z exactly 0 (equal rounded means). kappa, quantiles 50, 75, 90, 99%:
+      50%   75%   90%   99% 
+    0.120 0.382 1.016 5.916 
+  Dropped by the cap of 0.2 (kappa above it, or not finite): 8,318 outcomes (37.6%), 788 of them with z exactly 0.
+  Final sample: 13,818 continuous outcomes, 138 of them with z exactly 0; kappa median 0.052, maximum 0.200; rounding allowance 0.13 x mean(kappa^6) = 5.23e-07 (J0 = 20; Propositions 3 and 4).
+  Uniform de-rounding draws each mean within +-1/2 of its unit and each SD from its rounding interval; the change in z is added to the outcome's z.
+  Under smin each continuous outcome's z is rescaled from its printed SE to SE_min; under smin + noise, uniform noise at
+  each mean's last digit is added to the numerator (the same draws as uniform). Under both, a projection-test rejection
+  is certified when B-hat exceeds the subsample's rounding allowance C mean(kappa^6), C = 0.13 for J0 = 20 and 0.31 for
+  J0 = 30; the mean counts dichotomous outcomes as exact (kappa = 0) and does not cover outcomes reported as an estimate
+  and SE, whose rounding unit is unknown (they stay as printed under every treatment).

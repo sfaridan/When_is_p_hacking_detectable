@@ -1,0 +1,42 @@
+% Written by cochrane_exhibits.R from Cochrane_results_n100_all_trial_kappa0.5_zcounts_cont.rds (saved 2026-11-02 00:04:05)
+% Needs \usepackage{booktabs, threeparttable}
+\begin{table}[!htbp]\centering
+\begin{threeparttable}
+\caption{Tests for selective reporting in the Cochrane Database of Systematic Reviews: continuous efficacy outcomes}
+\label{tab:cochrane}
+\begin{tabular}{lccccccc}
+\toprule
+ & \multicolumn{3}{c}{Projection test} & \multicolumn{2}{c}{Kudrin (2025)} & EKW & $p$-curve \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-6}
+De-rounding & $p$ & $10^3 \hat B$ & Allowance & $T_\infty$ & $T_H$ & smallest $p$ & Stouffer \\
+\midrule
+\multicolumn{8}{l}{\textit{Panel A. All outcomes: 17,680 outcomes, 5,310 trials}} \\
+None & .991 & 0.00 &  & \textbf{$<$.001} & .903 & .276 & 1.000 \\
+Uniform & .989 & 0.00 &  & \textbf{.038} & .664 & .494 & 1.000 \\
+ & (.013) & (0.00) &  & (.029) & (.212) & (.278) & (.000) \\
+$s_{\min}$ & .993 & 0.00 & 0.08 & \textbf{$<$.001} & .768 & .218 & 1.000 \\
+$s_{\min}$ + noise & .990 & 0.00 & 0.08 & \textbf{.037} & .685 & .509 & 1.000 \\
+ & (.012) & (0.00) &  & (.030) & (.209) & (.274) & (.000) \\
+\addlinespace
+\multicolumn{8}{l}{\textit{Panel B. Published by 2005: 7,414 outcomes, 2,330 trials}} \\
+None & .658 & 0.00 &  & \textbf{$<$.001} & .166 & .159 & 1.000 \\
+Uniform & .664 & 0.00 &  & .364 & .367 & .465 & 1.000 \\
+ & (.077) & (0.00) &  & (.171) & (.190) & (.233) & (.000) \\
+$s_{\min}$ & .691 & 0.00 & 0.09 & \textbf{$<$.001} & .073 & .171 & 1.000 \\
+$s_{\min}$ + noise & .680 & 0.00 & 0.09 & .357 & .315 & .457 & 1.000 \\
+ & (.071) & (0.00) &  & (.165) & (.193) & (.237) & (.000) \\
+\addlinespace
+\multicolumn{8}{l}{\textit{Panel C. Published after 2005: 10,149 outcomes, 2,960 trials}} \\
+None & .711 & 0.00 &  & \textbf{$<$.001} & .648 & .452 & 1.000 \\
+Uniform & .724 & 0.00 &  & .147 & .708 & .505 & 1.000 \\
+ & (.073) & (0.00) &  & (.086) & (.191) & (.294) & (.000) \\
+$s_{\min}$ & .703 & 0.00 & 0.07 & \textbf{$<$.001} & .667 & .384 & 1.000 \\
+$s_{\min}$ + noise & .713 & 0.00 & 0.07 & .139 & .695 & .526 & 1.000 \\
+ & (.070) & (0.00) &  & (.084) & (.203) & (.286) & (.000) \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}[flushleft]\footnotesize
+\item Continuous efficacy outcomes of randomized trials with at least 100 participants in the Cochrane Database of Systematic Reviews (the data of van Zwet, Schwab and Senn 2021); $z$ is the mean difference over its standard error, from the printed arm means and standard deviations; outcomes whose rounding unit in $z$-units, $\kappa = 2a/\mathrm{SE}_{\min}$, exceeds 0.5 are left out. De-rounding: None uses the printed values; Uniform draws each mean and standard deviation uniformly within its rounding cell; $s_{\min}$ rescales $z$ to the smallest standard error consistent with the printed standard deviations; $s_{\min}$ + noise also adds uniform noise at each mean's last digit. Under Uniform and $s_{\min}$ + noise, entries are averages over 200 draws, with standard deviations across draws in parentheses. Projection test: $J = 40$, $J_0 = 20$, $p = 2$, centered at 1.96. Allowance: the rounding allowance $0.13\,\overline{\kappa^6}$, times $10^3$ (Propositions 3 and 4); under $s_{\min}$ and $s_{\min}$ + noise, the projection test rejects only when $\hat B$ exceeds it. Every test clusters by trial. EKW: the smallest of the six tests' $p$-values of Elliott, Kudrin and W\"uthrich (2022), each averaged over draws as above; not itself a valid $p$-value. $p$-curve: Stouffer's test for left skew (Simonsohn, Nelson and Simmons 2014). Bold: $p$-values of at most .05, and $10^3 \hat B$ above the allowance.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
