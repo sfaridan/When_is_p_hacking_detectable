@@ -1,0 +1,36 @@
+% Written by main_applications_table.R on 2026-11-02 11:44 from Settings_application_keepmu0 and Cochrane_results_n100_all_trial_kappa0.5_zcounts_cont.rds
+% Needs \usepackage{booktabs, threeparttable, multirow}
+\begin{table}[!htbp]\centering
+\begin{threeparttable}
+\caption{Tests for selective reporting in economics and medicine, on printed and de-rounded statistics}
+\label{tab:main_applications}
+\begin{tabular}{llcccccc}
+\toprule
+ & & Projection & \multicolumn{3}{c}{Kudrin (2025)} & EKW and & Projection test \\
+\cmidrule(lr){4-6}
+Sample & Statistics & test & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & $p$-curve & certified: $10^3 \hat B$ \\
+ & & $p$ & $p$ & $p$ & $p$ & smallest $p$ & (allowance) \\
+\midrule
+\multicolumn{8}{l}{\textit{A. Economics: Brodeur, Cook and Heyes (2020), by research design}} \\
+RCT & Printed & \textbf{$<$.001} & \textbf{.033} & \textbf{.004} & \textbf{.004} & \textbf{.014} & \multirow{2}{*}{\textbf{1.8 ($<$0.1)}} \\
+{\footnotesize 6,795 tests, 141 articles} & De-rounded & \textbf{.001} & \textbf{.027} & \textbf{.006} & \textbf{.006} & .488 & \\
+\addlinespace[2pt]
+IV & Printed & \textbf{.002} & .176 & \textbf{.009} & \textbf{.009} & .071 & \multirow{2}{*}{\textbf{2.8 (0.2)}} \\
+{\footnotesize 4,962 tests, 279 articles} & De-rounded & \textbf{.002} & .283 & \textbf{.017} & \textbf{.017} & .419 & \\
+\addlinespace[2pt]
+DID & Printed & \textbf{.014} & \textbf{.007} & \textbf{.002} & \textbf{.002} & \textbf{.044} & \multirow{2}{*}{\textbf{0.8 (0.6)}} \\
+{\footnotesize 5,316 tests, 237 articles} & De-rounded & \textbf{.015} & \textbf{.020} & \textbf{.031} & \textbf{.031} & .336 & \\
+\addlinespace[2pt]
+RDD & Printed & .066 & .097 & \textbf{.027} & \textbf{.027} & \textbf{.012} & \multirow{2}{*}{\textbf{1.0 (0.1)}} \\
+{\footnotesize 2,820 tests,  83 articles} & De-rounded & .066 & .467 & .126 & .126 & .526 & \\
+\midrule
+\multicolumn{8}{l}{\textit{B. Medicine: Cochrane Database of Systematic Reviews, continuous efficacy outcomes}} \\
+All trials & Printed & .991 & \textbf{$<$.001} & .903 & .903 & .276 & \multirow{2}{*}{0.0 (0.1)} \\
+{\footnotesize 17,680 outcomes, 5,310 trials} & De-rounded & .989 & \textbf{.038} & .664 & .664 & .494 & \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}[flushleft]\footnotesize
+\item Entries are $p$-values; bold marks $p \le .05$. Printed: the test statistics as computed from the printed coefficients and standard errors (Panel A) or the printed arm means and standard deviations (Panel B). De-rounded: every printed number drawn uniformly within its rounding interval; $p$-values averaged over 200 draws. Projection test: $J = 40$, $J_0 = 20$, centered at 1.96. Certified: the projection test under the smallest standard error consistent with the printed one (Section 5.2); its rejection is certified when $10^3 \hat B$ exceeds the rounding allowance $10^3 \times 0.13\,\overline{\kappa^6}$ (Propositions 3 and 4), shown in parentheses; bold when it does. EKW and $p$-curve: the smallest of the $p$-values of the six tests of Elliott, Kudrin and W\"uthrich (2022) and the $p$-curve test for left skew (Simonsohn, Nelson and Simmons 2014), each averaged over draws; it is not itself a valid $p$-value and overstates their evidence. Every test clusters by article (Panel A) or trial (Panel B). Statistics whose rounding interval exceeds half a standard error are left out ($\kappa \le 0.5$); estimates printed as zero are kept. Panel B: continuous efficacy outcomes of randomized trials with at least 100 participants. $T_\infty$'s rejections in Panel B come from $p$-values near 1: outcomes whose two arms have equal printed means (Figure~\ref{fig:cochrane_tinf_gap}). Every rounding treatment, and standard deviations across draws: Appendix Tables~\ref{tab:brodeur_rounding} and~\ref{tab:cochrane}.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}

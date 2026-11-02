@@ -1,6 +1,6 @@
-Trials: 3,282 randomized trials with at least 2 continuous efficacy outcomes of at least 100 participants (their first 8 in review order), 12,897 outcomes; from Cochrane_sample_n100_all_trial_kappa0.5_cont.rds.
+Trials: 3,282 randomized trials with at least 2 continuous efficacy outcomes of at least 100 participants (their first 8 in review order), 12,897 outcomes; from Cochrane_sample_n100_all_trial_kappa0.5_zcounts_cont.rds.
 Outcomes per trial: 2: 1,185; 3:   652; 4:   439; 5:   233; 6:   220; 7:    94; 8:   459.
 Meta-samples: 1,500 trials each, drawn without replacement (46% of the eligible trials); one reported outcome per trial.
-Share of trials whose reported outcome is significant (|z| > 1.96, printed z): pre-specified 0.379; most significant 0.627; threshold rule 0.524.
+Share of trials whose reported outcome is significant (|z| > 1.96, printed z): pre-specified 0.383; most significant 0.635; threshold rule 0.530.
 Exact zeros among the printed z: 238 (1.8%), from equal rounded means.
 Rounding: kappa = 2a / SE_min; the cap 0.5 leaves out 0 of 17,680 outcomes (trials: 3,282 of 5,310 remain eligible). Among the eligible outcomes kappa has median 0.081, 90th percentile 0.322; rounding allowance 0.13 x mean(kappa^6) = 7.67e-05 over them (each meta-sample uses its reported outcomes').
