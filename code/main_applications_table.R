@@ -6,6 +6,9 @@
 #### application_MM_analysis.R and application_cochrane.R saved: run them first, clear R, then run this.
 #### Writes table_main_applications.tex in out_dir (needs \usepackage{booktabs, threeparttable, multirow}).
 #### The full results (every rounding treatment, standard deviations across draws) are in the appendix tables.
+#### Section 6 also writes application_MM_output.R's two rounding tables with the Cochrane results below RDD:
+#### table_rounding_ekw<mm_tag><rt_suffix>.tex and table_rounding_appendix<mm_tag><rt_suffix>.tex, from the same
+#### saved results (no analysis is rerun).
 #### =====================================================================================================
 rm(list = ls())
 
@@ -16,15 +19,28 @@ mm_dir    <- file.path(root, "results")                       #application_MM_an
 mm_tag    <- "_keepmu0"                                      #its run_tag
 co_dir    <- file.path(root, "results", "cochrane")           #application_cochrane.R's res_dir
 co_tag    <- "_n100_all_trial_kappa0.5_zcounts_cont"          #its tag
-co_groups <- "all"                                           #Cochrane subsamples shown: any of "all", "early", "late"
+co_groups <- c("all", "early", "late")                       #Cochrane subsamples in the main table: any of "all", "early", "late"
 deround   <- "uniform"                                       #the de-rounded rows: "uniform" or "smin_noise"
 certify   <- "smin"                                          #the certified column: "smin" or "smin_noise"
 J0        <- 20                                              #the projection test's main specification
 ref_fig_tinf <- "Figure~\\ref{fig:cochrane_tinf_gap}"         #your labels for the appendix figure and tables
-ref_appendix <- "Appendix Tables~\\ref{tab:brodeur_rounding} and~\\ref{tab:cochrane}"
+ref_appendix <- NULL   #NULL: the rounding table of section 6 (application_MM_output.R's if rt_write is FALSE) and tab:cochrane
+
+#--- Section 6: application_MM_output.R's two rounding tables, with the Cochrane results below RDD
+rt_write  <- TRUE                                            #FALSE: skip them
+rt_groups <- "all"                                           #Cochrane subsamples there: any of "all", "early", "late"
+rt_suffix <- "_cochrane"                                     #added to the file names and labels of application_MM_output.R's
+#tables, so both versions can coexist
+rt_bold   <- TRUE                                            #as there: bold p < .05; under s_min only certified projection tests
 
 stopifnot(deround %in% c("uniform", "smin_noise"), certify %in% c("smin", "smin_noise"))
 meth <- c("RCT", "IV", "DID", "RDD")
+rt_file  <- c(main     = paste0("table_rounding_ekw", mm_tag, rt_suffix, ".tex"),
+              appendix = paste0("table_rounding_appendix", mm_tag, rt_suffix, ".tex"))
+rt_label <- c(main     = paste0("tab:rounding_ekw", mm_tag, rt_suffix),
+              appendix = paste0("tab:rounding_appendix", mm_tag, rt_suffix))
+if (is.null(ref_appendix)) ref_appendix <- sprintf("Appendix Tables~\\ref{%s} and~\\ref{tab:cochrane}",
+                                                   if (rt_write) rt_label[["main"]] else paste0("tab:rounding_ekw", mm_tag))
 
 #### 1. Brodeur, Cook and Heyes (2020): application_MM_analysis.R's results ---------------------------------
 ms_file <- file.path(mm_dir, paste0("Settings_application", mm_tag))
@@ -90,6 +106,21 @@ co_allow     <- co_rows[[paste0("allowance_J0_", J0)]]
 co_label     <- c(all = "All trials", early = sprintf("Published by %d", cs$year_split),
                   late = sprintf("Published after %d", cs$year_split))[co_groups]
 co_size      <- sprintf("%s outcomes, %s trials", format(co_rows$n, big.mark = ","), format(co_rows$clusters, big.mark = ","))
+co_by        <- if (is.null(cs$cluster_by)) "trial" else cs$cluster_by
+co_unit        <- switch(co_by, trial = "trial", trial_in_review = "trial within review", review = "review", "cluster")
+co_unit_plural <- switch(co_by, trial = "trials", trial_in_review = "trials within reviews", review = "reviews", "clusters")
+year_note <- function(groups) {                              #how the period subsamples are defined, when any is shown
+  if (!any(c("early", "late") %in% groups)) return("")
+  n_of <- function(g) {
+    r <- RES$results[RES$results$group == g, , drop = FALSE]
+    if (nrow(r)) as.numeric(r$n[1]) else NA_real_
+  }
+  no_year <- n_of("all") - n_of("early") - n_of("late")
+  paste0(sprintf("Published by %d and after %d: trials by year of publication (the study's year, else the year in the trial's label)",
+                 as.integer(cs$year_split), as.integer(cs$year_split)),
+         if (isTRUE(no_year > 0)) sprintf("; the %s outcomes without a year are in neither", format(no_year, big.mark = ",")) else "",
+         ". ")
+}
 
 #### 3. Do the two runs match? -----------------------------------------------------------------------------
 same <- function(a, b) isTRUE(all.equal(as.numeric(a), as.numeric(b)))
@@ -141,8 +172,10 @@ notes <- paste0(
   sprintf("Projection test: $J = 40$, $J_0 = %d$, centered at 1.96. Certified: the projection test under %s (Section 5.2); its rejection is certified when $10^3 \\hat B$ exceeds the rounding allowance $10^3 \\times %s\\,\\overline{\\kappa^6}$ (Propositions 3 and 4), shown in parentheses; bold when it does. ",
           J0, certify_text, format(if (J0 == 20) 0.13 else 0.31)),
   "EKW and $p$-curve: the smallest of the $p$-values of the six tests of Elliott, Kudrin and W\\\"uthrich (2022) and the $p$-curve test for left skew (Simonsohn, Nelson and Simmons 2014), each averaged over draws; it is not itself a valid $p$-value and overstates their evidence. ",
-  "Every test clusters by article (Panel A) or trial (Panel B). Statistics whose rounding interval exceeds half a standard error are left out ($\\kappa \\le 0.5$); estimates printed as zero are kept. ",
+  sprintf("The projection test, Kudrin's tests, CS1 and CS2B cluster by article (Panel A) or %s (Panel B); the other EKW tests and the $p$-curve test treat the statistics as independent. ", co_unit),
+  "Statistics whose rounding interval exceeds half a standard error are left out ($\\kappa \\le 0.5$); estimates printed as zero are kept. ",
   sprintf("Panel B: continuous efficacy outcomes of randomized trials with at least %d participants. ", as.integer(cs$n_min)),
+  year_note(co_groups),
   sprintf("$T_\\infty$'s rejections in Panel B come from $p$-values near 1: outcomes whose two arms have equal printed means (%s). ", ref_fig_tinf),
   sprintf("Every rounding treatment, and standard deviations across draws: %s.", ref_appendix))
 
@@ -189,3 +222,270 @@ show$B <- 1e3 * show$B; show$allowance <- 1e3 * show$allowance
 names(show)[names(show) %in% c("B", "allowance")] <- c("B_x1000", "allowance_x1000")
 print(format(show, digits = 3), row.names = FALSE)
 cat("\nTable written to ", out_file, "\n", sep = "")
+
+#### 6. application_MM_output.R's two rounding tables, with the Cochrane results below RDD ------------------
+# The same tables as its table_rounding_ekw<mm_tag>.tex and table_rounding_appendix<mm_tag>.tex, built by the same
+# rules from the same Brodeur results files (so the Brodeur blocks are identical to its), plus one block for each
+# Cochrane subsample in rt_groups, from Cochrane_results<co_tag>.rds. Saved results only: no analysis is rerun.
+if (rt_write) {
+  rt_J0    <- 20                                                #the main specification; the appendix adds J0 = 30
+  rt_treat <- c(none = "None", uniform = "Unif.", smin = "$s_{\\min}$", smin_noise = "$s_{\\min}$+noise")
+  rt_treat <- rt_treat[intersect(names(rt_treat), MS$keys_run)] #the treatments the Brodeur run has
+  rt_keys  <- names(rt_treat)
+  rt_Brows <- intersect(c("smin", "smin_noise"), rt_keys)       #rows with B-hat: the treatments the allowance covers
+  rt_tests <- list(main     = c("proj", "T_inf", "T_H", "Disc", "Binomial", "CS1", "CS2B"),
+                   appendix = c("proj30", "proj_noshift", "Stouffer", "LCM", "Fisher"))
+  rt_cat <- data.frame(
+    family  = c("Projection test", "Projection, $J_0=30$", "Projection, no shift", "Kudrin (2025)", "Kudrin (2025)",
+                "EKW", "EKW", "EKW", "EKW", "$p$-curve", "EKW", "EKW"),
+    colhead = c("$p$", "$p$", "$p$", "$T_\\infty$", "$T_H$", "Disc.", "Binom.", "CS1", "CS2B", "Stouffer", "LCM", "Fisher"),
+    short   = c("the projection test", "the projection test with $J_0=30$", "the unshifted projection test", "$T_\\infty$",
+                "$T_H$", "Disc.\\@", "Binom.", "CS1", "CS2B", "the $p$-curve test", "LCM", "Fisher"),
+    clust   = c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE),
+    has_B   = c(TRUE, TRUE, rep(FALSE, 10)),
+    row.names = c("proj", "proj30", "proj_noshift", "T_inf", "T_H", "Disc", "Binomial", "CS1", "CS2B", "Stouffer", "LCM", "Fisher"),
+    stringsAsFactors = FALSE)
+  rt_cite <- c(brodeur = "Brodeur et al.\\ (2020)", ekw = "Elliott et al.\\ (2022)", kudrin = "Kudrin (2025)",
+               coxshi = "Cox and Shi (2023)", simonsohn = "Simonsohn et al.\\ (2014)")
+  if (!all(c(rt_J0, 30) %in% MS$J0_list) || !all(c(rt_J0, 30) %in% cs$J0_list))
+    stop("Section 6 needs J0 = 20 and J0 = 30 in both runs", call. = FALSE)
+  if (!same(MS$epsilon_U_pre, cs$epsilon_U_pre))
+    warning("E(L, delta) differs: Brodeur ", MS$epsilon_U_pre, ", Cochrane ", cs$epsilon_U_pre, call. = FALSE)
+  
+  #--- Brodeur: every test under every treatment, from the files application_MM_output.R reads
+  rt_num  <- function(x) vapply(x, function(v) as.numeric(v)[1], numeric(1), USE.NAMES = FALSE)   #results hold list-columns
+  rt_read <- function(stem, key) {
+    f <- file.path(mm_dir, paste0(stem, "_", key, mm_tag))
+    if (!file.exists(f)) stop("Missing Brodeur results: ", basename(f), call. = FALSE)
+    readRDS(f)
+  }
+  rt_pick <- function(d, what) {                                #rows in the order of meth
+    i <- match(meth, d$methods)
+    if (anyNA(i)) stop(what, " has no results for ", paste(meth[is.na(i)], collapse = ", "), call. = FALSE)
+    d[i, ]
+  }
+  rt_mm <- lapply(setNames(rt_keys, rt_keys), function(key) {
+    pr  <- rt_pick(rt_read(paste0("MM_weights_results_", rt_J0, "_J0"), key), "MM_weights_results_20_J0")
+    p30 <- rt_pick(rt_read("MM_weights_results_30_J0", key), "MM_weights_results_30_J0")
+    pns <- rt_pick(rt_read(paste0("MM_weights_results_", rt_J0, "_J0_noshift"), key), "MM_weights_results_20_J0_noshift")
+    kd  <- rt_pick(rt_read("Kudrin_results", key), "Kudrin_results")
+    st  <- rt_pick(rt_read("Stouffer_results", key), "Stouffer_results")
+    ek  <- rt_read("EWK_results", key)                          #matrix: tests x designs
+    ek  <- matrix(rt_num(ek), nrow(ek), dimnames = dimnames(ek))[, paste0("ewk_", tolower(meth)), drop = FALSE]
+    er  <- function(r) if (r %in% rownames(ek)) unname(ek[r, ]) else stop("EWK_results_", key, " has no ", r, call. = FALSE)
+    list(p = list(proj = rt_num(pr$pval), proj30 = rt_num(p30$pval), proj_noshift = rt_num(pns$pval),
+                  T_inf = rt_num(kd$T_inf), T_H = rt_num(kd$T_H), Stouffer = rt_num(st$pval),
+                  LCM = er("lcms_EWK"), Fisher = er("Fisher_EWK"), Disc = er("disconts_EWK"),
+                  Binomial = er("binomial_EWK"), CS1 = er("CS1_EWK_s"), CS2B = er("CS2_EWK_s")),
+         B = rt_num(pr$breakdown), B30 = rt_num(p30$breakdown),
+         p_hyb = if (is.null(kd$T_H_hybrid)) rep(NA_real_, length(meth)) else rt_num(kd$T_H_hybrid),
+         restricted = if (is.null(kd$restricted)) rep(NA, length(meth)) else as.logical(rt_num(kd$restricted)),
+         n = rt_num(pr$n), articles = rt_num(pr$articles))
+  })
+  if (!isTRUE(all(rt_mm[[1]]$n == MS$n_by_design[meth])))
+    warning("The Brodeur results files have n = ", paste(rt_mm[[1]]$n, collapse = "/"), " but the run's settings say ",
+            paste(MS$n_by_design[meth], collapse = "/"), " (stale files?)", call. = FALSE)
+  rt_allow_mm <- function(j0) {                                 #the run's rounding allowance by design, as in section 1
+    if (!is.null(MS$allowance)) MS$allowance[[as.character(j0)]][meth] else MS$C_round[[as.character(j0)]] * MS$kappa6[meth]
+  }
+  rt_A20 <- as.numeric(rt_allow_mm(rt_J0))
+  rt_A30 <- as.numeric(rt_allow_mm(30))
+  rt_blocks <- lapply(seq_along(meth), function(i) list(
+    title = meth[i], n = rt_mm[[1]]$n[i], clusters = rt_mm[[1]]$articles[i], what = "$t$-statistics", unit = "articles",
+    allow = c("20" = rt_A20[i], "30" = rt_A30[i]),
+    res = lapply(rt_mm, function(r) list(p = lapply(r$p, `[`, i), B = r$B[i], B30 = r$B30[i],
+                                         p_hyb = r$p_hyb[i], restricted = r$restricted[i]))))
+  
+  #--- Cochrane: the same tests under the same treatments, one block per subsample in rt_groups
+  rt_co_title <- c(all   = "Cochrane, all trials",
+                   early = sprintf("Cochrane, published by %d", as.integer(cs$year_split)),
+                   late  = sprintf("Cochrane, published after %d", as.integer(cs$year_split)))
+  rt_groups   <- intersect(intersect(rt_groups, names(rt_co_title)), unique(RES$results$group))
+  rt_first_co <- if (length(rt_groups)) length(rt_blocks) + 1 else NA_integer_
+  rt_col <- function(r, nm) if (nrow(r) && nm %in% names(r)) as.numeric(r[[nm]][1]) else NA_real_
+  for (g in rt_groups) {
+    rows <- RES$results[RES$results$group == g, , drop = FALSE]
+    rt_blocks[[length(rt_blocks) + 1]] <- list(
+      title = rt_co_title[[g]], n = rt_col(rows, "n"), clusters = rt_col(rows, "clusters"), what = "outcomes",
+      unit = co_unit_plural, allow = c("20" = rt_col(rows, paste0("allowance_J0_", rt_J0)), "30" = rt_col(rows, "allowance_J0_30")),
+      res = lapply(setNames(rt_keys, rt_keys), function(key) {
+        r <- rows[rows$treatment == key, , drop = FALSE]
+        if (!nrow(r)) return(NULL)                              #a treatment the Cochrane run lacks: its cells are dots
+        list(p = list(proj = rt_col(r, paste0("proj_p_J0_", rt_J0)), proj30 = rt_col(r, "proj_p_J0_30"),
+                      proj_noshift = rt_col(r, "proj_p_noshift"), T_inf = rt_col(r, "T_inf"), T_H = rt_col(r, "T_H"),
+                      Stouffer = rt_col(r, "Stouffer"), LCM = rt_col(r, "LCM"), Fisher = rt_col(r, "Fisher"),
+                      Disc = rt_col(r, "Disc"), Binomial = rt_col(r, "Binomial"), CS1 = rt_col(r, "CS1"), CS2B = rt_col(r, "CS2B")),
+             B = rt_col(r, paste0("proj_B_J0_", rt_J0)), B30 = rt_col(r, "proj_B_J0_30"), p_hyb = rt_col(r, "T_H_hybrid"),
+             restricted = as.logical(rt_col(r, "hybrid_restricted")))   #the share of draws in which it bound
+      }))
+  }
+  
+  #--- Cells, exactly as application_MM_output.R formats them
+  rt_fmt_p <- function(x) ifelse(is.na(x), "$\\cdot$", sub("^0\\.", ".", sprintf("%.2f", x)))
+  rt_fmt_d <- function(x) ifelse(is.na(x), "$\\cdot$",
+                                 ifelse(x == 0, "0", ifelse(1e3 * x < 0.1, "$<0.1$", sprintf("%.1f", 1e3 * x))))
+  rt_big   <- function(x) formatC(x, big.mark = ",", format = "d")
+  rt_Bof   <- function(tk, rr) if (tk == "proj30") rr$B30 else rr$B                   #B-hat of a projection test
+  rt_Aof   <- function(tk, blk) if (tk == "proj30") blk$allow[["30"]] else blk$allow[["20"]]   #and its allowance
+  rt_hyb_same <- function(rr) {                                 #does Kudrin's hybrid test coincide with T_H here?
+    isFALSE(rr$restricted) || (!is.na(rr$p_hyb) && !is.na(rr$p$T_H) && abs(rr$p_hyb - rr$p$T_H) < 1e-12)
+  }
+  rt_cell_p <- function(tk, key, blk) {
+    rr <- blk$res[[key]]
+    if (is.null(rr)) return("$\\cdot$")
+    p <- rr$p[[tk]]
+    s <- rt_fmt_p(p)
+    certified <- !rt_cat[tk, "has_B"] || !(key %in% rt_Brows) || isTRUE(rt_Bof(tk, rr) > rt_Aof(tk, blk))
+    if (rt_bold && !is.na(p) && p < 0.05 && certified) s <- paste0("\\textbf{", s, "}")
+    if (tk == "T_H") {
+      s <- if (rt_hyb_same(rr)) paste0(s, "$^{\\dagger}$") else if (!is.na(rr$p_hyb)) paste0(s, " [", rt_fmt_p(rr$p_hyb), "]") else s
+    }
+    s
+  }
+  rt_cell_B <- function(tk, key, blk) {
+    rr <- blk$res[[key]]
+    if (!(key %in% rt_Brows)) "" else if (is.null(rr)) "$\\cdot$" else rt_fmt_d(rt_Bof(tk, rr))
+  }
+  
+  #--- LaTeX: one block per design or subsample, one row per treatment; a rule between the two applications
+  rt_build <- function(tests, caption, label, notes) {
+    fam    <- unlist(lapply(tests, function(tk) rep(rt_cat[tk, "family"], 1 + rt_cat[tk, "has_B"])))
+    heads  <- unlist(lapply(tests, function(tk) c(rt_cat[tk, "colhead"], if (rt_cat[tk, "has_B"]) "$10^3\\widehat{B}$")))
+    ncols  <- 1 + length(heads)
+    runs   <- rle(fam)
+    ends   <- 1 + cumsum(runs$lengths)
+    starts <- ends - runs$lengths + 1
+    b_tk   <- tests[rt_cat[tests, "has_B"]][1]                  #the projection test whose allowance the block line gives
+    body <- unlist(lapply(seq_along(rt_blocks), function(b) {
+      blk  <- rt_blocks[[b]]
+      line <- sprintf("\\textit{%s}: %s %s in %s %s%s", blk$title, rt_big(blk$n), blk$what, rt_big(blk$clusters), blk$unit,
+                      if (!is.na(b_tk)) paste0("; rounding allowance ", rt_fmt_d(rt_Aof(b_tk, blk))) else "")
+      rows <- vapply(rt_keys, function(key) paste0(rt_treat[[key]], " & ", paste(unlist(lapply(tests, function(tk)
+        c(rt_cell_p(tk, key, blk), if (rt_cat[tk, "has_B"]) rt_cell_B(tk, key, blk)))), collapse = " & "), " \\\\"), "")
+      c(if (isTRUE(b == rt_first_co)) "\\midrule" else if (b > 1) "\\addlinespace",
+        sprintf("\\multicolumn{%d}{l}{%s} \\\\", ncols, line), rows)
+    }))
+    c("\\begin{table}[htbp]", "\\centering", paste0("\\caption{", caption, "}"), paste0("\\label{", label, "}"),
+      "\\small",
+      "\\resizebox{\\ifdim\\width>\\linewidth\\linewidth\\else\\width\\fi}{!}{%",
+      sprintf("\\begin{tabular}{l%s}", strrep("c", ncols - 1)), "\\toprule",
+      paste0(" & ", paste(sprintf("\\multicolumn{%d}{c}{%s}", runs$lengths, runs$values), collapse = " & "), " \\\\"),
+      paste(sprintf("\\cmidrule(lr){%d-%d}", starts, ends), collapse = " "),
+      paste0("Treatment & ", paste(heads, collapse = " & "), " \\\\"),
+      "\\midrule", body, "\\bottomrule", "\\end{tabular}}", "", "\\medskip",
+      "\\begin{minipage}{\\linewidth}", "\\footnotesize", notes, "\\end{minipage}", "\\end{table}")
+  }
+  
+  #--- Notes: application_MM_output.R's, with the Cochrane sample and treatments added
+  rt_and <- function(x) if (length(x) < 2) x else paste(paste(x[-length(x)], collapse = ", "), "and", x[length(x)])
+  rt_up  <- function(s) paste0(toupper(substring(s, 1, 1)), substring(s, 2))
+  rt_gl  <- function(lbl) if (substr(lbl, 1, 1) == "$") lbl else paste0("\\textit{", lbl, "}")
+  rt_avg <- function(key) sprintf("$p$-values are averages over %d draws", as.integer(MS$n_draws[[key]]))
+  rt_treat_note <- function(key) paste0(rt_gl(rt_treat[[key]]), ": ", switch(key,
+                                                                             none       = "each $t$-statistic is the ratio of the reported coefficient and standard error, and reported $t$-statistics are used as printed.",
+                                                                             uniform    = paste0("the coefficient and the standard error are each replaced by an independent uniform draw from its rounding interval, and reported $t$-statistics receive uniform noise at their last digit; ", rt_avg(key), "."),
+                                                                             smin       = "each coefficient is divided by the smallest standard error consistent with the reported one, and reported $t$-statistics are used as printed (Section 5.2); this treatment is deterministic.",
+                                                                             smin_noise = paste0("each coefficient, plus uniform noise at its last digit, is divided by the smallest standard error consistent with the reported one, and reported $t$-statistics receive uniform noise at their last digit (Section 5.2); ", rt_avg(key), ".")))
+  rt_co_draws <- if (same(cs$n_draws, MS$n_draws_noise)) "" else
+    sprintf("; its averages are over %d draws", as.integer(cs$n_draws))
+  rt_co_note <- paste0(rt_gl("Cochrane"), ": each $z$-statistic is the difference of the two arms' printed means divided by the ",
+                       "standard error computed from their printed standard deviations, and the treatments handle the means as they ",
+                       "handle coefficients and the standard deviations as they handle standard errors, so that $s_{\\min}$ uses the ",
+                       "smallest standard deviations consistent with the printed ones", rt_co_draws, ".")
+  rt_sample <- paste0(
+    "The Brodeur sample is the same in every row: it excludes tests whose reported coefficient is missing",
+    if (isTRUE(MS$drop_zero_mu)) paste0(" or zero, following ", rt_cite[["kudrin"]]) else
+      paste0(" (unlike ", rt_cite[["kudrin"]], ", it keeps those reported as zero)"),
+    ", and tests whose reported standard error is zero or whose rounding unit in $t$-units, $\\kappa$, exceeds ", MS$kappa_cap, ". ",
+    sprintf(paste0("The Cochrane sample is the same in every row: continuous efficacy outcomes of randomized trials with at least %d ",
+                   "participants, without those whose rounding unit in $z$-units, $\\kappa = 2a/\\mathrm{SE}_{\\min}$, exceeds %s, where ",
+                   "$a$ is the unit of the printed means and $\\mathrm{SE}_{\\min}$ the smallest standard error consistent with the printed ",
+                   "standard deviations. "), as.integer(cs$n_min), format(cs$kappa_cap)),
+    year_note(rt_groups),
+    "The first line of each block gives its numbers of statistics and of articles or ", co_unit_plural, ".")
+  rt_proj <- sprintf(paste0("%s: $J_0=%s$, $J=%s$, and a grid of %s points on $[-%s,%s]$ plus the point 9999; the discretization error ",
+                            "$E(L,\\delta)=%s$ is included in every $p$-value and in $\\widehat{B}$."),
+                     rt_gl("Projection test"), rt_J0, MS$J, rt_big(MS$numgrid), MS$L, MS$L, format(MS$epsilon_U_pre, scientific = FALSE))
+  rt_Bnote <- paste0("$10^3\\widehat{B}$: the breakdown statistic (Section 5.1), a lower 95\\% confidence bound on the distance between the ",
+                     "reported $t$-curve and the set of $t$-curves possible without selective reporting, shown under ",
+                     rt_and(unname(rt_treat[rt_Brows])), ". ", rt_gl("Rounding allowance"), " ($\\times 10^3$, first line of each block): ",
+                     "an upper bound on the distance that rounding can create under these treatments, ", MS$C_round[[as.character(rt_J0)]],
+                     " times the average of $\\kappa^6$ (Propositions 3 and 4). A rejection with $\\widehat{B}$ above it cannot be attributed to rounding.")
+  rt_any_hyb <- any(vapply(rt_blocks, function(blk) any(vapply(blk$res, function(rr) !is.null(rr) && !rt_hyb_same(rr), TRUE)), TRUE))
+  rt_Knote <- paste0("$T_\\infty$, $T_H$: the KS-type and histogram-based tests of ", rt_cite[["kudrin"]], ", using the sinc kernel with frequency ",
+                     "cutoff 3 and, for $T_H$, the points $0.01,0.02,\\ldots,0.15$. His hybrid test $T_H^{\\mathrm{hyb}}$ was run as well; ",
+                     "$^\\dagger$ marks the cells where it coincides with $T_H$ because its shape restrictions do not bind",
+                     if (rt_any_hyb) "; elsewhere its $p$-value follows in brackets", ".")
+  rt_Enote <- paste0(rt_gl("EKW"), ": the tests of ", rt_cite[["ekw"]], ", run with their Tests.R on the two-sided $p$-values $2(1-\\Phi(|t|))$: ",
+                     "the density discontinuity test at 0.05 (Disc.), the binomial test on $[0.04,0.05]$ (Binom.), and the ", rt_cite[["coxshi"]],
+                     " histogram-based tests on $(0,0.15]$ with 15 bins for monotonicity (CS1) and for 2-monotonicity with bounds (CS2B).")
+  rt_clust_note <- function(tests) {
+    yes  <- tests[rt_cat[tests, "clust"]]
+    no   <- tests[!rt_cat[tests, "clust"]]
+    boot <- intersect(c("proj", "proj30", "proj_noshift", "T_inf"), tests)
+    paste0(
+      if (length(yes)) paste0(rt_up(rt_and(rt_cat[yes, "short"])), if (length(yes) > 1) " cluster" else " clusters",
+                              " by article (Brodeur) or ", co_unit, " (Cochrane)"),
+      if (length(yes) && length(no)) ", and ",
+      if (length(no)) paste0(if (length(yes)) rt_and(rt_cat[no, "short"]) else rt_up(rt_and(rt_cat[no, "short"])),
+                             if (length(no) > 1) " do not" else " does not", if (!length(yes)) " cluster" else ""),
+      if (length(boot)) paste0("; ", rt_and(rt_cat[boot, "short"]), if (length(boot) > 1) " use " else " uses ",
+                               rt_big(MS$boots), " bootstrap repetitions, resampling articles or ", co_unit_plural),
+      ".")
+  }
+  rt_bold_note <- function(tests) if (rt_bold) paste0("Bold: $p<.05$",
+                                                      if (any(rt_cat[tests, "has_B"]) && length(rt_Brows)) paste0(", except that under ", rt_and(unname(rt_treat[rt_Brows])),
+                                                                                                                  " a projection test is bold only when its $\\widehat{B}$ exceeds the rounding allowance"), ".")
+  rt_ns <- if (is.null(MS$noshift_n_draws)) NULL else MS$noshift_n_draws[rt_keys]   #draws behind the unshifted test (Brodeur)
+  rt_ns_fewer <- if (is.null(rt_ns)) logical(0) else (!is.na(rt_ns) & rt_ns != MS$n_draws[rt_keys])
+  rt_ns_note <- if (any(rt_ns_fewer)) paste0("; under ", rt_and(unname(rt_treat[rt_keys[rt_ns_fewer]])), " its Brodeur $p$-values average over ",
+                                             rt_and(as.character(rt_ns[rt_ns_fewer])), " draws") else ""
+  rt_time_file <- file.path(mm_dir, paste0("Run_times", mm_tag))
+  rt_runtime <- if (file.exists(rt_time_file)) {
+    rt_rt <- readRDS(rt_time_file)
+    rt_rr <- function(x) if (diff(range(x)) < 1) sprintf("%.1f", max(x)) else sprintf("%.0f--%.0f", min(x), max(x))
+    sprintf("Run times on one core, per design of %s: %s seconds for the projection test with %s bootstrap repetitions, %s seconds for the three tests of %s and %s seconds for the six EKW tests.",
+            rt_cite[["brodeur"]], rt_rr(rt_rt[, "projection"]), rt_big(MS$boots), rt_rr(rt_rt[, "kudrin"]), rt_cite[["kudrin"]], rt_rr(rt_rt[, "ekw"]))
+  } else NULL
+  rt_notes <- list(
+    main = c(
+      paste0("\\textit{Notes:} $p$-values for the null hypothesis of no selective reporting in the data of ", rt_cite[["brodeur"]],
+             ", by research design (RCT: randomized controlled trials; IV: instrumental variables; DID: difference-in-differences; ",
+             "RDD: regression discontinuity), and in the Cochrane Database of Systematic Reviews (Cochrane), with one row for each treatment of rounding."),
+      vapply(rt_keys, rt_treat_note, ""), rt_co_note, rt_sample, rt_proj, rt_Bnote, rt_Knote, rt_Enote,
+      rt_clust_note(rt_tests$main), rt_bold_note(rt_tests$main),
+      paste0("Appendix Table~\\ref{", rt_label[["appendix"]], "} reports the projection test with $J_0=30$ and without the shift, ",
+             "the $p$-curve test of ", rt_cite[["simonsohn"]], ", and the EKW tests LCM and Fisher.")),
+    appendix = c(
+      paste0("\\textit{Notes:} $p$-values for the null hypothesis of no selective reporting, by research design or subsample and treatment ",
+             "of rounding, for the samples and the treatments of Table~\\ref{", rt_label[["main"]], "}, which defines them."),
+      paste0("Projection, $J_0=30$: the projection test with weights $w_j=\\min\\{1,2^{30-j}\\}$; its $10^3\\widehat{B}$ and the rounding ",
+             "allowance in the first line of each block are for $J_0=30$, with ", MS$C_round[["30"]], " in place of ",
+             MS$C_round[[as.character(rt_J0)]], "."),
+      paste0("Projection, no shift: the projection test on $t$-statistics that are not shifted by 1.96 (Remark 13); no rounding ",
+             "allowance is computed for it, so its rejections under $s_{\\min}$ are not certified against rounding", rt_ns_note, "."),
+      paste0("$p$-curve: the test for left skew of ", rt_cite[["simonsohn"]], ", which multiplies each $p<.05$ by 20, transforms the results ",
+             "by the normal quantile function and combines them by Stouffer's method; like $p$-curve, it treats the $p$-values as independent."),
+      paste0(rt_gl("EKW"), ": the least concave majorant test (LCM) and Fisher's test of ", rt_cite[["ekw"]], " on $p$-values in $(0,0.15]$, ",
+             "both of a concave $p$-curve CDF."),
+      rt_clust_note(rt_tests$appendix), rt_bold_note(rt_tests$appendix), rt_runtime))
+  rt_count   <- c("one", "two", "three", "four")[length(rt_keys)]
+  rt_zero    <- if (isTRUE(MS$drop_zero_mu)) "" else " (keeping coefficients reported as zero)"
+  rt_caption <- c(main     = paste0("Tests for selective reporting under ", rt_count, " treatments of rounding, in economics", rt_zero, " and medicine"),
+                  appendix = paste0("Further tests for selective reporting under ", rt_count, " treatments of rounding, in economics", rt_zero, " and medicine"))
+  for (nm in names(rt_tests)) {
+    writeLines(rt_build(rt_tests[[nm]], rt_caption[[nm]], rt_label[[nm]], rt_notes[[nm]]), file.path(out_dir, rt_file[[nm]]))
+    cat("Rounding table with Cochrane written to ", file.path(out_dir, rt_file[[nm]]), "\n", sep = "")
+  }
+  
+  #--- The Cochrane blocks on the console (the Brodeur blocks are application_MM_output.R's)
+  rt_all_tests <- unlist(rt_tests, use.names = FALSE)
+  for (blk in rt_blocks[if (is.na(rt_first_co)) integer(0) else seq(rt_first_co, length(rt_blocks))]) {
+    M <- t(vapply(rt_keys, function(key) vapply(rt_all_tests, function(tk) {
+      rr <- blk$res[[key]]
+      if (is.null(rr)) NA_real_ else rr$p[[tk]]
+    }, 0), numeric(length(rt_all_tests))))
+    cat("\n", blk$title, ": p-values by treatment\n", sep = "")
+    print(round(M, 3))
+  }
+}
