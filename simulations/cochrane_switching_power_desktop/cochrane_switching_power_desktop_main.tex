@@ -1,0 +1,48 @@
+\begin{table}[htbp]
+\centering
+\caption{Size and power against outcome switching in Cochrane trials}
+\label{tab:cochrane_switching_power_desktop_main}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccc}
+\toprule
+ & Size & \multicolumn{2}{c}{Most significant outcome} & \multicolumn{2}{c}{Another outcome if $|z| \le 1.96$} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6}
+Test & $\tau = 0$ & $\tau = 0.5$ & $\tau = 1.0$ & $\tau = 0.5$ & $\tau = 1.0$ \\
+\midrule
+\multicolumn{6}{l}{\textit{No de-rounding}} \\
+Projection test & 0.028 & 0.034 & 0.782 & 0.324 & 0.992 \\
+$T_\infty$ & 0.454 & 0.070 & 0.150 & 0.342 & 0.998 \\
+$T_H$ & 0.080 & 0.068 & 0.084 & 0.314 & 0.882 \\
+$T_H^{\mathrm{hyb}}$ & 0.080 & 0.068 & 0.084 & 0.314 & 0.882 \\
+EKW (largest of six) & 0.060 & 0.048 & 0.024 & 0.094 & 0.142 \\
+$p$-curve test for left skew (Stouffer) & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+\midrule
+\multicolumn{6}{l}{\textit{Uniform de-rounding}} \\
+Projection test & 0.030 & 0.036 & 0.754 & 0.290 & 0.994 \\
+$T_\infty$ & 0.110 & 0.072 & 0.190 & 0.324 & 0.998 \\
+$T_H$ & 0.058 & 0.054 & 0.072 & 0.256 & 0.822 \\
+$T_H^{\mathrm{hyb}}$ & 0.058 & 0.054 & 0.072 & 0.256 & 0.822 \\
+EKW (largest of six) & 0.052 & 0.058 & 0.050 & 0.046 & 0.060 \\
+$p$-curve test for left skew (Stouffer) & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+\midrule
+\multicolumn{6}{l}{\textit{Smallest consistent SE}} \\
+Projection test & 0.030 & 0.036 & 0.744 & 0.264 & 0.988 \\
+$T_\infty$ & 0.470 & 0.062 & 0.144 & 0.330 & 0.998 \\
+$T_H$ & 0.068 & 0.042 & 0.064 & 0.246 & 0.834 \\
+$T_H^{\mathrm{hyb}}$ & 0.068 & 0.042 & 0.064 & 0.246 & 0.834 \\
+EKW (largest of six) & 0.074 & 0.050 & 0.018 & 0.070 & 0.090 \\
+$p$-curve test for left skew (Stouffer) & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+\midrule
+\multicolumn{6}{l}{\textit{Smallest consistent SE + noise}} \\
+Projection test & 0.022 & 0.032 & 0.710 & 0.274 & 0.990 \\
+$T_\infty$ & 0.112 & 0.056 & 0.162 & 0.328 & 0.998 \\
+$T_H$ & 0.066 & 0.056 & 0.074 & 0.234 & 0.788 \\
+$T_H^{\mathrm{hyb}}$ & 0.066 & 0.056 & 0.074 & 0.234 & 0.788 \\
+EKW (largest of six) & 0.044 & 0.066 & 0.048 & 0.050 & 0.060 \\
+$p$-curve test for left skew (Stouffer) & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}\footnotesize\textit{Notes:} Rejection rates of 5\%-level tests over 500 repetitions. Each meta-sample draws 1{,}500 of the 3{,}282 randomized trials in the Cochrane Database of Systematic Reviews (Schwab's data set, as in van Zwet, Schwab and Senn 2021) with at least 2 continuous efficacy outcomes of at least 100 participants, without replacement, and reports one outcome per trial. A trial chooses among its first 8 outcomes in review order. With probability $1 - \tau$ it reports one chosen at random (its pre-specified outcome); with probability $\tau$ it reports its most significant outcome (max) or, when the pre-specified outcome has $|z| \le 1.96$, the larger of it and one other outcome (threshold). Trials select on unrounded $z$: each repetition draws the means and standard deviations uniformly within their rounding cells. Columns: the analyst's treatment of rounding. None: the printed $z$. Unif.: means and standard deviations drawn uniformly within their rounding cells. $s_{\min}$: the mean difference over $SE_{\min}$, the standard error from the smallest standard deviations consistent with the printed ones. $+$noise: the same with uniform noise at each mean's last digit. Outcomes whose rounding unit in $z$-units, $\kappa = 2a/SE_{\min}$ ($a$ the unit of the means; a difference of two rounded means can be off by $a$), exceeds 0.5 are left out under every option. Every test treats trials as independent units. Size: rejection rate at $\tau = 0$, where every trial reports its pre-specified outcome. EKW: the largest rejection rate of its six tests at each $\tau$, as in Kudrin's (2025) figures.\end{minipage}
+\end{table}

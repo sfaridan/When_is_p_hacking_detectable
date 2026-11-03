@@ -1,0 +1,28 @@
+\begin{table}[htbp]
+\centering
+\caption{The $p$-curve test for left skew (Stouffer) against outcome switching in Cochrane trials}
+\label{tab:cochrane_switching_power_desktop_stouffer}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccccccc}
+\toprule
+ & \multicolumn{4}{c}{Most significant outcome} & \multicolumn{4}{c}{Another outcome if $|z| \le 1.96$} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9}
+$\tau$ & None & Unif. & $s_{\min}$ & $+$noise & None & Unif. & $s_{\min}$ & $+$noise \\
+\midrule
+0 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.1 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.2 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.3 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.4 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.5 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.6 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.7 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.8 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+0.9 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+1 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}\footnotesize\textit{Notes:} Rejection rates of 5\%-level tests over 500 repetitions. Each meta-sample draws 1{,}500 of the 3{,}282 randomized trials in the Cochrane Database of Systematic Reviews (Schwab's data set, as in van Zwet, Schwab and Senn 2021) with at least 2 continuous efficacy outcomes of at least 100 participants, without replacement, and reports one outcome per trial. A trial chooses among its first 8 outcomes in review order. With probability $1 - \tau$ it reports one chosen at random (its pre-specified outcome); with probability $\tau$ it reports its most significant outcome (max) or, when the pre-specified outcome has $|z| \le 1.96$, the larger of it and one other outcome (threshold). Trials select on unrounded $z$: each repetition draws the means and standard deviations uniformly within their rounding cells. Columns: the analyst's treatment of rounding. None: the printed $z$. Unif.: means and standard deviations drawn uniformly within their rounding cells. $s_{\min}$: the mean difference over $SE_{\min}$, the standard error from the smallest standard deviations consistent with the printed ones. $+$noise: the same with uniform noise at each mean's last digit. Outcomes whose rounding unit in $z$-units, $\kappa = 2a/SE_{\min}$ ($a$ the unit of the means; a difference of two rounded means can be off by $a$), exceeds 0.5 are left out under every option. Every test treats trials as independent units. $p$-curve test for left skew, as in simulations\_brodeur\_rct.R.\end{minipage}
+\end{table}
