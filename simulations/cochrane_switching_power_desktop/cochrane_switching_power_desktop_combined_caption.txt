@@ -1,0 +1,4 @@
+Cochrane: continuous efficacy outcomes of randomized trials (n >= 100); meta-samples of 1,500 of 3,282 trials with >= 2 outcomes; 500 repetitions; shaded: 95% band around 5%.
+A share tau of trials reports its most significant outcome (max) or switches when |z| <= 1.96 (threshold); the rest report a random one.
+Under s_min and s_min + noise the projection test rejects only if B-hat > rounding allowance 0.13 x mean(kappa^6) of the reported outcomes; otherwise if p <= 0.05.
+Any EKW test or the p-curve test: a rejection when the smallest p-value of the six EKW tests and the p-curve test for left skew is at most 0.05.

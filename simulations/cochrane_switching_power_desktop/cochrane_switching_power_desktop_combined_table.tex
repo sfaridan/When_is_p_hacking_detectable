@@ -1,0 +1,35 @@
+\begin{table}[htbp]
+\centering
+\caption{Size and power of every test against outcome switching in Cochrane trials}
+\label{tab:cochrane_power_all_tests}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{%
+\begin{tabular}{lcccccccccccc}
+\toprule
+ & \multicolumn{4}{c}{Size ($\tau = 0$)} & \multicolumn{4}{c}{Most significant ($\tau = 1$)} & \multicolumn{4}{c}{Threshold ($\tau = 1$)} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13}
+Test & None & Unif. & $s_{\min}$ & $+$noise & None & Unif. & $s_{\min}$ & $+$noise & None & Unif. & $s_{\min}$ & $+$noise \\
+\midrule
+Projection test & .028 & .030 & .030 & .022 & .782 & .754 & .744 & .710 & .992 & .994 & .988 & .990 \\
+Projection test, $p \le .05$ only & .028 & .030 & .034 & .028 & .782 & .754 & .756 & .730 & .992 & .994 & .988 & .990 \\
+\addlinespace
+Kudrin's $T_\infty$ & \textbf{.454} & \textbf{.110} & \textbf{.470} & \textbf{.112} & .150 & .190 & .144 & .162 & .998 & .998 & .998 & .998 \\
+Kudrin's $T_H$ & \textbf{.080} & .058 & .068 & .066 & .084 & .072 & .064 & .074 & .882 & .822 & .834 & .788 \\
+Kudrin's $T_H^{\mathrm{hyb}}$ & \textbf{.080} & .058 & .068 & .066 & .084 & .072 & .064 & .074 & .882 & .822 & .834 & .788 \\
+\addlinespace
+EKW: LCM & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 \\
+EKW: Fisher & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 \\
+EKW: density discontinuity & .040 & .052 & \textbf{.070} & .044 & .024 & .050 & .018 & .048 & .012 & .028 & .030 & .040 \\
+EKW: binomial & .032 & .014 & .022 & .014 & .010 & .008 & .012 & .008 & .012 & .010 & .004 & .008 \\
+EKW: CS1 & .036 & .034 & .052 & .022 & .006 & .016 & .004 & .016 & .028 & .016 & .016 & .022 \\
+EKW: CS2B & .060 & .052 & \textbf{.074} & .042 & .020 & .020 & .012 & .028 & .142 & .060 & .090 & .060 \\
+EKW: smallest $p$-value & \textbf{.128} & \textbf{.122} & \textbf{.168} & \textbf{.096} & .054 & .086 & .042 & .080 & .162 & .094 & .122 & .112 \\
+\addlinespace
+$p$-curve (Stouffer) & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 & .000 \\
+EKW or $p$-curve: smallest $p$-value & \textbf{.128} & \textbf{.122} & \textbf{.168} & \textbf{.096} & .054 & .086 & .042 & .080 & .162 & .094 & .122 & .112 \\
+\bottomrule
+\end{tabular}}
+\par\smallskip
+\begin{minipage}{\linewidth}\footnotesize\textit{Notes:} Rejection rates of 5\%-level tests over 500 repetitions, with no switching ($\tau = 0$: size) and when every trial switches ($\tau = 1$). Each meta-sample draws 1,500 of the 3,282 randomized trials in the Cochrane Database of Systematic Reviews (Schwab's data set, as in van Zwet, Schwab and Senn 2021) with at least 2 continuous efficacy outcomes of at least 100 participants, without replacement, and reports one outcome per trial. A trial chooses among its first 8 outcomes in review order. With probability $1 - \tau$ it reports one chosen at random (its pre-specified outcome); with probability $\tau$ it reports its most significant outcome (Most significant) or, when the pre-specified outcome has $|z| \le 1.96$, the larger of it and one other outcome (Threshold). Trials select on unrounded $z$: each repetition draws the means and standard deviations uniformly within their rounding cells. Columns within each group: the analyst's treatment of rounding. None: the printed $z$. Unif.: means and standard deviations drawn uniformly within their rounding cells. $s_{\min}$: the mean difference over $SE_{\min}$, the standard error from the smallest standard deviations consistent with the printed ones. $+$noise: the same with uniform noise at each mean's last digit. Outcomes whose rounding unit in $z$-units, $\kappa = 2a/SE_{\min}$ ($a$ the unit of the means), exceeds 0.5 are left out. Projection test: $J = 40$, $J_0 = 20$, centered at 1.96, 200 bootstrap repetitions; under $s_{\min}$ and $+$noise it rejects only when its breakdown statistic $\hat B$ exceeds the rounding allowance 0.13 times the mean of $\kappa^6$ over the reported outcomes (Propositions 3 and 4), and otherwise when $p \le .05$; the row ``$p \le .05$ only'' ignores the allowance. Kudrin (2025): $T_\infty$, with 199 bootstrap repetitions, and $T_H$ and $T_H^{\mathrm{hyb}}$, with the sinc kernel and frequency cutoff 3. EKW: the tests of Elliott, Kudrin and W\"uthrich (2022), as in the application, on the two-sided $p$-values below 0.15: LCM and Fisher, both of a concave $p$-curve CDF, the density discontinuity test at .05, the binomial test on $[.04,.05]$, and the Cox--Shi histogram tests of monotonicity (CS1) and 2-monotonicity with bounds (CS2B). $p$-curve: the test for left skew of Simonsohn, Nelson and Simmons (2014), by Stouffer's method. The two ``smallest $p$-value'' rows reject when the smallest of their tests' $p$-values is at most .05; they are not size-controlled tests. Every test treats trials as independent units. Bold: a size above .069, the upper end of the 95\% Monte Carlo band around 5\%.\end{minipage}
+\end{table}
