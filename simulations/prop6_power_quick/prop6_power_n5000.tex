@@ -1,0 +1,31 @@
+\begin{table}[htbp]
+\centering
+\caption{Rejection rates under the DGP of Proposition 6}
+\label{tab:prop6_power_n5000}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccc}
+\toprule
+Test & $\tau = 0$ & $\tau = 0.5$ & $\tau = 0.8$ & $\tau = 0.9$ & $\tau = 1$ \\
+\midrule
+Projection test & 0.000 & 0.025 & 0.000 & 0.375 & 1.000 \\
+\midrule
+$T_\infty$ & 0.050 & 0.025 & 0.000 & 0.025 & 0.025 \\
+$T_H$ & 0.050 & 0.050 & 0.000 & 0.025 & 0.025 \\
+$T_H^{\mathrm{hyb}}$ & 0.050 & 0.050 & 0.000 & 0.025 & 0.025 \\
+\midrule
+EKW: binomial & 0.000 & 0.025 & 0.025 & 0.025 & 0.025 \\
+EKW: density discontinuity & 0.050 & 0.025 & 0.000 & 0.025 & 0.050 \\
+EKW: Fisher & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+EKW: LCM & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+EKW: CS1 & 0.050 & 0.025 & 0.025 & 0.075 & 0.000 \\
+EKW: CSUB & 0.075 & 0.050 & 0.050 & 0.025 & 0.100 \\
+EKW: CS2B & 0.100 & 0.075 & 0.050 & 0.125 & 0.150 \\
+$p$-curve (Stouffer) & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+\midrule
+Any EKW test or $p$-curve (smallest $p$-value) & 0.150 & 0.125 & 0.100 & 0.200 & 0.225 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}\footnotesize\textit{Notes:} Rejection rates of 5\%-level tests over 40 repetitions. Each meta-sample has $n = 5{,}000$ $t$-statistics. A share $\tau$ of the studies went through the publication filter of Proposition 6: true effects $H \sim N(0, 2)$, $T = H + Z$, and a study is published with probability $1 - \exp(-t^2/12)$; the other studies are honest draws of $T$. For $\tau \le \tau^* = 0.543$ the reported $t$-curve satisfies $H_0$ exactly, so the selection is undetectable there; at $\tau = 1$ it is the $t$-curve of Proposition 6. Nothing is rounded. Projection test: $J = 40$, $J_0 = 20$, centered at 1.96, 99 bootstrap repetitions. Kudrin (2025): $T_\infty$ with 99 bootstrap repetitions, $T_H$ and $T_H^{\mathrm{hyb}}$, with the sinc kernel and frequency cutoff 3. EKW: the seven tests of Elliott, Kudrin and W\"uthrich (2022) on the $p$-values in $(0, 0.15]$ (Cox--Shi tests with 30 bins); a test that fails counts as a non-rejection. $p$-curve: the test for left skew of Simonsohn, Nelson and Simmons (2014), by Stouffer's method. The last row rejects when the smallest of these eight $p$-values is at most 0.05; it is not a size-controlled test. Bold: above 0.118, the upper end of the 95\% Monte Carlo band around 5\%, at a $\tau$ where $H_0$ holds.\end{minipage}
+\end{table}
