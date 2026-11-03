@@ -1,0 +1,32 @@
+\begin{table}[htbp]
+\centering
+\caption{Rejection rates, $S = 3{,}000$}
+\label{tab:kudrin_style_var_dial_plus_gammahat_S3000}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccccccccccc}
+\toprule
+ & \multicolumn{4}{c}{$h \sim \hat{\Pi}$} & \multicolumn{4}{c}{$h \sim$ custom} & \multicolumn{4}{c}{$h \sim N(2, 0.7^2)$} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13}
+$\tau$ & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & Proj. & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ \\
+\midrule
+\multicolumn{13}{l}{\textit{Maximum of 8 specifications}} \\
+0.0 & 0.010 & 0.030 & 0.030 & 0.030 & 0.010 & 0.010 & 0.030 & 0.030 & 0.020 & 0.010 & 0.010 & 0.010 \\
+0.2 & 0.010 & 0.020 & 0.020 & 0.020 & 0.050 & 0.040 & 0.010 & 0.010 & 0.000 & 0.030 & 0.040 & 0.040 \\
+0.4 & 0.000 & 0.050 & 0.050 & 0.050 & 0.940 & 0.060 & 0.080 & 0.080 & 0.040 & 0.050 & 0.060 & 0.060 \\
+0.6 & 0.040 & 0.050 & 0.040 & 0.040 & 1.000 & 0.420 & 0.380 & 0.380 & 0.030 & 0.020 & 0.020 & 0.020 \\
+0.8 & 0.130 & 0.040 & 0.030 & 0.030 & 1.000 & 0.790 & 0.720 & 0.720 & 0.030 & 0.030 & 0.010 & 0.010 \\
+1.0 & 0.990 & 0.070 & 0.050 & 0.050 & 1.000 & 0.960 & 0.910 & 0.910 & 0.920 & 0.020 & 0.020 & 0.020 \\
+\midrule
+\multicolumn{13}{l}{\textit{Threshold: second draw if t $\le$ 1.96}} \\
+0.0 & 0.010 & 0.030 & 0.030 & 0.030 & 0.010 & 0.010 & 0.030 & 0.030 & 0.020 & 0.010 & 0.010 & 0.010 \\
+0.2 & 0.030 & 0.030 & 0.040 & 0.040 & 0.110 & 0.040 & 0.050 & 0.050 & 0.000 & 0.070 & 0.090 & 0.090 \\
+0.4 & 0.090 & 0.080 & 0.120 & 0.120 & 0.420 & 0.080 & 0.130 & 0.130 & 0.210 & 0.190 & 0.140 & 0.140 \\
+0.6 & 0.110 & 0.170 & 0.130 & 0.130 & 0.730 & 0.160 & 0.250 & 0.250 & 0.510 & 0.430 & 0.410 & 0.470 \\
+0.8 & 0.150 & 0.270 & 0.270 & 0.270 & 0.990 & 0.290 & 0.560 & 0.560 & 0.930 & 0.710 & 0.610 & 0.970 \\
+1.0 & 0.240 & 0.340 & 0.300 & 0.300 & 0.990 & 0.540 & 0.720 & 0.720 & 1.000 & 0.950 & 0.950 & 1.000 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}\footnotesize\textit{Notes:} Rejection rates of 5\%-level tests over 100 Monte Carlo repetitions; each meta-sample has $S = 3{,}000$ $t$-statistics. Blocks of rows: p-hacking method. $\tau$: share of results that are p-hacked, so the $\tau = 0$ rows are sizes. Column groups: distribution of true effects $h$. Proj.: projection test; $T_\infty$, $T_H$, $T_H^{\mathrm{hyb}}$: Kudrin (2025).\end{minipage}
+\end{table}

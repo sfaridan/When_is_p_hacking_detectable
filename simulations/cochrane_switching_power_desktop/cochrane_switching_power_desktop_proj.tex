@@ -1,0 +1,28 @@
+\begin{table}[htbp]
+\centering
+\caption{Projection test against outcome switching in Cochrane trials}
+\label{tab:cochrane_switching_power_desktop_proj}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccccccc}
+\toprule
+ & \multicolumn{4}{c}{Most significant outcome} & \multicolumn{4}{c}{Another outcome if $|z| \le 1.96$} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9}
+$\tau$ & None & Unif. & $s_{\min}$ & $+$noise & None & Unif. & $s_{\min}$ & $+$noise \\
+\midrule
+0 & 0.028 & 0.030 & 0.030 & 0.022 & 0.028 & 0.030 & 0.030 & 0.022 \\
+0.1 & 0.030 & 0.026 & 0.026 & 0.024 & 0.028 & 0.032 & 0.030 & 0.024 \\
+0.2 & 0.036 & 0.026 & 0.030 & 0.024 & 0.042 & 0.042 & 0.040 & 0.042 \\
+0.3 & 0.032 & 0.030 & 0.024 & 0.032 & 0.074 & 0.088 & 0.066 & 0.072 \\
+0.4 & 0.034 & 0.040 & 0.028 & 0.034 & 0.182 & 0.152 & 0.166 & 0.134 \\
+0.5 & 0.034 & 0.036 & 0.036 & 0.032 & 0.324 & 0.290 & 0.264 & 0.274 \\
+0.6 & 0.058 & 0.062 & 0.054 & 0.054 & 0.490 & 0.460 & 0.446 & 0.414 \\
+0.7 & 0.092 & 0.098 & 0.076 & 0.080 & 0.670 & 0.660 & 0.648 & 0.628 \\
+0.8 & 0.184 & 0.178 & 0.160 & 0.164 & 0.860 & 0.834 & 0.838 & 0.814 \\
+0.9 & 0.376 & 0.364 & 0.344 & 0.324 & 0.946 & 0.948 & 0.946 & 0.938 \\
+1 & 0.782 & 0.754 & 0.744 & 0.710 & 0.992 & 0.994 & 0.988 & 0.990 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}\footnotesize\textit{Notes:} Rejection rates of 5\%-level tests over 500 repetitions. Each meta-sample draws 1{,}500 of the 3{,}282 randomized trials in the Cochrane Database of Systematic Reviews (Schwab's data set, as in van Zwet, Schwab and Senn 2021) with at least 2 continuous efficacy outcomes of at least 100 participants, without replacement, and reports one outcome per trial. A trial chooses among its first 8 outcomes in review order. With probability $1 - \tau$ it reports one chosen at random (its pre-specified outcome); with probability $\tau$ it reports its most significant outcome (max) or, when the pre-specified outcome has $|z| \le 1.96$, the larger of it and one other outcome (threshold). Trials select on unrounded $z$: each repetition draws the means and standard deviations uniformly within their rounding cells. Columns: the analyst's treatment of rounding. None: the printed $z$. Unif.: means and standard deviations drawn uniformly within their rounding cells. $s_{\min}$: the mean difference over $SE_{\min}$, the standard error from the smallest standard deviations consistent with the printed ones. $+$noise: the same with uniform noise at each mean's last digit. Outcomes whose rounding unit in $z$-units, $\kappa = 2a/SE_{\min}$ ($a$ the unit of the means; a difference of two rounded means can be off by $a$), exceeds 0.5 are left out under every option. Every test treats trials as independent units. Projection test: run\_test\_weight\_fast() with $J = 40$, $J_0 = 20$ and $p = 2$. Under $s_{\min}$ and $+$noise it rejects only when its breakdown statistic $\hat B$ exceeds the rounding allowance 0.13 times the mean of $\kappa^6$ over the reported outcomes (Propositions 3 and 4); under None and Unif.\ when $p \le 0.05$.\end{minipage}
+\end{table}
