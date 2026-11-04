@@ -4,55 +4,56 @@
 \label{tab:rounding_ekw_keepmu0_cochrane}
 \small
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{%
-\begin{tabular}{lcccccccc}
+\begin{tabular}{lccccccccccc}
 \toprule
- & \multicolumn{2}{c}{Projection test} & \multicolumn{2}{c}{Kudrin (2025)} & \multicolumn{4}{c}{EKW} \\
-\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-9}
-Treatment & $p$ & $10^3\widehat{B}$ & $T_\infty$ & $T_H$ & Disc. & Binom. & CS1 & CS2B \\
+ & \multicolumn{2}{c}{Projection test} & \multicolumn{2}{c}{Kudrin (2025)} & \multicolumn{6}{c}{EKW} & \multicolumn{1}{c}{$p$-curve} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-11} \cmidrule(lr){12-12}
+Treatment & $p$ & $10^3\widehat{B}$ & $T_\infty$ & $T_H$ & Disc. & Binom. & CS1 & CS2B & LCM & Fisher & Stouffer \\
 \midrule
-\multicolumn{9}{l}{\textit{RCT}: 6,795 $t$-statistics in 141 articles; rounding allowance $<0.1$} \\
-None & \textbf{.00} &  & \textbf{.03} & \textbf{.00}$^{\dagger}$ & \textbf{.04} & \textbf{.01} & .47 & .78 \\
-Unif. & \textbf{.00} &  & \textbf{.03} & \textbf{.01}$^{\dagger}$ & .56 & .89 & .50 & .49 \\
-$s_{\min}$ & \textbf{.00} & 1.8 & .08 & \textbf{.01}$^{\dagger}$ & .62 & .07 & .80 & .86 \\
-$s_{\min}$+noise & \textbf{.00} & 1.8 & .05 & \textbf{.01}$^{\dagger}$ & .43 & .94 & .49 & .53 \\
+\multicolumn{12}{l}{\textit{RCT}: 6,795 $t$-statistics in 141 articles; rounding allowance $<0.1$} \\
+None & \textbf{.00} &  & \textbf{.03} & \textbf{.00}$^{\dagger}$ & \textbf{.04} & \textbf{.01} & .47 & .78 & .64 & 1.00 & 1.00 \\
+Unif. & \textbf{.00} &  & \textbf{.03} & \textbf{.01}$^{\dagger}$ & .56 & .89 & .50 & .49 & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$ & \textbf{.00} & 1.8 & .08 & \textbf{.01}$^{\dagger}$ & .62 & .07 & .80 & .86 & .80 & 1.00 & 1.00 \\
+$s_{\min}$+noise & \textbf{.00} & 1.8 & .05 & \textbf{.01}$^{\dagger}$ & .43 & .94 & .49 & .53 & 1.00 & 1.00 & 1.00 \\
 \addlinespace
-\multicolumn{9}{l}{\textit{IV}: 4,962 $t$-statistics in 279 articles; rounding allowance 0.2} \\
-None & \textbf{.00} &  & .18 & \textbf{.01}$^{\dagger}$ & .83 & .38 & .76 & .07 \\
-Unif. & \textbf{.00} &  & .28 & \textbf{.02}$^{\dagger}$ & .56 & .73 & .68 & .42 \\
-$s_{\min}$ & \textbf{.00} & 2.8 & .43 & .07$^{\dagger}$ & .15 & .12 & .69 & .24 \\
-$s_{\min}$+noise & \textbf{.00} & 2.9 & .32 & \textbf{.04}$^{\dagger}$ & .41 & .60 & .74 & .69 \\
+\multicolumn{12}{l}{\textit{IV}: 4,962 $t$-statistics in 279 articles; rounding allowance 0.2} \\
+None & \textbf{.00} &  & .18 & \textbf{.01}$^{\dagger}$ & .83 & .38 & .76 & .07 & 1.00 & 1.00 & 1.00 \\
+Unif. & \textbf{.00} &  & .28 & \textbf{.02}$^{\dagger}$ & .56 & .73 & .68 & .42 & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$ & \textbf{.00} & 2.8 & .43 & .07$^{\dagger}$ & .15 & .12 & .69 & .24 & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$+noise & \textbf{.00} & 2.9 & .32 & \textbf{.04}$^{\dagger}$ & .41 & .60 & .74 & .69 & 1.00 & 1.00 & 1.00 \\
 \addlinespace
-\multicolumn{9}{l}{\textit{DID}: 5,316 $t$-statistics in 237 articles; rounding allowance 0.6} \\
-None & \textbf{.01} &  & \textbf{.01} & \textbf{.00}$^{\dagger}$ & \textbf{.04} & .06 & .77 & .05 \\
-Unif. & \textbf{.01} &  & \textbf{.02} & \textbf{.03}$^{\dagger}$ & .45 & .98 & .62 & .34 \\
-$s_{\min}$ & \textbf{.02} & 0.8 & \textbf{.04} & \textbf{.00}$^{\dagger}$ & \textbf{.03} & .13 & .15 & \textbf{.02} \\
-$s_{\min}$+noise & \textbf{.02} & 0.8 & .05 & \textbf{.05}$^{\dagger}$ & .40 & .97 & .54 & .26 \\
+\multicolumn{12}{l}{\textit{DID}: 5,316 $t$-statistics in 237 articles; rounding allowance 0.6} \\
+None & \textbf{.01} &  & \textbf{.01} & \textbf{.00}$^{\dagger}$ & \textbf{.04} & .06 & .77 & .05 & .37 & 1.00 & 1.00 \\
+Unif. & \textbf{.01} &  & \textbf{.02} & \textbf{.03}$^{\dagger}$ & .45 & .98 & .62 & .34 & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$ & \textbf{.02} & 0.8 & \textbf{.04} & \textbf{.00}$^{\dagger}$ & \textbf{.03} & .13 & .15 & \textbf{.02} & .95 & 1.00 & 1.00 \\
+$s_{\min}$+noise & \textbf{.02} & 0.8 & .05 & \textbf{.05}$^{\dagger}$ & .40 & .97 & .54 & .26 & 1.00 & 1.00 & 1.00 \\
 \addlinespace
-\multicolumn{9}{l}{\textit{RDD}: 2,820 $t$-statistics in 83 articles; rounding allowance $<0.1$} \\
-None & .07 &  & .10 & \textbf{.03}$^{\dagger}$ & \textbf{.03} & \textbf{.01} & .70 & .52 \\
-Unif. & .07 &  & .47 & .13$^{\dagger}$ & .53 & .80 & .69 & .59 \\
-$s_{\min}$ & \textbf{.02} & 1.0 & .28 & \textbf{.02}$^{\dagger}$ & .99 & .35 & .89 & .56 \\
-$s_{\min}$+noise & \textbf{.02} & 0.9 & .23 & \textbf{.05}$^{\dagger}$ & .54 & .94 & .71 & .47 \\
+\multicolumn{12}{l}{\textit{RDD}: 2,820 $t$-statistics in 83 articles; rounding allowance $<0.1$} \\
+None & .07 &  & .10 & \textbf{.03}$^{\dagger}$ & \textbf{.03} & \textbf{.01} & .70 & .52 & .99 & 1.00 & 1.00 \\
+Unif. & .07 &  & .47 & .13$^{\dagger}$ & .53 & .80 & .69 & .59 & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$ & \textbf{.02} & 1.0 & .28 & \textbf{.02}$^{\dagger}$ & .99 & .35 & .89 & .56 & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$+noise & \textbf{.02} & 0.9 & .23 & \textbf{.05}$^{\dagger}$ & .54 & .94 & .71 & .47 & 1.00 & 1.00 & 1.00 \\
 \midrule
-\multicolumn{9}{l}{\textit{Cochrane, all trials}: 17,680 outcomes in 5,310 trials; rounding allowance $<0.1$} \\
-None & .99 &  & \textbf{.00} & .90$^{\dagger}$ & .60 & .67 & .28 & .32 \\
-Unif. & .99 &  & \textbf{.04} & .66$^{\dagger}$ & .49 & .76 & .50 & .51 \\
-$s_{\min}$ & .99 & 0 & \textbf{.00} & .77$^{\dagger}$ & .53 & .67 & .22 & .37 \\
-$s_{\min}$+noise & .99 & 0 & \textbf{.04} & .69$^{\dagger}$ & .53 & .73 & .51 & .51 \\
+\multicolumn{12}{l}{\textit{Cochrane, all trials}: 17,680 outcomes in 5,310 trials; rounding allowance $<0.1$} \\
+None & .99 &  & \textbf{.00} & .90$^{\dagger}$ & .60 & .67 & .28 & .32 & 1.00 & 1.00 & 1.00 \\
+Unif. & .99 &  & \textbf{.04} & .66$^{\dagger}$ & .49 & .76 & .50 & .51 & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$ & .99 & 0 & \textbf{.00} & .77$^{\dagger}$ & .53 & .67 & .22 & .37 & 1.00 & 1.00 & 1.00 \\
+$s_{\min}$+noise & .99 & 0 & \textbf{.04} & .69$^{\dagger}$ & .53 & .73 & .51 & .51 & 1.00 & 1.00 & 1.00 \\
 \bottomrule
 \end{tabular}}
 
 \medskip
 \begin{minipage}{\linewidth}
 \footnotesize
-\textit{Notes:} $p$-values of tests for selective reporting in the $t$-statistics of Brodeur et al.\ (2020), by research design, and in the $z$-statistics of continuous efficacy outcomes in the Cochrane Database of Systematic Reviews (randomized trials with at least 100 participants).
-Rows: \textit{None}, the printed statistics; \textit{Unif.}, every printed number drawn uniformly within its rounding interval; $s_{\min}$, the smallest standard error consistent with the printed numbers (Section 5.2); $s_{\min}$+noise, as $s_{\min}$, with uniform noise at the estimate's last digit. \textit{Unif.} and $s_{\min}$+noise average over 200 draws.
-Statistics whose rounding interval exceeds half a standard error ($\kappa>0.5$) are left out.
-Projection test: $J_0=20$, $J=40$, centered at 1.96; $10^3\widehat{B}$ is a lower 95\% confidence bound on the distance from the reported $t$-curve to the nearest honest one, and the rounding allowance (first line of each block), $0.13\,\overline{\kappa^6}$, bounds the distance rounding can create (Propositions 3 and 4).
+\textit{Notes:} $p$-values. Brodeur et al.\ (2020): $t$-statistics by research design. Cochrane: $z$-statistics of continuous efficacy outcomes of randomized trials with at least 100 participants.
+Rows: \textit{None}, printed statistics; \textit{Unif.}, every printed number drawn uniformly within its rounding interval; $s_{\min}$, the smallest standard error consistent with the printed numbers (Section 5.2); $s_{\min}$+noise, the same plus uniform noise at the estimate's last digit. \textit{Unif.} and $s_{\min}$+noise average over 200 draws.
+Statistics with $\kappa>0.5$ are left out (Section 5.2).
+Projection test: $J_0=20$, $J=40$, centered at 1.96. $10^3\widehat{B}$: a lower 95\% confidence bound on the distance to the nearest honest $t$-curve; the rounding allowance (first line of each block), $0.13\,\overline{\kappa^6}$, bounds what rounding can create (Propositions 3 and 4).
 $T_\infty$, $T_H$: Kudrin (2025); $^\dagger$: his hybrid test gives the same $p$-value.
-EKW: the density discontinuity test at .05, the binomial test on $[.04,.05]$, and the Cox--Shi tests of monotonicity (CS1) and 2-monotonicity with bounds (CS2B) on $(0,.15]$, as in Elliott et al.\ (2022).
-All tests but Disc.\ and Binom.\ cluster by article or trial.
-Bold: $p<.05$; in the $s_{\min}$ rows, a projection test only when $\widehat{B}$ exceeds the allowance.
-Further tests: Table~\ref{tab:rounding_appendix_keepmu0_cochrane}.
+EKW, as in Elliott et al.\ (2022): density discontinuity at .05; binomial on $[.04,.05]$; on $(0,.15]$, Cox--Shi monotonicity (CS1) and 2-monotonicity with bounds (CS2B), and LCM and Fisher tests of a concave CDF.
+Stouffer: the $p$-curve test for left skew of Simonsohn et al.\ (2014).
+The projection test, $T_\infty$, $T_H$, CS1 and CS2B cluster by article or trial; the others do not.
+Bold: $p<.05$; in the $s_{\min}$ rows, the projection test only when $\widehat{B}$ exceeds the allowance.
+Projection tests with $J_0=30$ and without the shift: Table~\ref{tab:rounding_appendix_keepmu0_cochrane}.
 \end{minipage}
 \end{table}
