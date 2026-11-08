@@ -5,7 +5,7 @@
 #### the data behind the two figures and the run times. It saves all of them, and every setting of the run,
 #### in <root>/results. It writes no table or figure: application_MM_output.R reads these files, the settings
 #### included, and makes all of them, so their notes always describe the run that produced the numbers.
-#### Every file is tagged with run_tag (see drop_zero_mu and run_label): runs on different samples never
+#### Every file is tagged with run_tag (see drop_zero_mu, require_se and run_label): runs on different samples never
 #### overwrite each other. Settings_application<run_tag> records the run. Also written, as application_cochrane.R does:
 ####   Sample_report_application<run_tag>.txt  every step from the file to the final sample, by design, reconciled with
 ####                                           Kudrin's (2025) Table 2 and Kranz and Putz's (2022) rule
@@ -25,9 +25,13 @@ res_dir       <- file.path(root, "results")
 drop_zero_mu   <- FALSE  #Kudrin's (2025) drop of coefficients printed as zero; FALSE keeps them (missing ones are
 #dropped either way). Proposition 4 covers selection on how results are printed, not on
 #the estimates, so keeping them is the sample the validity argument covers
-kappa_cap      <- 0.5    #drop coef/SE t-statistics with kappa = a/s_min above this (the same under every option)
+kappa_cap      <- 0.5    #drop t-statistics with kappa = a/s_min above this (the same under every option)
+require_se     <- TRUE   #keep a test only if its coefficient and its standard error are both printed, so every t is
+#coefficient / SE and de-rounded as in Section 5.2. FALSE (a robustness check; the run tag
+#then ends in "_keept") also keeps t-statistics printed without a standard error, under the
+#same cap with kappa = a_t; t's the file computed from printed p-values are dropped either way
 se_rounded_up  <- FALSE  #TRUE if papers may have rounded standard errors up: then s_min = sd - b and s_max = sd
-run_label      <- ""     #anything else that should tell this run's files apart, e.g. "_check"
+run_label      <- "_drop_se_mi"     #anything else that should tell this run's files apart, e.g. "_check"
 
 # De-rounding
 options_to_run <- 1:4    #1 = none, 2 = uniform (standard), 3 = smallest SE, 4 = smallest SE + noise in the numerator
@@ -70,7 +74,7 @@ fig_level        <- 0.95
 fig_seed         <- 20261030      #seeds of the two figures' bootstraps
 fig_shape_seed   <- 20261102
 
-run_tag <- paste0(if (drop_zero_mu) "" else "_keepmu0", run_label)   #in every file name of this run
+run_tag <- paste0(if (drop_zero_mu) "" else "_keepmu0", if (require_se) "" else "_keept", run_label)   #in every file name of this run
 
 #### 1. Code ---------------------------------------------------------------------------------------------
 source(file.path(root, "code", "functions_all_weighted.R"))
@@ -95,9 +99,11 @@ MM_data   <- MM_raw[!drop, ]
 #   2 "uniform":    t = (m + V) / W,  V ~ U(-a/2, a/2), W ~ U(s_min, s_max)  (the usual de-rounding)
 #   3 "smin":       t = m / s_min                                              (Section 5.2)
 #   4 "smin_noise": t = (m + V) / s_min
-# A reported t-statistic is used as printed under options 1 and 3, and gets noise uniform on +-1/2 of its
-# last digit under options 2 and 4. Options 2 and 4 are run on n_draws_noise independent draws, and p-values
-# and breakdown statistics are averaged over them. Not covered: t-statistics converted from rounded p-values.
+# With require_se, every test in the sample is a coefficient and a standard error. Some papers print a t-statistic
+# or a p-value in their place; with require_se = FALSE, a printed t-statistic is used as printed under options 1
+# and 3, and gets noise uniform on +-1/2 of its rounding unit a_t under options 2 and 4. Never covered:
+# t-statistics converted from rounded p-values, which are dropped either way. Options 2 and 4 are run on
+# n_draws_noise independent draws, and p-values and breakdown statistics are averaged over them.
 #
 # The sample is the same under every option: which t-statistics are dropped depends only on the printed
 # values and kappa_cap, never on the option. The noise is drawn once, with fixed seeds, so options 2
@@ -110,6 +116,14 @@ MM_data   <- MM_raw[!drop, ]
 #     coefficient and its standard error are almost always printed to the same decimals. Both are fixed
 #     by the table's format and the standard error, not by the estimate. The width of V need not match
 #     the true unit: Proposition 4 allows any independent noise.
+#   Used only with require_se = FALSE:
+#   a_t, per article, for a t printed without a standard error: the finest place value among the article's
+#     printed t-statistics. A t has no units, so its decimals are the article's style, and the file has lost
+#     trailing zeros: a t printed 2.00 is stored as 2, and its own last digit would give kappa = 1, dropping
+#     it for its value. Taking the unit from the article keeps it fixed by the format, as a is.
+#   A t with 4 or more decimals was computed by the file, not printed: converted back, it gives a p-value with
+#     few decimals (the sample report shows them), so it came from a printed p-value. It never sets an article's
+#     a_t, and is dropped: rounding a p-value is not rounding t on a lattice (Propositions 3 and 4).
 
 stopifnot(all(options_to_run %in% 1:4))
 deround_keys   <- c("none", "uniform", "smin", "smin_noise")
@@ -142,19 +156,32 @@ a_tab  <- 10^(-ave(dec_mu, tab_id, FUN = function(d) if (all(is.na(d))) NA_integ
 a_mu   <- pmax(a_tab, b_sd)                                  #NA unless both mu and sd are present
 s_min  <- sd_p - if (se_rounded_up) b_sd else b_sd / 2       #smallest SE consistent with sd
 s_max  <- sd_p + if (se_rounded_up) 0 else b_sd / 2          #largest SE consistent with sd
-a_t    <- 10^(-dec_t)                                        #rounding unit of a directly reported t
 
 has_ratio  <- !is.na(mu_p) & !is.na(sd_p)
+direct     <- !has_ratio & !is.na(t_p)                       #a t-statistic in the file, and no standard error
+pvalue_t   <- direct & dec_t >= 4                            #4+ decimals: computed by the file, from a printed p-value
+printed_t  <- direct & !pvalue_t
+a_art      <- 10^(-ave(ifelse(printed_t, dec_t, NA), MM_data$title,   #the finest printed t in the article: a t
+                       FUN = function(d) if (all(is.na(d))) NA_real_ else max(d, na.rm = TRUE)))   #printed 2.00 is stored as 2
+a_t        <- ifelse(printed_t, a_art, 10^(-dec_t))          #rounding unit of a t without a standard error
+p_decimals <- n_dec(round(2 * pnorm(-abs(MM_data$t)), 6))   #decimals of the p-value each t converts back to: few
+pval_evidence <- table(design = MM_data$method[pvalue_t], p_decimals = p_decimals[pvalue_t])   #mean a printed p
+no_se_kinds   <- table(design = MM_data$method[direct],                                         #what papers printed
+                       printed = ifelse(pvalue_t, "p-value", "t-statistic")[direct])           #in place of the SE
+
+drop_nose  <- !has_ratio & require_se                        #no standard error printed (a t or a p-value instead)
 drop_se0   <- has_ratio & sd_p <= 0                          #SE printed as zero: t not recoverable
-drop_kappa <- has_ratio & !drop_se0 & a_mu / s_min > kappa_cap
+drop_kappa <- (has_ratio & !drop_se0 & a_mu / s_min > kappa_cap) | (printed_t & !require_se & a_t > kappa_cap)
+drop_pval  <- pvalue_t & !require_se                         #t computed from a printed p-value (robustness run)
 use_ratio  <- has_ratio & !drop_se0 & !drop_kappa
-direct     <- !has_ratio & !is.na(t_p)
 
 cat("Decimals printed in the standard errors (many at 6+ would suggest computed rather than printed SEs):\n")
 print(table(dec_sd[has_ratio]))
 cat("\nt-statistics dropped (the same under every de-rounding option):\n")
-drop_counts <- rbind(se_zero         = tapply(drop_se0,   MM_data$method, sum),
-                     kappa_above_cap = tapply(drop_kappa, MM_data$method, sum))
+drop_counts <- rbind(se_missing      = tapply(drop_nose,  MM_data$method, sum),
+                     se_zero         = tapply(drop_se0,   MM_data$method, sum),
+                     kappa_above_cap = tapply(drop_kappa, MM_data$method, sum),
+                     t_from_pvalue   = tapply(drop_pval,  MM_data$method, sum))
 print(drop_counts)
 
 #### How much do we drop, compared with Kranz and Putz's (2022) omission rule?
@@ -166,12 +193,13 @@ print(drop_counts)
 # Our data have lost trailing zeros, so we use KP's own fallback for that case: append zeros to the SE
 # until it has as many decimals as its coefficient (KP online appendix, note to Figure A2), which they
 # report agrees with the exact rule in 96 percent of cases. If your file records trailing zeros, read
-# the significand from those instead. Reported t-statistics (no coefficient and SE) are kept by both rules.
+# the significand from those instead. Both rules act on tests printed as a coefficient and a standard error,
+# so the comparison is on those rows; tests printed without a standard error are left out of it.
 
 kp_threshold <- 37
 kp_signif    <- round(sd_p * 10^pmax(dec_sd, dec_mu))                   #SE significand, KP's convention
 drop_kp      <- has_ratio & kp_signif < kp_threshold                     #includes SEs printed as zero
-drop_ours    <- drop_se0 | drop_kappa
+drop_ours    <- has_ratio & (drop_se0 | drop_kappa)
 z_is_2       <- has_ratio & sd_p > 0 & abs(abs(mu_p / sd_p) - 2) < 1e-9   #KP's heap at exactly z = 2
 
 drop_summary <- function(g) {                                            #g: logical row selector
@@ -186,14 +214,14 @@ drop_summary <- function(g) {                                            #g: log
     kp_z2_pct   = 100 * mean(drop_kp[g & z_is_2]))
 }
 methods_kp      <- c("RCT", "IV", "DID", "RDD")
-rows_kp         <- c(setNames(lapply(methods_kp, function(m) MM_data$method %in% m), methods_kp),
-                     list(Pooled = rep(TRUE, nrow(MM_data))))
+rows_kp         <- c(setNames(lapply(methods_kp, function(m) has_ratio & MM_data$method %in% m), methods_kp),
+                     list(Pooled = has_ratio))                         #rows printed with a standard error
 drop_comparison <- t(sapply(rows_kp, drop_summary))
 
-cat("\nt-statistics dropped by our procedure (SE = 0 or kappa > ", kappa_cap,
+cat("\nTests printed with a standard error, dropped by our procedure (SE = 0 or kappa > ", kappa_cap,
     ") and by Kranz and Putz's rule (SE significand < ", kp_threshold, "):\n", sep = "")
 print(round(drop_comparison, 1))
-cat(sprintf("Our procedure drops %.1f to %.1f percent of the t-statistics by method (%.1f pooled); Kranz and Putz's rule would drop %.1f to %.1f percent (%.1f pooled).\n",
+cat(sprintf("Of the tests printed with a standard error, our procedure drops %.1f to %.1f percent by method (%.1f pooled); Kranz and Putz's rule would drop %.1f to %.1f percent (%.1f pooled).\n",
             min(drop_comparison[methods_kp, "ours_pct"]), max(drop_comparison[methods_kp, "ours_pct"]), drop_comparison["Pooled", "ours_pct"],
             min(drop_comparison[methods_kp, "kp_pct"]),   max(drop_comparison[methods_kp, "kp_pct"]),   drop_comparison["Pooled", "kp_pct"]))
 cat(sprintf("Of the %d t-statistics at exactly z = 2, our procedure drops %.1f percent and theirs %.1f percent. (KP report 37.9 percent of all observations and 87.3 percent of those at z = 2, on their version of the data.)\n",
@@ -209,12 +237,14 @@ sample_rows <- data.frame(row = seq_len(nrow(MM_raw)), article = strip(MM_raw$ti
 reason <- rep("", nrow(MM_raw))
 reason[is.na(MM_raw$mu)] <- "coefficient missing"
 if (drop_zero_mu) reason[!is.na(MM_raw$mu) & MM_raw$mu %in% 0] <- "coefficient printed as zero"
+reason[kept_rows[drop_nose]]  <- "standard error missing"
 reason[kept_rows[drop_se0]]   <- "standard error printed as zero"
 reason[kept_rows[drop_kappa]] <- "kappa above cap"
+reason[kept_rows[drop_pval]]  <- "t computed from a p-value"
 sample_rows$kept     <- reason == ""
 sample_rows$reason   <- reason
 sample_rows$t_source <- NA_character_
-sample_rows$t_source[kept_rows] <- ifelse(use_ratio, "coef/SE", ifelse(direct, "reported t", NA))
+sample_rows$t_source[kept_rows] <- ifelse(use_ratio, "coef/SE", ifelse(pvalue_t, "t from a p-value", ifelse(direct, "reported t", NA)))
 sample_rows$kappa    <- NA_real_
 sample_rows$kappa[kept_rows]    <- ifelse(has_ratio & !drop_se0, a_mu / s_min, ifelse(direct, a_t, NA))
 
@@ -228,7 +258,7 @@ MM_data$dr_t       <- t_p                                                       
 MM_data$dr_a       <- ifelse(use_ratio, a_mu, ifelse(direct, a_t, NA))           #rounding unit of the numerator
 MM_data$kappa      <- ifelse(use_ratio, a_mu / s_min, ifelse(direct, a_t, NA))   #rounding unit in t-units
 MM_data$lambda_max <- ifelse(use_ratio, s_max / s_min, NA)                       #largest inflation from dividing by s_min
-MM_data            <- MM_data[!(drop_se0 | drop_kappa), ]
+MM_data            <- MM_data[!(drop_nose | drop_se0 | drop_kappa | drop_pval), ]
 
 #The de-rounding noise, drawn once with fixed seeds, so every option and every run uses the same draws
 set.seed(1)
@@ -271,26 +301,33 @@ is_zero  <- !is.na(sample_rows$coefficient) & sample_rows$coefficient %in% 0
 steps_mm <- rbind("In the file"                         = count_by(rep(TRUE, nrow(sample_rows))),
                   "Dropped: coefficient missing"        = count_by(reason == "coefficient missing"),
                   "Dropped: coefficient printed as 0"   = count_by(reason == "coefficient printed as zero"),
+                  "Dropped: standard error missing"     = count_by(reason == "standard error missing"),
                   "Dropped: standard error printed as 0" = count_by(reason == "standard error printed as zero"),
                   "Dropped: kappa above the cap"        = count_by(reason == "kappa above cap"),
+                  "Dropped: t computed from a p-value"  = count_by(reason == "t computed from a p-value"),
                   "Final sample"                        = count_by(sample_rows$kept),
                   "Articles in the final sample"        = papers_by(sample_rows$kept))
 if (!drop_zero_mu) steps_mm <- steps_mm[rownames(steps_mm) != "Dropped: coefficient printed as 0", ]
+steps_mm <- steps_mm[rownames(steps_mm) != (if (require_se) "Dropped: t computed from a p-value" else "Dropped: standard error missing"), ]
 
 # Kudrin (2025), Table 2: tests (papers) after excluding observations with missing information. Our reading of his
 # rule: a coefficient is present and not printed as zero. Our sample differs from it by exactly
-# (zero coefficients we keep) - (standard errors printed as zero) - (kappa above the cap)
+# (zero coefficients we keep) - (standard errors missing) - (standard errors printed as zero) - (kappa above the cap),
+# or, with require_se = FALSE, - (t's from p-values) instead of - (standard errors missing)
 kud_n      <- c(RCT = 7101, IV = 5158, DID = 5780, RDD = 3117)
 kud_papers <- c(RCT = 141, IV = 281, DID = 241, RDD = 85)
 kud_rule   <- !is.na(sample_rows$coefficient) & !is_zero
 recon <- rbind("Kudrin (2025), Table 2: tests"              = c(kud_n[meth], Total = sum(kud_n)),
                "Kudrin (2025), Table 2: papers"             = c(kud_papers[meth], Total = sum(kud_papers)),
                "His rule on this file: tests"               = count_by(kud_rule)[c(meth, "Total")],
-               "His rule on this file: papers"              = papers_by(kud_rule)[c(meth, "Total")],
+               "His rule on this file: papers"              = c(papers_by(kud_rule)[meth], Total = sum(papers_by(kud_rule)[meth])),
                "+ zero coefficients we keep"                = if (drop_zero_mu) 0 * count_by(is_zero)[c(meth, "Total")] else count_by(is_zero)[c(meth, "Total")],
+               "- standard errors missing"                  = count_by(reason == "standard error missing")[c(meth, "Total")],
                "- standard errors printed as zero"          = count_by(reason == "standard error printed as zero")[c(meth, "Total")],
                "- kappa above the cap"                      = count_by(reason == "kappa above cap")[c(meth, "Total")],
+               "- t computed from a p-value"                = count_by(reason == "t computed from a p-value")[c(meth, "Total")],
                "= our final sample"                         = count_by(sample_rows$kept)[c(meth, "Total")])
+recon <- recon[rownames(recon) != (if (require_se) "- t computed from a p-value" else "- standard errors missing"), ]
 
 t_print <- ifelse(MM_data$t_source %in% "coef/SE", MM_data$dr_mu / MM_data$dr_sd, MM_data$dr_t)
 dup_key <- paste(MM_data$method, MM_data$title, MM_data$dr_mu, MM_data$dr_sd, MM_data$dr_t, sep = "|")
@@ -318,12 +355,20 @@ report_mm <- c(
   "One row of the file is one test: a coefficient and its standard error, or a reported t-statistic.",
   "",
   "1. SETTINGS THAT DEFINE THE SAMPLE",
-  sprintf("  drop_zero_mu = %s (coefficients printed as zero %s); kappa_cap = %s; se_rounded_up = %s",
-          drop_zero_mu, if (drop_zero_mu) "dropped, as Kudrin (2025)" else "kept", format(kappa_cap), se_rounded_up),
+  sprintf("  drop_zero_mu = %s (coefficients printed as zero %s); kappa_cap = %s; se_rounded_up = %s; require_se = %s",
+          drop_zero_mu, if (drop_zero_mu) "dropped, as Kudrin (2025)" else "kept", format(kappa_cap), se_rounded_up, require_se),
   "  kappa = a / s_min: the coefficient's rounding unit a (the finest place value among its table's coefficients, but no",
   "  finer than its standard error's) over the smallest standard error consistent with the printed one, s - b/2.",
-  "  The cap applies to t-statistics computed as coefficient / standard error; reported t-statistics have kappa equal",
-  "  to their own rounding unit and are never capped. Which rows are dropped never depends on the de-rounding option.",
+  "  Some tests have a coefficient but no standard error: the paper printed a t-statistic or a p-value in its place, and",
+  "  the file stores a t. One computed from a p-value has 4 or more decimals; converted back, it gives a p-value with the",
+  "  number of decimals in the second table (few decimals mean a printed p-value).",
+  show_lines(no_se_kinds),
+  show_lines(pval_evidence),
+  if (require_se) "  require_se = TRUE drops all of them, so every t-statistic in the sample is coefficient / standard error." else
+    c("  require_se = FALSE keeps the printed t-statistics, with kappa = a_t, the finest place value among the article's",
+      "  printed t-statistics (the file has lost trailing zeros, so a t printed 2.00 is stored as 2), under the same cap.",
+      "  It drops those computed from p-values: rounding a p-value is not rounding t on a lattice (Propositions 3 and 4)."),
+  "  Which rows are dropped never depends on the de-rounding option.",
   "",
   "2. EVERY STEP, IN ORDER, BY DESIGN (rows dropped by each step; the first and last rows count rows kept)",
   show_lines(steps_mm),
@@ -337,7 +382,7 @@ report_mm <- c(
   "4. RECONCILIATION WITH KUDRIN (2025)",
   "  His Table 2 reports the tests left 'after excluding observations with missing information'. We read his rule as:",
   "  the coefficient is present and not printed as zero. Our final sample differs from that rule's sample by exactly the",
-  "  three rows below it:",
+  "  rows below it:",
   show_lines(recon),
   if (any(recon["His rule on this file: tests", meth] != kud_n[meth]))
     "  NOTE: our reading of his rule does not reproduce his counts for every design; the gap is in the rows above." else
@@ -345,7 +390,8 @@ report_mm <- c(
   "  Other differences in the analysis, not the sample: every test here clusters by article (Kudrin's T_inf resamples",
   "  p-values independently), and every test is run under four de-rounding options (Section 5.2).",
   "",
-  "5. COMPARISON WITH KRANZ AND PUTZ'S (2022) OMISSION RULE (standard-error significand below 37)",
+  "5. COMPARISON WITH KRANZ AND PUTZ'S (2022) OMISSION RULE (standard-error significand below 37), ON THE TESTS PRINTED",
+  "   WITH A STANDARD ERROR (the only ones either rule acts on)",
   show_lines(drop_comparison, 1),
   "",
   sprintf("6. ROW-LEVEL FILE: Sample_rows_application%s.csv lists every row of the file (row = its position in MM data.dta)", run_tag),
@@ -373,6 +419,7 @@ settings_now <- function(status) list(
   tests_from = if (exists("tests_source")) tests_source else "this run",
   run_tag = run_tag, run_label = run_label, data_file = file.path(data_location, "MM data.dta"),
   drop_zero_mu = drop_zero_mu, n_zero_mu = n_zero_mu, kappa_cap = kappa_cap, se_rounded_up = se_rounded_up,
+  require_se = require_se, no_se_kinds = no_se_kinds, pval_evidence = pval_evidence,
   drop_counts = drop_counts,
   n_by_design        = setNames(as.vector(table(factor(MM_data$method, levels = meth))), meth),
   articles_by_design = vapply(meth, function(m) length(unique(MM_data$title[MM_data$method == m])), 0),
@@ -400,7 +447,7 @@ if (!run_tests) {                       #reuse saved test results only if they w
   now <- settings_now("check")
   if (file.exists(settings_file)) {
     old  <- readRDS(settings_file)
-    same <- c("drop_zero_mu", "kappa_cap", "se_rounded_up", "options_run", "n_draws_noise", "cv", "shift", "L",
+    same <- c("drop_zero_mu", "kappa_cap", "se_rounded_up", "require_se", "options_run", "n_draws_noise", "cv", "shift", "L",
               "numgrid", "boots", "boot_seed_by_draw", "J", "p", "J0_list", "run_stouffer", "run_noshift", "noshift_draws",
               "n_by_design")
     diff <- same[!vapply(same, function(k) isTRUE(all.equal(old[[k]], now[[k]])), TRUE)]

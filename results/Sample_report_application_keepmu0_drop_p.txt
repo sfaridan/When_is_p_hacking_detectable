@@ -1,0 +1,68 @@
+SAMPLE REPORT: the application to Brodeur, Cook and Heyes (2020)
+Written 2026-11-08 09:24 by application_MM_analysis.R; run tag '_keepmu0_drop_p'. Data: C:/Users/sfaridani6/Documents/Data/120246-V1/MM data.dta (21,740 rows, 684 articles).
+One row of the file is one test: a coefficient and its standard error, or a reported t-statistic.
+
+1. SETTINGS THAT DEFINE THE SAMPLE
+  drop_zero_mu = FALSE (coefficients printed as zero kept); kappa_cap = 0.5; se_rounded_up = FALSE; drop_pvalue_t = TRUE
+  kappa = a / s_min: the coefficient's rounding unit a (the finest place value among its table's coefficients, but no
+  finer than its standard error's) over the smallest standard error consistent with the printed one, s - b/2.
+  A t-statistic printed without a standard error has kappa = a_t, the finest place value among its article's printed
+  t-statistics: the file has lost trailing zeros, so a t printed 2.00 is stored as 2. The cap applies to both kinds.
+  A t-statistic with 4 or more decimals was computed by the file, not printed. Converted back, it gives a p-value with
+  the number of decimals below; few decimals mean a printed p-value. Rounding a p-value is not rounding t on a lattice,
+  so Propositions 3 and 4 do not cover these t-statistics: they are dropped.
+          p_decimals
+    design   1   2   3   4   5   6
+       DID  28 139  49   0   0   0
+       IV    0   5  23   3   2   1
+  Which rows are dropped never depends on the de-rounding option.
+
+2. EVERY STEP, IN ORDER, BY DESIGN (rows dropped by each step; the first and last rows count rows kept)
+                                          RCT   IV  DID  RDD Total
+    In the file                          7569 5170 5853 3148 21740
+    Dropped: coefficient missing          373    0    0    7   380
+    Dropped: standard error printed as 0    7    8   58   10    83
+    Dropped: kappa above the cap          394  207  503  311  1415
+    Dropped: t computed from a p-value      0   34  216    0   250
+    Final sample                         6795 4921 5076 2820 19612
+    Articles in the final sample          141  276  228   83   663
+  Rows of the final sample with no usable t-statistic: 0 (must be 0).
+
+3. THE FINAL SAMPLE, BY DESIGN
+        tests articles coef_over_SE reported_t share_sig zero_coef_kept exact_duplicates kappa_median kappa_p90 kappa_max allowance_J0_20_x1000 allowance_J0_30_x1000
+    RCT  6795      141         6795          0    0.3762             57              315       0.0180    0.1818    0.4911                0.0221                0.0526
+    IV   4921      276         4619        302    0.5708              5              135       0.0100    0.0952    0.4995                0.0074                0.0177
+    DID  5076      228         4966        110    0.5676             10              238       0.0215    0.2201    0.4450                0.0201                0.0480
+    RDD  2820       83         2775         45    0.4411             10               80       0.0198    0.1818    0.4878                0.0205                0.0489
+  share_sig: share with printed |t| > 1.96. exact_duplicates: rows repeating an earlier row's article, coefficient,
+  standard error and t (kept, as Kudrin keeps them). Allowances: C mean(kappa^6) x 1000, C = 0.13 (J0 = 20), 0.31 (J0 = 30).
+
+4. RECONCILIATION WITH KUDRIN (2025)
+  His Table 2 reports the tests left 'after excluding observations with missing information'. We read his rule as:
+  the coefficient is present and not printed as zero. Our final sample differs from that rule's sample by exactly the
+  rows below it:
+                                       RCT   IV  DID  RDD Total
+    Kudrin (2025), Table 2: tests     7101 5158 5780 3117 21156
+    Kudrin (2025), Table 2: papers     141  281  241   85   748
+    His rule on this file: tests      7101 5158 5780 3117 21156
+    His rule on this file: papers      141  281  241   85   680
+    + zero coefficients we keep         95   12   73   24   204
+    - standard errors printed as zero    7    8   58   10    83
+    - kappa above the cap              394  207  503  311  1415
+    - t computed from a p-value          0   34  216    0   250
+    = our final sample                6795 4921 5076 2820 19612
+  Our reading of his rule reproduces his counts for every design.
+  Other differences in the analysis, not the sample: every test here clusters by article (Kudrin's T_inf resamples
+  p-values independently), and every test is run under four de-rounding options (Section 5.2).
+
+5. COMPARISON WITH KRANZ AND PUTZ'S (2022) OMISSION RULE (standard-error significand below 37)
+           t_stats ours   kp ours_pct kp_pct both only_ours only_kp z_eq_2 ours_z2_pct kp_z2_pct
+    RCT       7196  401 2634      5.6   36.6  364        37    2270     82        35.4      87.8
+    IV        5170  249 1183      4.8   22.9  137       112    1046     28        25.0      78.6
+    DID       5853  777 2454     13.3   41.9  495       282    1959    114        43.9      94.7
+    RDD       3141  321 1272     10.2   40.5  229        92    1043     34        32.4      88.2
+    Pooled   21360 1748 7543      8.2   35.3 1225       523    6318    258        37.6      89.9
+
+6. ROW-LEVEL FILE: Sample_rows_application_keepmu0_drop_p.csv lists every row of the file (row = its position in MM data.dta)
+  with its article, table, design, coefficient, standard error and t as stored, whether it is kept, the reason if not,
+  how its t-statistic is formed, and its kappa.
