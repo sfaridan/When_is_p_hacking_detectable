@@ -16,7 +16,7 @@ rm(list = ls())
 root      <- "C:/Users/sfaridani6/Documents/GitHub/When_is_p_hacking_detectable"
 out_dir   <- file.path(root, "results")
 mm_dir    <- file.path(root, "results")                       #application_MM_analysis.R's res_dir
-mm_tag    <- "_keepmu0"                                      #its run_tag
+mm_tag    <- "_keepmu0_drop_se_mi"                                      #its run_tag
 co_dir    <- file.path(root, "results", "cochrane")           #application_cochrane.R's res_dir
 co_tag    <- "_n100_all_trial_kappa0.5_zcounts_cont"          #its tag
 co_groups <- c("all", "early", "late")                       #Cochrane subsamples in the main table: any of "all", "early", "late"

@@ -1,0 +1,55 @@
+\begin{table}[htbp]
+\centering
+\caption{The projection test with $J_0=30$ and without the shift, under four treatments of rounding, in economics (keeping coefficients reported as zero) and medicine}
+\label{tab:rounding_appendix_keepmu0_drop_se_mi_cochrane}
+\small
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{%
+\begin{tabular}{lccc}
+\toprule
+ & \multicolumn{2}{c}{Projection, $J_0=30$} & \multicolumn{1}{c}{Projection, no shift} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-4}
+Treatment & $p$ & $10^3\widehat{B}$ & $p$ \\
+\midrule
+\multicolumn{4}{l}{\textit{RCT}: 6,795 $t$-statistics in 141 articles; rounding allowance $<0.1$} \\
+None & \textbf{.00} &  & \textbf{.03} \\
+Unif. & \textbf{.00} &  & \textbf{.03} \\
+$s_{\min}$ & \textbf{.00} & 2.4 & \textbf{.03} \\
+$s_{\min}$+noise & \textbf{.00} & 2.4 & \textbf{.03} \\
+\addlinespace
+\multicolumn{4}{l}{\textit{IV}: 4,619 $t$-statistics in 263 articles; rounding allowance $<0.1$} \\
+None & \textbf{.00} &  & \textbf{.03} \\
+Unif. & \textbf{.00} &  & \textbf{.03} \\
+$s_{\min}$ & \textbf{.00} & 3.5 & \textbf{.03} \\
+$s_{\min}$+noise & \textbf{.00} & 3.6 & \textbf{.03} \\
+\addlinespace
+\multicolumn{4}{l}{\textit{DID}: 4,966 $t$-statistics in 218 articles; rounding allowance $<0.1$} \\
+None & \textbf{.01} &  & .09 \\
+Unif. & \textbf{.02} &  & .10 \\
+$s_{\min}$ & \textbf{.02} & 1.0 & .13 \\
+$s_{\min}$+noise & \textbf{.02} & 1.0 & .12 \\
+\addlinespace
+\multicolumn{4}{l}{\textit{RDD}: 2,775 $t$-statistics in 80 articles; rounding allowance $<0.1$} \\
+None & \textbf{.03} &  & .26 \\
+Unif. & \textbf{.03} &  & .26 \\
+$s_{\min}$ & \textbf{.01} & 1.9 & .20 \\
+$s_{\min}$+noise & \textbf{.02} & 1.8 & .20 \\
+\midrule
+\multicolumn{4}{l}{\textit{Cochrane, all trials}: 17,680 outcomes in 5,310 trials; rounding allowance 0.2} \\
+None & .61 &  & .54 \\
+Unif. & .64 &  & .54 \\
+$s_{\min}$ & .61 & 0 & .48 \\
+$s_{\min}$+noise & .64 & 0 & .49 \\
+\bottomrule
+\end{tabular}}
+
+\medskip
+\begin{minipage}{\linewidth}
+\footnotesize
+\textit{Notes:} $p$-values for the samples and treatments of Table~\ref{tab:rounding_ekw_keepmu0_drop_se_mi_cochrane}.
+$J_0=30$: weights $w_j=\min\{1,2^{30-j}\}$; $10^3\widehat{B}$ and the rounding allowance (first line of each block, $0.31\,\overline{\kappa^6}$) are for $J_0=30$.
+No shift: $t$-statistics not shifted by 1.96 (Remark 13); no allowance is computed for it, so its rejections are not certified against rounding.
+Both cluster by article or trial and use 1,000 bootstrap repetitions.
+Bold: $p<.05$; in the $s_{\min}$ rows, the $J_0=30$ test only when $\widehat{B}$ exceeds the allowance.
+Run time per design of Brodeur et al.\ (2020), on one core: 8.1 s for the projection test, 0.9 s for Kudrin's tests, 2.8 s for the EKW tests.
+\end{minipage}
+\end{table}
