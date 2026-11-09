@@ -587,7 +587,6 @@ for (ext in c("pdf", "png")) {
     z <- res[[m]]
     plot(NA, xlim = c(0, max_t), ylim = c(0, ymax), xaxs = "i", yaxs = "i", xlab = "|t|", ylab = "Density")
     if (show_pointwise && nrow(z$pw)) rect(z$pw[, 1] - 0.01, 0, z$pw[, 2] + 0.01, ymax, col = light, border = NA)
-    if (nrow(z$sim)) rect(z$sim[, 1] - 0.01, 0, z$sim[, 2] + 0.01, ymax, col = dark, border = NA)
     rect(head(breaks, -1), 0, breaks[-1], z$density, col = "grey75", border = "white", lwd = 0.4)
     if (show_honest) lines(u_h, z$honest, lwd = 1.8)
     abline(v = 1.96, lty = 3, col = "grey30")
@@ -598,12 +597,12 @@ for (ext in c("pdf", "png")) {
                     1e3 * tests[m, "B"]), side = 3, line = 0.3, cex = 0.75)
     }
     if (m == meth[1]) {
-      keep <- c(TRUE, any_sim, any_pw, show_honest)
+      keep <- c(TRUE, any_pw, show_honest)
       legend("topright", bty = "n", cex = 0.8,
-             legend = c("Reported |t|", sprintf("Too peaked for honest reporting (%g%%, %g-%g)", 100 * level, window[1], window[2]),
+             legend = c("Reported |t|",
                         sprintf("Too peaked for honest reporting (%g%% pointwise)", 100 * level), "Closest honest t-curve")[keep],
-             fill = c("grey75", dark, light, NA)[keep], border = c("white", NA, NA, NA)[keep],
-             lty = c(NA, NA, NA, 1)[keep], lwd = c(NA, NA, NA, 1.8)[keep], col = c(NA, NA, NA, "black")[keep])
+             fill = c("grey75", light, NA)[keep], border = c("white", NA, NA)[keep],
+             lty = c(NA, NA, 1)[keep], lwd = c(NA, NA, 1.8)[keep], col = c(NA, NA, "black")[keep])
     }
   }
   par(op)
