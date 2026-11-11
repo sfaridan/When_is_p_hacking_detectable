@@ -293,3 +293,21 @@ writeLines(tab_tex, paste0(OUT_STEM, "_table.tex"))
 cat("\nWritten to ", RUN_DIR, ":\n  ", basename(OUT_STEM), ".pdf (the figure)\n  ", basename(OUT_STEM),
     "_caption.txt (its notes)\n  ", basename(OUT_STEM), "_rates.csv (the plotted rates)\n  ", basename(OUT_STEM),
     "_table.tex (every test at tau = 0 and tau = 1, for the appendix)\n", sep = "")
+
+
+#### 6. The figure without Kudrin's tests --------------------------------------------------------------------
+# The same figure without its two Kudrin rows (T_H and T_inf), so the projection test and the EKW-or-p-curve row:
+# draw_combined() as it is, on section 3's layout less those rows' lines, so the panels, headers, axes and legend
+# are those of <name>_combined.pdf and only the height changes. The script's own ROWS, nr, H and M are untouched,
+# and the caption file serves both figures, as its notes never mention Kudrin's tests. Writes <name>_combined_nokudrin.pdf.
+nk_r   <- which(!names(ROWS) %in% c("T_H", "T_inf"))              #the rows kept
+nk_lay <- c(1, rbind(2 * nk_r, 2 * nk_r + 1), nrow(M) - 1:0)      #their lines of the layout (header, panels), with the
+#column titles, the axis titles and the legend
+nk_M   <- M[nk_lay, , drop = FALSE]
+nk_M[] <- match(nk_M, sort(unique(c(nk_M))))                      #the cells renumbered 1, 2, ... in the order they are drawn
+nk_draw <- draw_combined                                          #draw_combined(), finding the kept rows and layout first
+environment(nk_draw) <- list2env(list(ROWS = ROWS[nk_r], nr = length(nk_r), H = H[nk_lay], M = nk_M), parent = globalenv())
+grDevices::pdf(paste0(OUT_STEM, "_nokudrin.pdf"), width = sum(W) + 0.02, height = sum(H[nk_lay]) + 0.02, pointsize = 8)
+nk_draw()
+grDevices::dev.off()
+cat("  ", basename(OUT_STEM), "_nokudrin.pdf (the figure without Kudrin's tests)\n", sep = "")
