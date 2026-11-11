@@ -451,59 +451,22 @@ if (rt_write) {
   }
 }
 
-#### 7. The main table without Kudrin's tests ---------------------------------------------------------------
-# Section 4's table without its three Kudrin (2025) columns (T_inf, T_H, T_H^hyb), and without the two places its
-# notes mention them: the sentence on T_inf's rejections in Panel B, and Kudrin's tests among the tests that cluster.
-# Everything else is section 4's: the same rows, bold rules, certified column and notes (whose citation of Elliott,
-# Kudrin and Wuthrich stays, as it is the EKW tests'). Saved results only. Writes the table to nk_file.
-nk_file  <- file.path(out_dir, "table_main_applications_nokudrin.tex")
-nk_label <- "tab:main_applications_nokudrin"                 #"tab:main_applications" if it replaces section 4's table in the paper
-
-nk_pair <- function(label, size, pr, de, cert) {              #pair() without Kudrin's three columns
-  c(sprintf("%s & Printed & %s & %s & \\multirow{2}{*}{%s} \\\\", label, fp(pr$proj), fp(pr$ekw_st), cert),
-    sprintf("{\\footnotesize %s} & De-rounded & %s & %s & \\\\", size, fp(de$proj), fp(de$ekw_st)))
-}
-nk_body_mm <- unlist(lapply(seq_along(meth), function(i) {
-  c(if (i > 1) "\\addlinespace[2pt]",
-    nk_pair(meth[i], mm_size[i], mm_printed[i, ], mm_derounded[i, ], fB(mm_cert$B[i], mm_allow[[i]])))
-}))
-nk_body_co <- unlist(lapply(seq_along(co_groups), function(i) {
-  c(if (i > 1) "\\addlinespace[2pt]",
-    nk_pair(co_label[[i]], co_size[i], co_printed[i, ], co_derounded[i, ], fB(co_cert$B[i], co_allow[i])))
-}))
-
-nk_notes <- sub(sprintf("$T_\\infty$'s rejections in Panel B come from $p$-values near 1: outcomes whose two arms have equal printed means (%s). ",
-                        ref_fig_tinf), "", notes, fixed = TRUE)     #section 4's notes, less the sentence on T_inf
-nk_notes <- sub("Kudrin's tests, ", "", nk_notes, fixed = TRUE)    #and less Kudrin's tests among those that cluster
-if (grepl("T_\\\\infty|T_H|Kudrin's|Kudrin \\(2025\\)", nk_notes)) {
-  stop("Section 4's notes still mention Kudrin's tests after the cuts: their wording has changed, so update the two sub() calls",
+#### 7. Section 6's rounding table without Kudrin's tests -----------------------------------------------------
+# table_rounding_ekw<mm_tag><rt_suffix>.tex without its T_inf and T_H columns, and without the two places its notes
+# mention them: the note on Kudrin's tests (with the dagger for his hybrid test), and T_inf and T_H among the tests that
+# cluster. Everything else is section 6's: the same blocks, rows, bold rules and notes, built by its rt_build(), so the
+# Kudrin (2025) header and its rule drop out on their own. Saved results only. Writes the table to nk_file.
+if (!rt_write) stop("Section 7 builds on section 6's table: set rt_write <- TRUE", call. = FALSE)
+nk_file  <- file.path(out_dir, sub("\\.tex$", "_nokudrin.tex", rt_file[["main"]]))
+nk_label <- paste0(rt_label[["main"]], "_nokudrin")           #rt_label[["main"]] if it replaces section 6's table in the paper
+#(the notes of the main and appendix tables refer to that label)
+nk_tests <- setdiff(rt_tests[["main"]], c("T_inf", "T_H"))     #section 6's columns less Kudrin's
+nk_notes <- rt_notes[["main"]]
+nk_notes <- nk_notes[nk_notes != rt_kudn]                      #less the note on Kudrin's tests
+nk_notes <- sub("$T_\\infty$, $T_H$, ", "", nk_notes, fixed = TRUE)   #and less T_inf and T_H among the tests that cluster
+if (any(grepl("T_\\\\infty|T_H|Kudrin's|Kudrin \\(2025\\)", nk_notes))) {
+  stop("Section 6's notes still mention Kudrin's tests after the cuts: their wording has changed, so update the cuts above",
        call. = FALSE)
 }
-
-nk_tex <- c(sprintf("%% Written by main_applications_table.R, section 7 (no Kudrin columns), on %s from Settings_application%s and Cochrane_results%s.rds",
-                    format(Sys.time(), "%Y-%m-%d %H:%M"), mm_tag, co_tag),
-            "% Needs \\usepackage{booktabs, threeparttable, multirow}",
-            "\\begin{table}[!htbp]\\centering",
-            "\\begin{threeparttable}",
-            "\\caption{Tests for selective reporting in economics and medicine, on printed and de-rounded statistics}",
-            sprintf("\\label{%s}", nk_label),
-            "\\begin{tabular}{llccc}",
-            "\\toprule",
-            " & & Projection & EKW and & Projection test \\\\",
-            "Sample & Statistics & test & $p$-curve & certified: $10^3 \\hat B$ \\\\",
-            " & & $p$ & smallest $p$ & (allowance) \\\\",
-            "\\midrule",
-            "\\multicolumn{5}{l}{\\textit{A. Economics: Brodeur, Cook and Heyes (2020), by research design}} \\\\",
-            nk_body_mm,
-            "\\midrule",
-            "\\multicolumn{5}{l}{\\textit{B. Medicine: Cochrane Database of Systematic Reviews, continuous efficacy outcomes}} \\\\",
-            nk_body_co,
-            "\\bottomrule",
-            "\\end{tabular}",
-            "\\begin{tablenotes}[flushleft]\\footnotesize",
-            paste0("\\item ", nk_notes),
-            "\\end{tablenotes}",
-            "\\end{threeparttable}",
-            "\\end{table}")
-writeLines(nk_tex, nk_file)
-cat("Table without Kudrin's tests written to ", nk_file, "\n", sep = "")
+writeLines(rt_build(nk_tests, rt_caption[["main"]], nk_label, nk_notes), nk_file)
+cat("Rounding table without Kudrin's tests written to ", nk_file, "\n", sep = "")
