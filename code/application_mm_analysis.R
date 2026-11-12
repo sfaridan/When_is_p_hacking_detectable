@@ -5,7 +5,7 @@
 #### the data behind the two figures and the run times. It saves all of them, and every setting of the run,
 #### in <root>/results. It writes no table or figure: application_MM_output.R reads these files, the settings
 #### included, and makes all of them, so their notes always describe the run that produced the numbers.
-#### Every file is tagged with run_tag (see drop_zero_mu, require_se and run_label): runs on different samples never
+#### Every file is tagged with run_tag (see drop_zero_mu, require_se, drop_duplicates and run_label): runs on different samples never
 #### overwrite each other. Settings_application<run_tag> records the run. Also written, as application_cochrane.R does:
 ####   Sample_report_application<run_tag>.txt  every step from the file to the final sample, by design, reconciled with
 ####                                           Kudrin's (2025) Table 2 and Kranz and Putz's (2022) rule
@@ -31,6 +31,9 @@ require_se     <- TRUE   #keep a test only if its coefficient and its standard e
 #then ends in "_keept") also keeps t-statistics printed without a standard error, under the
 #same cap with kappa = a_t; t's the file computed from printed p-values are dropped either way
 se_rounded_up  <- FALSE  #TRUE if papers may have rounded standard errors up: then s_min = sd - b and s_max = sd
+drop_duplicates <- TRUE #TRUE: keep only the first copy of a test the file lists more than once (same design, article,
+#printed coefficient, standard error and t), as application_cochrane.R keeps the first copy of each
+#trial's outcome data; the run tag then gains "_dedup". FALSE keeps them, as Kudrin (2025) does
 run_label      <- "_drop_se_mi"     #anything else that should tell this run's files apart, e.g. "_check"
 
 # De-rounding
@@ -74,7 +77,8 @@ fig_level        <- 0.95
 fig_seed         <- 20261030      #seeds of the two figures' bootstraps
 fig_shape_seed   <- 20261102
 
-run_tag <- paste0(if (drop_zero_mu) "" else "_keepmu0", if (require_se) "" else "_keept", run_label)   #in every file name of this run
+run_tag <- paste0(if (drop_zero_mu) "" else "_keepmu0", if (require_se) "" else "_keept",
+                  if (drop_duplicates) "_dedup" else "", run_label)   #in every file name of this run
 
 #### 1. Code ---------------------------------------------------------------------------------------------
 source(file.path(root, "code", "functions_all_weighted.R"))
@@ -175,6 +179,16 @@ drop_kappa <- (has_ratio & !drop_se0 & a_mu / s_min > kappa_cap) | (printed_t & 
 drop_pval  <- pvalue_t & !require_se                         #t computed from a printed p-value (robustness run)
 use_ratio  <- has_ratio & !drop_se0 & !drop_kappa
 
+# Exact duplicates: a later row repeating an earlier row's design, article, printed coefficient, standard error and t
+# (the key the sample report counts as exact_duplicates). The rule applies after every other rule, among the rows
+# they keep, so a copy that survives them is never dropped in favor of one that does not: a coefficient's rounding
+# unit is set per table, so two copies of a test can differ in kappa. The first copy in the file is kept, as
+# application_cochrane.R keeps the first copy of each trial's outcome data.
+keep_other <- !(drop_nose | drop_se0 | drop_kappa | drop_pval)   #the sample before duplicates are considered
+dup_later  <- rep(FALSE, n_obs)
+dup_later[keep_other] <- duplicated(paste(MM_data$method, MM_data$title, mu_p, sd_p, t_p, sep = "|")[keep_other])
+drop_dup   <- drop_duplicates & dup_later
+
 cat("Decimals printed in the standard errors (many at 6+ would suggest computed rather than printed SEs):\n")
 print(table(dec_sd[has_ratio]))
 cat("\nt-statistics dropped (the same under every de-rounding option):\n")
@@ -182,6 +196,7 @@ drop_counts <- rbind(se_missing      = tapply(drop_nose,  MM_data$method, sum),
                      se_zero         = tapply(drop_se0,   MM_data$method, sum),
                      kappa_above_cap = tapply(drop_kappa, MM_data$method, sum),
                      t_from_pvalue   = tapply(drop_pval,  MM_data$method, sum))
+if (drop_duplicates) drop_counts <- rbind(drop_counts, exact_duplicate = tapply(drop_dup, MM_data$method, sum))
 print(drop_counts)
 
 #### How much do we drop, compared with Kranz and Putz's (2022) omission rule?
@@ -199,7 +214,7 @@ print(drop_counts)
 kp_threshold <- 37
 kp_signif    <- round(sd_p * 10^pmax(dec_sd, dec_mu))                   #SE significand, KP's convention
 drop_kp      <- has_ratio & kp_signif < kp_threshold                     #includes SEs printed as zero
-drop_ours    <- has_ratio & (drop_se0 | drop_kappa)
+drop_ours    <- has_ratio & (drop_se0 | drop_kappa)                   #rounding drops only: duplicates are not part of it
 z_is_2       <- has_ratio & sd_p > 0 & abs(abs(mu_p / sd_p) - 2) < 1e-9   #KP's heap at exactly z = 2
 
 drop_summary <- function(g) {                                            #g: logical row selector
@@ -241,6 +256,7 @@ reason[kept_rows[drop_nose]]  <- "standard error missing"
 reason[kept_rows[drop_se0]]   <- "standard error printed as zero"
 reason[kept_rows[drop_kappa]] <- "kappa above cap"
 reason[kept_rows[drop_pval]]  <- "t computed from a p-value"
+reason[kept_rows[drop_dup]]   <- "exact duplicate"
 sample_rows$kept     <- reason == ""
 sample_rows$reason   <- reason
 sample_rows$t_source <- NA_character_
@@ -258,13 +274,21 @@ MM_data$dr_t       <- t_p                                                       
 MM_data$dr_a       <- ifelse(use_ratio, a_mu, ifelse(direct, a_t, NA))           #rounding unit of the numerator
 MM_data$kappa      <- ifelse(use_ratio, a_mu / s_min, ifelse(direct, a_t, NA))   #rounding unit in t-units
 MM_data$lambda_max <- ifelse(use_ratio, s_max / s_min, NA)                       #largest inflation from dividing by s_min
-MM_data            <- MM_data[!(drop_nose | drop_se0 | drop_kappa | drop_pval), ]
+MM_data            <- MM_data[keep_other, ]
 
-#The de-rounding noise, drawn once with fixed seeds, so every option and every run uses the same draws
+#The de-rounding noise, drawn once with fixed seeds, so every option and every run uses the same draws. It is drawn
+#before duplicates are dropped, so each remaining test gets the same noise whether or not drop_duplicates is set
 set.seed(1)
 U_num <- matrix(runif(nrow(MM_data) * n_draws_noise, -0.5, 0.5), ncol = n_draws_noise)   #numerator noise, one column per draw
 set.seed(2)
 U_den <- matrix(runif(nrow(MM_data) * n_draws_noise, -0.5, 0.5), ncol = n_draws_noise)   #denominator noise (option 2 only)
+if (drop_duplicates) {
+  first_copy <- !dup_later[keep_other]
+  MM_data    <- MM_data[first_copy, ]
+  U_num      <- U_num[first_copy, , drop = FALSE]
+  U_den      <- U_den[first_copy, , drop = FALSE]
+}
+stopifnot(nrow(MM_data) == sum(sample_rows$kept))   #the sample report and the tests use the same rows
 
 deround_draw <- function(r) {                                #t-statistics for draw r under the current option
   d     <- MM_data                                           #(reads deround_spec and add_noise, set in the loop below)
@@ -305,15 +329,18 @@ steps_mm <- rbind("In the file"                         = count_by(rep(TRUE, nro
                   "Dropped: standard error printed as 0" = count_by(reason == "standard error printed as zero"),
                   "Dropped: kappa above the cap"        = count_by(reason == "kappa above cap"),
                   "Dropped: t computed from a p-value"  = count_by(reason == "t computed from a p-value"),
+                  "Dropped: exact duplicate"            = count_by(reason == "exact duplicate"),
                   "Final sample"                        = count_by(sample_rows$kept),
                   "Articles in the final sample"        = papers_by(sample_rows$kept))
 if (!drop_zero_mu) steps_mm <- steps_mm[rownames(steps_mm) != "Dropped: coefficient printed as 0", ]
+if (!drop_duplicates) steps_mm <- steps_mm[rownames(steps_mm) != "Dropped: exact duplicate", ]
 steps_mm <- steps_mm[rownames(steps_mm) != (if (require_se) "Dropped: t computed from a p-value" else "Dropped: standard error missing"), ]
 
 # Kudrin (2025), Table 2: tests (papers) after excluding observations with missing information. Our reading of his
 # rule: a coefficient is present and not printed as zero. Our sample differs from it by exactly
 # (zero coefficients we keep) - (standard errors missing) - (standard errors printed as zero) - (kappa above the cap),
-# or, with require_se = FALSE, - (t's from p-values) instead of - (standard errors missing)
+# or, with require_se = FALSE, - (t's from p-values) instead of - (standard errors missing); with drop_duplicates,
+# also - (exact duplicates)
 kud_n      <- c(RCT = 7101, IV = 5158, DID = 5780, RDD = 3117)
 kud_papers <- c(RCT = 141, IV = 281, DID = 241, RDD = 85)
 kud_rule   <- !is.na(sample_rows$coefficient) & !is_zero
@@ -326,8 +353,10 @@ recon <- rbind("Kudrin (2025), Table 2: tests"              = c(kud_n[meth], Tot
                "- standard errors printed as zero"          = count_by(reason == "standard error printed as zero")[c(meth, "Total")],
                "- kappa above the cap"                      = count_by(reason == "kappa above cap")[c(meth, "Total")],
                "- t computed from a p-value"                = count_by(reason == "t computed from a p-value")[c(meth, "Total")],
+               "- exact duplicates"                         = count_by(reason == "exact duplicate")[c(meth, "Total")],
                "= our final sample"                         = count_by(sample_rows$kept)[c(meth, "Total")])
 recon <- recon[rownames(recon) != (if (require_se) "- t computed from a p-value" else "- standard errors missing"), ]
+if (!drop_duplicates) recon <- recon[rownames(recon) != "- exact duplicates", ]
 
 t_print <- ifelse(MM_data$t_source %in% "coef/SE", MM_data$dr_mu / MM_data$dr_sd, MM_data$dr_t)
 dup_key <- paste(MM_data$method, MM_data$title, MM_data$dr_mu, MM_data$dr_sd, MM_data$dr_t, sep = "|")
@@ -355,8 +384,11 @@ report_mm <- c(
   "One row of the file is one test: a coefficient and its standard error, or a reported t-statistic.",
   "",
   "1. SETTINGS THAT DEFINE THE SAMPLE",
-  sprintf("  drop_zero_mu = %s (coefficients printed as zero %s); kappa_cap = %s; se_rounded_up = %s; require_se = %s",
+  sprintf("  drop_zero_mu = %s (coefficients printed as zero %s); kappa_cap = %s; se_rounded_up = %s; require_se = %s;",
           drop_zero_mu, if (drop_zero_mu) "dropped, as Kudrin (2025)" else "kept", format(kappa_cap), se_rounded_up, require_se),
+  sprintf("  drop_duplicates = %s (%s)", drop_duplicates,
+          if (drop_duplicates) "a later copy of a test the file lists more than once is dropped, after every other rule" else
+            "tests the file lists more than once are kept; section 3 counts them"),
   "  kappa = a / s_min: the coefficient's rounding unit a (the finest place value among its table's coefficients, but no",
   "  finer than its standard error's) over the smallest standard error consistent with the printed one, s - b/2.",
   "  Some tests have a coefficient but no standard error: the paper printed a t-statistic or a p-value in its place, and",
@@ -377,7 +409,8 @@ report_mm <- c(
   "3. THE FINAL SAMPLE, BY DESIGN",
   show_lines(final_mm, 4),
   "  share_sig: share with printed |t| > 1.96. exact_duplicates: rows repeating an earlier row's article, coefficient,",
-  "  standard error and t (kept, as Kudrin keeps them). Allowances: C mean(kappa^6) x 1000, C = 0.13 (J0 = 20), 0.31 (J0 = 30).",
+  sprintf("  standard error and t (%s). Allowances: C mean(kappa^6) x 1000, C = 0.13 (J0 = 20), 0.31 (J0 = 30).",
+          if (drop_duplicates) "0 by construction: drop_duplicates dropped them, as section 2 shows" else "kept, as Kudrin keeps them"),
   "",
   "4. RECONCILIATION WITH KUDRIN (2025)",
   "  His Table 2 reports the tests left 'after excluding observations with missing information'. We read his rule as:",
@@ -419,7 +452,7 @@ settings_now <- function(status) list(
   tests_from = if (exists("tests_source")) tests_source else "this run",
   run_tag = run_tag, run_label = run_label, data_file = file.path(data_location, "MM data.dta"),
   drop_zero_mu = drop_zero_mu, n_zero_mu = n_zero_mu, kappa_cap = kappa_cap, se_rounded_up = se_rounded_up,
-  require_se = require_se, no_se_kinds = no_se_kinds, pval_evidence = pval_evidence,
+  require_se = require_se, drop_duplicates = drop_duplicates, no_se_kinds = no_se_kinds, pval_evidence = pval_evidence,
   drop_counts = drop_counts,
   n_by_design        = setNames(as.vector(table(factor(MM_data$method, levels = meth))), meth),
   articles_by_design = vapply(meth, function(m) length(unique(MM_data$title[MM_data$method == m])), 0),
@@ -447,7 +480,8 @@ if (!run_tests) {                       #reuse saved test results only if they w
   now <- settings_now("check")
   if (file.exists(settings_file)) {
     old  <- readRDS(settings_file)
-    same <- c("drop_zero_mu", "kappa_cap", "se_rounded_up", "require_se", "options_run", "n_draws_noise", "cv", "shift", "L",
+    if (is.null(old$drop_duplicates)) old$drop_duplicates <- FALSE   #saved before the setting existed: duplicates were kept
+    same <- c("drop_zero_mu", "drop_duplicates", "kappa_cap", "se_rounded_up", "require_se", "options_run", "n_draws_noise", "cv", "shift", "L",
               "numgrid", "boots", "boot_seed_by_draw", "J", "p", "J0_list", "run_stouffer", "run_noshift", "noshift_draws",
               "n_by_design")
     diff <- same[!vapply(same, function(k) isTRUE(all.equal(old[[k]], now[[k]])), TRUE)]

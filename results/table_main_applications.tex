@@ -1,4 +1,4 @@
-% Written by main_applications_table.R on 2026-11-09 08:12 from Settings_application_keepmu0_drop_se_mi and Cochrane_results_n100_all_trial_kappa0.5_zcounts_cont.rds
+% Written by main_applications_table.R on 2026-11-11 09:13 from Settings_application_keepmu0_dedup_drop_se_mi and Cochrane_results_n100_all_trial_kappa0.5_zcounts_cont.rds
 % Needs \usepackage{booktabs, threeparttable, multirow}
 \begin{table}[!htbp]\centering
 \begin{threeparttable}
@@ -12,17 +12,17 @@ Sample & Statistics & test & $T_\infty$ & $T_H$ & $T_H^{\mathrm{hyb}}$ & $p$-cur
  & & $p$ & $p$ & $p$ & $p$ & smallest $p$ & (allowance) \\
 \midrule
 \multicolumn{8}{l}{\textit{A. Economics: Brodeur, Cook and Heyes (2020), by research design}} \\
-RCT & Printed & \textbf{$<$.001} & \textbf{.033} & \textbf{.004} & \textbf{.004} & \textbf{.014} & \multirow{2}{*}{\textbf{1.8 ($<$0.1)}} \\
-{\footnotesize 6,795 tests, 141 articles} & De-rounded & \textbf{.001} & \textbf{.025} & \textbf{.005} & \textbf{.005} & .463 & \\
+RCT & Printed & \textbf{.005} & \textbf{.021} & \textbf{.001} & \textbf{.001} & \textbf{.046} & \multirow{2}{*}{\textbf{1.4 ($<$0.1)}} \\
+{\footnotesize 6,480 tests, 141 articles} & De-rounded & \textbf{.007} & \textbf{.013} & \textbf{.003} & \textbf{.003} & .197 & \\
 \addlinespace[2pt]
-IV & Printed & \textbf{.001} & \textbf{.001} & \textbf{.020} & \textbf{.020} & .054 & \multirow{2}{*}{\textbf{3.5 ($<$0.1)}} \\
-{\footnotesize 4,619 tests, 263 articles} & De-rounded & \textbf{.002} & \textbf{.017} & \textbf{.021} & \textbf{.021} & .375 & \\
+IV & Printed & \textbf{.001} & \textbf{$<$.001} & \textbf{.015} & \textbf{.015} & .057 & \multirow{2}{*}{\textbf{3.6 ($<$0.1)}} \\
+{\footnotesize 4,486 tests, 263 articles} & De-rounded & \textbf{.003} & \textbf{.013} & \textbf{.043} & \textbf{.043} & .445 & \\
 \addlinespace[2pt]
-DID & Printed & \textbf{.012} & \textbf{.015} & \textbf{.002} & \textbf{.002} & \textbf{.033} & \multirow{2}{*}{\textbf{1.4 ($<$0.1)}} \\
-{\footnotesize 4,966 tests, 218 articles} & De-rounded & \textbf{.015} & \textbf{.046} & \textbf{.044} & \textbf{.044} & .451 & \\
+DID & Printed & \textbf{.017} & \textbf{.019} & \textbf{.004} & \textbf{.004} & \textbf{.040} & \multirow{2}{*}{\textbf{1.3 ($<$0.1)}} \\
+{\footnotesize 4,730 tests, 218 articles} & De-rounded & \textbf{.017} & .058 & \textbf{.027} & \textbf{.027} & .438 & \\
 \addlinespace[2pt]
-RDD & Printed & \textbf{.034} & .062 & \textbf{.007} & \textbf{.007} & \textbf{.012} & \multirow{2}{*}{\textbf{1.5 ($<$0.1)}} \\
-{\footnotesize 2,775 tests,  80 articles} & De-rounded & \textbf{.039} & .388 & .095 & .095 & .515 & \\
+RDD & Printed & \textbf{.038} & .115 & \textbf{.017} & \textbf{.017} & \textbf{.022} & \multirow{2}{*}{\textbf{1.1 ($<$0.1)}} \\
+{\footnotesize 2,696 tests,  80 articles} & De-rounded & \textbf{.047} & .407 & .108 & .108 & .513 & \\
 \midrule
 \multicolumn{8}{l}{\textit{B. Medicine: Cochrane Database of Systematic Reviews, continuous efficacy outcomes}} \\
 All trials & Printed & .991 & \textbf{$<$.001} & .903 & .903 & .276 & \multirow{2}{*}{0.0 (0.1)} \\
@@ -36,7 +36,7 @@ Published after 2005 & Printed & .711 & \textbf{$<$.001} & .648 & .648 & .452 & 
 \bottomrule
 \end{tabular}
 \begin{tablenotes}[flushleft]\footnotesize
-\item Entries are $p$-values; bold marks $p \le .05$. Printed: the test statistics as computed from the printed coefficients and standard errors (Panel A) or the printed arm means and standard deviations (Panel B). De-rounded: every printed number drawn uniformly within its rounding interval; $p$-values averaged over 200 draws. Projection test: $J = 40$, $J_0 = 20$, centered at 1.96. Certified: the projection test under the smallest standard error consistent with the printed one (Section 5.2); its rejection is certified when $10^3 \hat B$ exceeds the rounding allowance $10^3 \times 0.13\,\overline{\kappa^6}$ (Propositions 3 and 4), shown in parentheses; bold when it does. EKW and $p$-curve: the smallest of the $p$-values of the six tests of Elliott, Kudrin and W\"uthrich (2022) and the $p$-curve test for left skew (Simonsohn, Nelson and Simmons 2014), each averaged over draws; it is not itself a valid $p$-value and overstates their evidence. The projection test, Kudrin's tests, CS1 and CS2B cluster by article (Panel A) or trial (Panel B); the other EKW tests and the $p$-curve test treat the statistics as independent. Statistics whose rounding interval exceeds half a standard error are left out ($\kappa \le 0.5$); estimates printed as zero are kept. Panel B: continuous efficacy outcomes of randomized trials with at least 100 participants. Published by 2005 and after 2005: trials by year of publication (the study's year, else the year in the trial's label); the 117 outcomes without a year are in neither. $T_\infty$'s rejections in Panel B come from $p$-values near 1: outcomes whose two arms have equal printed means (Figure~\ref{fig:cochrane_tinf_gap}). Every rounding treatment, and standard deviations across draws: Appendix Tables~\ref{tab:rounding_ekw_keepmu0_drop_se_mi_cochrane} and~\ref{tab:cochrane}.
+\item Entries are $p$-values; bold marks $p \le .05$. Printed: the test statistics as computed from the printed coefficients and standard errors (Panel A) or the printed arm means and standard deviations (Panel B). De-rounded: every printed number drawn uniformly within its rounding interval; $p$-values averaged over 200 draws. Projection test: $J = 40$, $J_0 = 20$, centered at 1.96. Certified: the projection test under the smallest standard error consistent with the printed one (Section 5.2); its rejection is certified when $10^3 \hat B$ exceeds the rounding allowance $10^3 \times 0.13\,\overline{\kappa^6}$ (Propositions 3 and 4), shown in parentheses; bold when it does. EKW and $p$-curve: the smallest of the $p$-values of the six tests of Elliott, Kudrin and W\"uthrich (2022) and the $p$-curve test for left skew (Simonsohn, Nelson and Simmons 2014), each averaged over draws; it is not itself a valid $p$-value and overstates their evidence. The projection test, Kudrin's tests, CS1 and CS2B cluster by article (Panel A) or trial (Panel B); the other EKW tests and the $p$-curve test treat the statistics as independent. Statistics whose rounding interval exceeds half a standard error are left out ($\kappa \le 0.5$); estimates printed as zero are kept. Panel B: continuous efficacy outcomes of randomized trials with at least 100 participants. Published by 2005 and after 2005: trials by year of publication (the study's year, else the year in the trial's label); the 117 outcomes without a year are in neither. $T_\infty$'s rejections in Panel B come from $p$-values near 1: outcomes whose two arms have equal printed means (Figure~\ref{fig:cochrane_tinf_gap}). Every rounding treatment, and standard deviations across draws: Appendix Tables~\ref{tab:rounding_ekw_keepmu0_dedup_drop_se_mi_cochrane} and~\ref{tab:cochrane}.
 \end{tablenotes}
 \end{threeparttable}
 \end{table}

@@ -14,7 +14,7 @@
 rm(list = ls())
 root    <- "C:/Users/sfaridani6/Documents/GitHub/When_is_p_hacking_detectable"
 res_dir <- file.path(root, "results")
-run_tag <- "_keepmu0_drop_se_mi"   #the run to report: "_keepmu0" keeps zero coefficients (application_MM_analysis.R's default),
+run_tag <- "_keepmu0_dedup_drop_se_mi"   #the run to report: "_keepmu0" keeps zero coefficients (application_MM_analysis.R's default),
 #"" is a run with Kudrin's (2025) drop of them; plus any run_label the run had
 
 #--- Presentation
